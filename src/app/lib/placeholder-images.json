@@ -1,0 +1,35 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "batik-pattern",
+      "description": "Batik Nusantara pattern showcasing symmetry and geometry.",
+      "imageUrl": "https://picsum.photos/seed/batik101/800/600",
+      "imageHint": "batik pattern"
+    },
+    {
+      "id": "borobudur-temple",
+      "description": "Borobudur temple showcasing architectural geometry.",
+      "imageUrl": "https://picsum.photos/seed/borobudur/800/600",
+      "imageHint": "indonesian temple"
+    },
+    {
+      "id": "mosque-architecture",
+      "description": "Great Mosque architecture with geometric patterns.",
+      "imageUrl": "https://picsum.photos/seed/mosque/800/600",
+      "imageHint": "mosque architecture"
+    },
+    {
+      "id": "traditional-games",
+      "description": "Children playing traditional Indonesian games.",
+      "imageUrl": "https://picsum.photos/seed/games/800/600",
+      "imageHint": "traditional games"
+    },
+    {
+      "id": "student-avatar",
+      "description": "Friendly student avatar for gamification.",
+      "imageUrl": "https://picsum.photos/seed/student/200/200",
+      "imageHint": "student person"
+    }
+  ]
+}
