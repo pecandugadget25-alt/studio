@@ -3,6 +3,8 @@
 import { useUser } from "@/firebase";
 import { Star, Bell } from "lucide-react";
 import { Badge } from "./ui/badge";
+import Image from "next/image";
+import Link from "next/link";
 
 export function AppBar() {
   const { profile } = useUser();
@@ -11,12 +13,18 @@ export function AppBar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-16 bg-white border-b android-shadow max-w-[500px] mx-auto">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xs">
-          EA
+      <Link href="/dashboard/student" className="flex items-center gap-2">
+        <div className="relative w-10 h-10">
+          <Image 
+            src="/logo.png" 
+            alt="ETHNO-ARITH Logo" 
+            fill 
+            className="object-contain"
+            priority
+          />
         </div>
         <h1 className="font-headline font-bold text-lg text-primary tracking-tight">ETHNO-ARITH</h1>
-      </div>
+      </Link>
       
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">

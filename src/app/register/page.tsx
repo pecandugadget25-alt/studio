@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
-import { ShieldCheck, Loader2, AlertCircle } from "lucide-react";
+import { ShieldCheck, Loader2 } from "lucide-react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useFirebase } from "@/firebase/provider";
@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import Image from "next/image";
 
 export default function RegisterPage() {
   const { auth, db } = useFirebase();
@@ -31,29 +32,21 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validasi Inisialisasi Firebase
     if (!auth || !db) {
-      console.error("[Registration] Firebase services (Auth/DB) are not available.");
       toast({
         variant: "destructive",
         title: "Sistem Belum Siap",
-        description: "Layanan Firebase sedang diinisialisasi. Silakan tunggu beberapa saat dan coba lagi.",
+        description: "Layanan Firebase sedang diinisialisasi. Silakan tunggu beberapa saat.",
       });
       return;
     }
 
     setLoading(true);
-    console.log("[Registration] Memulai proses pendaftaran...");
-    console.log("[Registration] Data Input:", { email: formData.email, peran: formData.peran });
 
     try {
-      // Step 1: Membuat akun di Firebase Authentication
-      console.log("[Registration] Mencoba createUserWithEmailAndPassword...");
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const uid = userCredential.user.uid;
-      console.log("[Registration] Akun Auth berhasil dibuat. UID:", uid);
 
-      // Step 2: Menyiapkan data profil untuk Firestore
       const userRef = doc(db, "users", uid);
       const userData = {
         uid,
@@ -65,14 +58,11 @@ export default function RegisterPage() {
         tanggalDaftar: serverTimestamp()
       };
 
-      // Step 3: Menyimpan ke Firestore (Non-blocking)
-      console.log("[Registration] Menjalankan setDoc ke Firestore (path: users/" + uid + ")");
       setDoc(userRef, userData)
         .then(() => {
           console.log("[Registration] Firestore: Profil berhasil disimpan.");
         })
         .catch(async (serverError) => {
-          console.error("[Registration] Firestore: Gagal menyimpan profil.", serverError);
           const permissionError = new FirestorePermissionError({
             path: userRef.path,
             operation: 'create',
@@ -81,61 +71,36 @@ export default function RegisterPage() {
           errorEmitter.emit('permission-error', permissionError);
         });
 
-      // Step 4: Berikan notifikasi sukses dan arahkan pengguna
       toast({
         title: "Pendaftaran Berhasil",
         description: "Selamat datang di ETHNO-ARITH, " + formData.name + "!",
       });
 
       const targetPath = formData.peran === "guru" ? "/dashboard/teacher" : "/dashboard/student";
-      console.log("[Registration] Mengarahkan ke: " + targetPath);
       router.push(targetPath);
 
     } catch (error: any) {
-      // Detail Logging untuk Debugging
-      console.error("[Registration] TERJADI KEGAGALAN REGISTRASI");
-      console.error("Code:", error.code);
-      console.error("Message:", error.message);
-      
       let friendlyMessage = "Gagal mendaftar karena masalah teknis.";
       
-      // Mapping Error Firebase Auth yang umum
       switch (error.code) {
         case "auth/email-already-in-use":
-          friendlyMessage = "Email ini sudah terdaftar. Silakan gunakan email lain atau masuk ke akun lama.";
+          friendlyMessage = "Email ini sudah terdaftar.";
           break;
         case "auth/invalid-email":
-          friendlyMessage = "Format email tidak valid. Periksa kembali penulisan email Anda.";
+          friendlyMessage = "Format email tidak valid.";
           break;
         case "auth/weak-password":
-          friendlyMessage = "Kata sandi terlalu lemah. Gunakan minimal 6 karakter.";
-          break;
-        case "auth/operation-not-allowed":
-          friendlyMessage = "Metode pendaftaran Email/Password belum diaktifkan di Firebase Console.";
+          friendlyMessage = "Kata sandi terlalu lemah (min. 6 karakter).";
           break;
         case "auth/network-request-failed":
-          friendlyMessage = "Koneksi internet terputus atau bermasalah. Periksa jaringan Anda.";
-          break;
-        case "auth/invalid-api-key":
-          friendlyMessage = "Konfigurasi API Key Firebase tidak valid. Hubungi pengembang.";
-          break;
-        case "auth/internal-error":
-          friendlyMessage = "Terjadi kesalahan internal pada server autentikasi.";
+          friendlyMessage = "Koneksi internet bermasalah.";
           break;
       }
 
       toast({
         variant: "destructive",
         title: "Registrasi Gagal",
-        description: (
-          <div className="mt-2 space-y-2">
-            <p className="font-medium text-sm">{friendlyMessage}</p>
-            <div className="p-2 bg-black/5 rounded text-[10px] font-mono break-all opacity-70">
-              <p>Error ID: {error.code}</p>
-              <p>Detail: {error.message}</p>
-            </div>
-          </div>
-        ),
+        description: friendlyMessage,
       });
     } finally {
       setLoading(false);
@@ -144,9 +109,15 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F5] flex flex-col items-center justify-center p-6">
-      <Link href="/" className="mb-8 flex items-center gap-2">
-        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-          <span className="text-primary-foreground font-headline font-bold text-xl">E</span>
+      <Link href="/" className="mb-8 flex flex-col items-center gap-2">
+        <div className="relative w-20 h-20 mb-2">
+          <Image 
+            src="/logo.png" 
+            alt="ETHNO-ARITH Logo" 
+            fill 
+            className="object-contain"
+            priority
+          />
         </div>
         <span className="font-headline font-bold text-2xl tracking-tight text-primary">ETHNO-ARITH</span>
       </Link>
@@ -212,12 +183,7 @@ export default function RegisterPage() {
               </RadioGroup>
             </div>
             <Button type="submit" className="w-full h-12 text-lg font-bold" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Memproses...
-                </>
-              ) : "Daftar Sekarang"}
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Daftar Sekarang"}
             </Button>
           </form>
           <div className="text-center text-sm">

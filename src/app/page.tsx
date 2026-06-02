@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,8 +11,14 @@ export default function LandingPage() {
       {/* Header */}
       <header className="px-6 lg:px-12 h-20 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-50 border-b">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-headline font-bold text-xl">E</span>
+          <div className="relative w-12 h-12">
+            <Image 
+              src="/logo.png" 
+              alt="ETHNO-ARITH Logo" 
+              fill 
+              className="object-contain"
+              priority
+            />
           </div>
           <span className="font-headline font-bold text-xl tracking-tight text-primary">ETHNO-ARITH</span>
         </div>

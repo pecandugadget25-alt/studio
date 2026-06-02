@@ -12,6 +12,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useFirebase } from "@/firebase/provider";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
 
 export default function LoginPage() {
   const { auth, db } = useFirebase();
@@ -73,9 +74,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F5] flex flex-col items-center justify-center p-6">
-      <Link href="/" className="mb-8 flex items-center gap-2">
-        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-          <span className="text-primary-foreground font-headline font-bold text-xl">E</span>
+      <Link href="/" className="mb-8 flex flex-col items-center gap-2">
+        <div className="relative w-24 h-24 mb-2">
+          <Image 
+            src="/logo.png" 
+            alt="ETHNO-ARITH Logo" 
+            fill 
+            className="object-contain"
+            priority
+          />
         </div>
         <span className="font-headline font-bold text-2xl tracking-tight text-primary">ETHNO-ARITH</span>
       </Link>
