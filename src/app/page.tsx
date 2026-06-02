@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,13 +18,15 @@ import {
   Flame,
   Award,
   Bell,
-  Search
+  Search,
+  Zap,
+  Trophy,
+  BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/firebase";
 import { personalizedLearningRecommendation, type PersonalizedLearningRecommendationOutput } from "@/ai/flows/personalized-learning-recommendation";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const MODULES = [
@@ -251,5 +253,3 @@ export default function MobileDashboard() {
     </div>
   );
 }
-
-import { Zap, Trophy as TrophyIcon } from "lucide-react";
