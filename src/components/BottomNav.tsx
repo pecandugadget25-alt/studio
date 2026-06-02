@@ -19,14 +19,14 @@ export function BottomNav() {
     { label: "Beranda", icon: Home, href: "/" },
     { label: "Modul", icon: BookOpen, href: "/modules" },
     { label: "Scan AR", icon: Camera, href: "/ar-scan", isAction: true },
+    { label: "Komik", icon: BookOpen, href: "/komik" },
     { label: "Peringkat", icon: Trophy, href: "/leaderboard" },
-    { label: "Profil", icon: User, href: "/profile", isProfile: true },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 h-24 bg-white/90 border-t bottom-nav-blur android-shadow flex items-center justify-around px-2 max-w-[500px] mx-auto pb-4">
       {navItems.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive = pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
         const Icon = item.icon;
 
         if (item.isAction) {
@@ -55,16 +55,7 @@ export function BottomNav() {
               isActive ? "text-primary" : "text-slate-400"
             )}
           >
-            {item.isProfile ? (
-              <div className={cn(
-                "w-7 h-7 rounded-full overflow-hidden border-2 transition-all",
-                isActive ? "border-primary scale-110" : "border-transparent"
-              )}>
-                <img src={`https://picsum.photos/seed/${profile.uid}/100/100`} alt="Avatar" className="w-full h-full object-cover" />
-              </div>
-            ) : (
-              <Icon className={cn("h-6 w-6 transition-all", isActive && "scale-110 fill-primary/10")} />
-            )}
+            <Icon className={cn("h-6 w-6 transition-all", isActive && "scale-110 fill-primary/10")} />
             <span className={cn("text-[10px] font-bold uppercase tracking-wider")}>
               {item.label}
             </span>

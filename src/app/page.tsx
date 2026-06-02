@@ -216,9 +216,9 @@ export default function MobileDashboard() {
             <BookOpen className="h-5 w-5 text-primary" />
             <h3 className="font-headline font-bold text-lg text-slate-900">📚 Komik Digital</h3>
           </div>
-          <Link href="/comics" className="text-xs font-bold text-primary">Lihat Semua</Link>
+          <Link href="/komik" className="text-xs font-bold text-primary">Lihat Semua</Link>
         </div>
-        <Link href="/comics">
+        <Link href="/komik">
           <Card className="rounded-3xl border-none bg-blue-50 p-6 card-shadow flex items-center justify-between group active:scale-[0.98] transition-all">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center shadow-inner">
