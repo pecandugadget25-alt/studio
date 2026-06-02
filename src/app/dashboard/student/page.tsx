@@ -1,12 +1,11 @@
 
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Trophy, 
   Flame, 
@@ -18,37 +17,72 @@ import {
   MapPin, 
   Lightbulb,
   CheckCircle2,
-  Clock
+  Clock,
+  LogOut,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { useUser, useFirebase } from "@/firebase";
 import { personalizedLearningRecommendation, type PersonalizedLearningRecommendationOutput } from "@/ai/flows/personalized-learning-recommendation";
 
 export default function StudentDashboard() {
+  const router = useRouter();
+  const { auth } = useFirebase();
+  const { user, profile, loading: authLoading } = useUser();
   const [recommendations, setRecommendations] = useState<PersonalizedLearningRecommendationOutput | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
-    async function fetchRecommendations() {
-      try {
-        const result = await personalizedLearningRecommendation({
-          studentName: "Budi Santoso",
-          recentQuizResults: [
-            { moduleName: "Batik Simetri", score: 75, difficulty: "sedang" },
-            { moduleName: "Geometri Candi", score: 45, difficulty: "sedang" }
-          ],
-          completedModules: ["Pengenalan Batik"],
-          availableModules: ["Geometri Candi", "Masjid Al Akbar", "Permainan Tradisional"],
-          availableBadges: ["Ahli Geometri Batik", "Penjaga Warisan"]
-        });
-        setRecommendations(result);
-      } catch (error) {
-        console.error("Failed to load AI recommendations", error);
-      } finally {
-        setLoading(false);
-      }
+    if (!authLoading && !user) {
+      router.push("/login");
     }
-    fetchRecommendations();
-  }, []);
+    if (profile && profile.peran !== 'siswa') {
+       // Optional: Redirect if not student
+    }
+  }, [user, profile, authLoading, router]);
+
+  useEffect(() => {
+    if (profile) {
+      async function fetchRecommendations() {
+        setAiLoading(true);
+        try {
+          const result = await personalizedLearningRecommendation({
+            studentName: profile?.nama || "Siswa",
+            recentQuizResults: [
+              { moduleName: "Batik Simetri", score: 75, difficulty: "sedang" },
+              { moduleName: "Geometri Candi", score: 45, difficulty: "sedang" }
+            ],
+            completedModules: ["Pengenalan Batik"],
+            availableModules: ["Geometri Candi", "Masjid Al Akbar", "Permainan Tradisional"],
+            availableBadges: ["Ahli Geometri Batik", "Penjaga Warisan"]
+          });
+          setRecommendations(result);
+        } catch (error) {
+          console.error("Failed to load AI recommendations", error);
+        } finally {
+          setAiLoading(false);
+        }
+      }
+      fetchRecommendations();
+    }
+  }, [profile]);
+
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push("/login");
+    }
+  };
+
+  if (authLoading || !profile) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-[#FAF7F5]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF7F5] pb-20">
@@ -60,17 +94,22 @@ export default function StudentDashboard() {
             ETHNO-ARITH
           </Link>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 bg-accent/10 px-3 py-1 rounded-full text-accent font-bold text-sm">
-            <Flame className="h-4 w-4 fill-current" />
-            <span>3 Hari</span>
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4 mr-4">
+            <div className="flex items-center gap-2 bg-accent/10 px-3 py-1 rounded-full text-accent font-bold text-sm">
+              <Flame className="h-4 w-4 fill-current" />
+              <span>3 Hari</span>
+            </div>
+            <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full text-primary font-bold text-sm">
+              <Star className="h-4 w-4 fill-current" />
+              <span>{profile.poin} XP</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full text-primary font-bold text-sm">
-            <Star className="h-4 w-4 fill-current" />
-            <span>1,250 XP</span>
-          </div>
+          <Button variant="ghost" size="icon" onClick={handleLogout} title="Keluar">
+            <LogOut className="h-5 w-5 text-muted-foreground" />
+          </Button>
           <div className="w-8 h-8 rounded-full bg-slate-200 border overflow-hidden">
-            <img src="https://picsum.photos/seed/budi/100/100" alt="Avatar" className="w-full h-full object-cover" />
+            <img src={`https://picsum.photos/seed/${profile.uid}/100/100`} alt="Avatar" className="w-full h-full object-cover" />
           </div>
         </div>
       </nav>
@@ -78,15 +117,13 @@ export default function StudentDashboard() {
       <main className="container mx-auto px-6 py-8">
         <div className="grid lg:grid-cols-12 gap-8">
           
-          {/* Main Content Area */}
           <div className="lg:col-span-8 space-y-8">
-            {/* Hero Welcome */}
             <section className="bg-primary rounded-3xl p-8 text-primary-foreground relative overflow-hidden shadow-xl shadow-primary/20">
               <div className="relative z-10 max-w-lg">
-                <h1 className="text-3xl font-headline font-bold mb-2">Selamat Datang, Budi! 👋</h1>
-                <p className="opacity-90 mb-6">Kamu hampir mencapai Level 5! Selesaikan 1 tantangan lagi untuk membuka badge 'Penjelajah Candi'.</p>
+                <h1 className="text-3xl font-headline font-bold mb-2">Selamat Datang, {profile.nama.split(' ')[0]}! 👋</h1>
+                <p className="opacity-90 mb-6">Kamu berada di Level {profile.level}! Selesaikan tantangan untuk membuka lebih banyak modul.</p>
                 <div className="flex gap-4">
-                  <Link href="/modules/candi">
+                  <Link href="/modules/batik">
                     <Button className="bg-white text-primary hover:bg-slate-100 font-bold px-6">Lanjutkan Belajar</Button>
                   </Link>
                   <Link href="/ar-scan">
@@ -100,7 +137,6 @@ export default function StudentDashboard() {
               <Trophy className="absolute top-8 right-8 h-32 w-32 text-white/10 rotate-12" />
             </section>
 
-            {/* AI Recommendation Section */}
             <section className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-accent/20 rounded-lg">
@@ -110,9 +146,9 @@ export default function StudentDashboard() {
               </div>
               
               <Card className="border-accent/30 bg-accent/5 overflow-hidden">
-                {loading ? (
+                {aiLoading ? (
                   <CardContent className="py-12 flex justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+                    <Loader2 className="animate-spin h-8 w-8 text-accent" />
                   </CardContent>
                 ) : recommendations ? (
                   <div className="grid md:grid-cols-2">
@@ -138,11 +174,14 @@ export default function StudentDashboard() {
                       </ul>
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                   <CardContent className="py-8 text-center text-muted-foreground">
+                    Belum ada rekomendasi. Selesaikan kuis untuk mulai mendapatkan saran!
+                  </CardContent>
+                )}
               </Card>
             </section>
 
-            {/* Modules Grid */}
             <section className="space-y-4">
               <h2 className="text-xl font-headline font-bold">Lanjutkan Modul</h2>
               <div className="grid md:grid-cols-2 gap-4">
@@ -153,65 +192,52 @@ export default function StudentDashboard() {
                   { id: 'games', name: 'Permainan Tradisional', progress: 0, icon: Gamepad2, color: 'bg-amber-500' },
                 ].map((mod) => (
                   <Card key={mod.id} className="hover:shadow-md transition-shadow group cursor-pointer">
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className={`w-12 h-12 ${mod.color} rounded-xl flex items-center justify-center text-white shadow-lg`}>
-                        <mod.icon className="h-6 w-6" />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <h4 className="font-bold">{mod.name}</h4>
-                        <div className="flex items-center gap-3">
-                          <Progress value={mod.progress} className="h-2" />
-                          <span className="text-xs font-bold text-muted-foreground">{mod.progress}%</span>
+                    <Link href={`/modules/${mod.id}`} className="block">
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <div className={`w-12 h-12 ${mod.color} rounded-xl flex items-center justify-center text-white shadow-lg`}>
+                          <mod.icon className="h-6 w-6" />
                         </div>
-                      </div>
-                      <Button size="icon" variant="ghost" className="group-hover:translate-x-1 transition-transform">
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </CardContent>
+                        <div className="flex-1 space-y-1">
+                          <h4 className="font-bold">{mod.name}</h4>
+                          <div className="flex items-center gap-3">
+                            <Progress value={mod.progress} className="h-2" />
+                            <span className="text-xs font-bold text-muted-foreground">{mod.progress}%</span>
+                          </div>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                      </CardContent>
+                    </Link>
                   </Card>
                 ))}
               </div>
             </section>
           </div>
 
-          {/* Right Sidebar */}
           <div className="lg:col-span-4 space-y-8">
-            {/* XP and Levels Card */}
             <Card className="rounded-3xl border-none shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Progress Level</CardTitle>
-                <CardDescription>Level 4 (Pejuang Budaya)</CardDescription>
+                <CardDescription>Level {profile.level}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="relative pt-1">
                   <div className="flex mb-2 items-center justify-between">
                     <div>
                       <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-primary/10">
-                        Level 4
+                        {profile.poin} XP
                       </span>
                     </div>
                     <div className="text-right">
                       <span className="text-xs font-semibold inline-block text-primary">
-                        800/1000 XP
+                        Target 1000 XP
                       </span>
                     </div>
                   </div>
-                  <Progress value={80} className="h-3" />
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="p-3 rounded-2xl bg-[#FAF7F5] border">
-                    <p className="text-2xl font-bold text-primary">12</p>
-                    <p className="text-xs text-muted-foreground uppercase">Kuis Selesai</p>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-[#FAF7F5] border">
-                    <p className="text-2xl font-bold text-accent">5</p>
-                    <p className="text-xs text-muted-foreground uppercase">Badge Koleksi</p>
-                  </div>
+                  <Progress value={(profile.poin / 1000) * 100} className="h-3" />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Badges Collection */}
             <Card className="rounded-3xl border-none shadow-lg">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">Badge Koleksi</CardTitle>
@@ -220,9 +246,7 @@ export default function StudentDashboard() {
               <CardContent>
                 <div className="flex flex-wrap gap-4">
                   {[
-                    { name: 'Ahli Geometri Batik', color: 'bg-orange-100 text-orange-600' },
-                    { name: 'Penjaga Warisan', color: 'bg-teal-100 text-teal-600' },
-                    { name: 'Juara Numerasi', color: 'bg-primary/10 text-primary' },
+                    { name: 'Penjelajah Awal', color: 'bg-orange-100 text-orange-600' },
                   ].map((badge, i) => (
                     <div key={i} className={`p-4 rounded-2xl ${badge.color} flex flex-col items-center gap-2 group cursor-help`}>
                       <Trophy className="h-8 w-8 transition-transform group-hover:scale-110" />
@@ -233,23 +257,6 @@ export default function StudentDashboard() {
                     <Clock className="h-8 w-8 mb-1" />
                     <span className="text-[10px] font-bold">Terkunci</span>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Daily Challenge */}
-            <Card className="rounded-3xl border-none shadow-lg bg-accent text-accent-foreground overflow-hidden relative">
-              <CardContent className="p-6">
-                <div className="relative z-10 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Gamepad2 className="h-5 w-5" />
-                    <h3 className="font-headline font-bold">Tantangan Harian</h3>
-                  </div>
-                  <p className="text-sm opacity-90">Selesaikan kuis 'Pola Batik Mega Mendung' dengan nilai sempurna hari ini!</p>
-                  <Button variant="secondary" className="w-full font-bold">Mulai Tantangan (+50 XP)</Button>
-                </div>
-                <div className="absolute -right-4 -bottom-4 opacity-10">
-                  <Flame className="h-32 w-32 rotate-12" />
                 </div>
               </CardContent>
             </Card>

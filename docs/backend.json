@@ -1,0 +1,29 @@
+
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Informasi profil pengguna ETHNO-ARITH.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "nama": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "peran": { "type": "string", "enum": ["siswa", "guru", "admin"] },
+        "level": { "type": "number", "description": "Level pembelajaran pengguna." },
+        "poin": { "type": "number", "description": "Total XP yang dikumpulkan." },
+        "tanggalDaftar": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "nama", "email", "peran"]
+    }
+  },
+  "auth": {
+    "providers": ["email"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Koleksi profil pengguna."
+    }
+  }
+}
