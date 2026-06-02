@@ -1,9 +1,11 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseProvider } from "@/firebase/provider";
 import { BottomNav } from "@/components/BottomNav";
 import { AppBar } from "@/components/AppBar";
+import { DynamicNav } from "@/components/DynamicNav";
 
 export const metadata: Metadata = {
   title: 'ETHNO-ARITH | Pembelajaran Numerasi Berbasis Budaya',
@@ -29,15 +31,20 @@ export default function RootLayout({
       <body className="font-body antialiased selection:bg-primary/20">
         <FirebaseProvider>
           <div className="app-container">
-            <AppBar />
+            <DynamicAppBar />
             <main className="min-h-screen">
               {children}
             </main>
-            <BottomNav />
+            <DynamicNav />
           </div>
         </FirebaseProvider>
         <Toaster />
       </body>
     </html>
   );
+}
+
+// Internal component to handle App Bar visibility
+function DynamicAppBar() {
+  return <AppBar />;
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from "react";
@@ -40,7 +41,7 @@ export default function LoginPage() {
         });
 
         if (profile.peran === "guru" || profile.peran === "admin") {
-          router.push("/dashboard/teacher");
+          router.push("/teacher");
         } else {
           router.push("/");
         }
