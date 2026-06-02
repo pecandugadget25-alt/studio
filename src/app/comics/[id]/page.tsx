@@ -1,9 +1,8 @@
-
 'use client';
 
 import { use, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   X, 
   ChevronRight, 
@@ -12,7 +11,9 @@ import {
   Loader2,
   BookOpen,
   ArrowLeft,
-  Star
+  Star,
+  ExternalLink,
+  Info
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,34 +21,43 @@ import { useUser, useFirestore } from "@/firebase";
 import { doc, updateDoc, arrayUnion, increment } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 const COMIC_DATA: Record<string, { 
   title: string, 
   description: string,
   driveId: string, 
   moduleLink: string,
-  image: string
+  image: string,
+  moduleName: string,
+  color: string
 }> = {
   "komik-1": { 
     title: "Misteri Simetri Batik", 
     description: "Ikuti petualangan Adi menemukan rahasia matematika di balik motif batik parang yang indah.",
     driveId: "1ml4zlDAA-RS8CYnhG8BaUOdyL_nJffiw",
     moduleLink: "/modules/batik",
-    image: "https://picsum.photos/seed/comic-batik/800/600"
+    image: "https://picsum.photos/seed/comic-batik/800/600",
+    moduleName: "Batik Nusantara",
+    color: "bg-orange-500"
   },
   "komik-2": { 
     title: "Petualangan di Candi Megah", 
     description: "Bantu Maya menghitung blok batu dan memahami bangun ruang di candi Borobudur.",
     driveId: "1dworgjt9gqSqNG_AQtCWbge9WANQ_fP-",
     moduleLink: "/modules/candi",
-    image: "https://picsum.photos/seed/comic-candi/800/600"
+    image: "https://picsum.photos/seed/comic-candi/800/600",
+    moduleName: "Candi Nusantara",
+    color: "bg-primary"
   },
   "komik-3": { 
-    title: "Rahasia Geometri Masjid", 
-    description: "Eksplorasi keindahan kubah dan menara masjid dengan konsep geometri yang seru.",
-    driveId: "1PP63HSHMdMMuSG6_rem9JhVg-aM2SaaS",
-    moduleLink: "/modules/masjid",
-    image: "https://picsum.photos/seed/comic-mosque/800/600"
+    title: "Permainan Tradisional", 
+    description: "Eksplorasi strategi berhitung lewat permainan Congklak dan Engklek bersama teman-teman.",
+    driveId: "1PP63HSHMdMMuSG6_rem9JhVg-aM2SaaS", // Reuse or placeholder
+    moduleLink: "/modules/games",
+    image: "https://picsum.photos/seed/comic-games/800/600",
+    moduleName: "Permainan Nusantara",
+    color: "bg-red-500"
   }
 };
 
@@ -95,93 +105,100 @@ export default function ComicReaderPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const downloadUrl = `https://drive.google.com/file/d/${comic.driveId}/view?usp=sharing`;
+  const readUrl = `https://drive.google.com/file/d/${comic.driveId}/view`;
+  const downloadUrl = `https://drive.google.com/uc?export=download&id=${comic.driveId}`;
 
   return (
-    <div className="min-h-screen bg-[#FAF7F5] flex flex-col">
-      {/* Simple Header */}
-      <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
+    <div className="min-h-screen bg-white pb-24">
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b flex items-center justify-between px-6 max-w-[500px] mx-auto">
         <Link href="/comics">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Kembali
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <h1 className="font-headline font-bold text-lg hidden md:block">Petualangan Literasi</h1>
-        <div className="w-10 md:hidden" />
+        <h1 className="font-headline font-bold text-base truncate max-w-[200px]">{comic.title}</h1>
+        <div className="w-10" />
       </header>
 
-      <main className="flex-1 container mx-auto px-6 py-8 max-w-2xl">
-        <Card className="border-none shadow-xl rounded-3xl overflow-hidden bg-white">
-          <div className="relative aspect-video">
-            <Image 
-              src={comic.image} 
-              alt={comic.title} 
-              fill 
-              className="object-cover"
-              data-ai-hint="comic cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
-              <h2 className="text-white text-2xl font-headline font-bold">{comic.title}</h2>
+      <main className="pt-20 px-6 space-y-8">
+        <div className="relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
+          <Image 
+            src={comic.image} 
+            alt={comic.title} 
+            fill 
+            className="object-cover"
+            data-ai-hint="comic cover detail"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-8">
+            <div className="space-y-2">
+              <span className={cn(comic.color, "text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full")}>
+                {comic.moduleName}
+              </span>
+              <h2 className="text-white text-2xl font-headline font-bold leading-tight">{comic.title}</h2>
             </div>
           </div>
-          
-          <CardContent className="p-8 space-y-6">
-            <div className="space-y-2">
-              <p className="text-muted-foreground leading-relaxed text-lg">
-                {comic.description}
+        </div>
+
+        <div className="space-y-6">
+          <Card className="border-none bg-slate-50 rounded-3xl p-6">
+            <p className="text-slate-600 leading-relaxed font-medium">
+              {comic.description}
+            </p>
+            <div className="flex items-center gap-2 text-accent font-bold mt-4 text-sm">
+              <Star className="h-5 w-5 fill-current" />
+              <span>Selesaikan untuk mendapatkan +5 XP</span>
+            </div>
+          </Card>
+
+          <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-3">
+            <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-slate-900">Petunjuk Belajar:</p>
+              <p className="text-[11px] text-slate-500 leading-normal">
+                Klik <strong>Baca Komik</strong> untuk membuka penampil Drive. Setelah selesai, kembali ke sini dan klik <strong>Sudah Dibaca</strong>.
               </p>
-              <div className="flex items-center gap-2 text-accent font-bold">
-                <Star className="h-5 w-5 fill-current" />
-                <span>+5 XP setelah selesai membaca</span>
-              </div>
             </div>
+          </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-3">
-              <BookOpen className="h-5 w-5 text-primary mt-1" />
-              <div className="text-sm">
-                <p className="font-bold">Cara Membaca:</p>
-                <ol className="list-decimal list-inside text-muted-foreground">
-                  <li>Klik tombol unduh di bawah ini</li>
-                  <li>Baca komik sampai selesai</li>
-                  <li>Kembali ke sini dan klik "Saya Sudah Membaca"</li>
-                </ol>
-              </div>
-            </div>
-
-            <div className="grid gap-4 pt-4">
-              <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="w-full">
-                <Button variant="outline" className="w-full h-14 text-lg font-bold rounded-2xl border-2 gap-2">
-                  <Download className="h-5 w-5" /> Unduh Komik
-                </Button>
-              </a>
-              
-              <Button 
-                className={`w-full h-14 text-lg font-bold rounded-2xl shadow-lg transition-all ${
-                  isRead ? "bg-green-500 hover:bg-green-600" : "bg-primary hover:bg-primary/90"
-                }`}
-                onClick={handleFinishReading}
-                disabled={isFinishing}
-              >
-                {isFinishing ? (
-                  <Loader2 className="animate-spin h-5 w-5" />
-                ) : isRead ? (
-                  <span className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5" /> Sudah Dibaca
-                  </span>
-                ) : (
-                  "Saya Sudah Membaca"
-                )}
+          <div className="grid grid-cols-2 gap-4">
+            <a href={readUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <Button variant="outline" className="w-full h-14 rounded-2xl border-2 font-bold gap-2">
+                <ExternalLink className="h-4 w-4" /> Baca Komik
               </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </a>
+            <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <Button variant="outline" className="w-full h-14 rounded-2xl border-2 font-bold gap-2">
+                <Download className="h-4 w-4" /> PDF
+              </Button>
+            </a>
+          </div>
 
-        <div className="mt-8 text-center">
-          <Link href={comic.moduleLink}>
-            <Button variant="link" className="text-primary font-bold gap-2">
-              Pelajari Materi Terkait di Modul <ChevronRight className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button 
+            className={cn(
+              "w-full h-16 text-lg font-bold rounded-[1.5rem] shadow-xl transition-all",
+              isRead ? "bg-green-500 hover:bg-green-600" : "bg-primary hover:bg-primary/90"
+            )}
+            onClick={handleFinishReading}
+            disabled={isFinishing}
+          >
+            {isFinishing ? (
+              <Loader2 className="animate-spin h-6 w-6" />
+            ) : isRead ? (
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-6 w-6" /> Selesai Dibaca
+              </span>
+            ) : (
+              "Saya Sudah Membaca"
+            )}
+          </Button>
+
+          <div className="text-center pt-4">
+            <Link href={comic.moduleLink}>
+              <Button variant="link" className="text-primary font-bold gap-2">
+                Pelajari Materi di Modul <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
     </div>

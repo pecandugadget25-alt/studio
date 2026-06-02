@@ -1,18 +1,19 @@
-
 'use client';
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, ArrowLeft, Star, CheckCircle2, Download } from "lucide-react";
+import { BookOpen, ArrowLeft, Star, CheckCircle2, Download, Clock } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/firebase";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 const COMICS = [
   {
     id: "komik-1",
     title: "Misteri Simetri Batik",
+    description: "Adi menemukan rahasia matematika di balik motif batik parang yang indah.",
     module: "Batik Nusantara",
     color: "bg-orange-500",
     image: "https://picsum.photos/seed/comic-batik/400/600",
@@ -21,6 +22,7 @@ const COMICS = [
   {
     id: "komik-2",
     title: "Petualangan di Candi Megah",
+    description: "Bantu Maya menghitung blok batu dan memahami bangun ruang di candi Borobudur.",
     module: "Candi Nusantara",
     color: "bg-primary",
     image: "https://picsum.photos/seed/comic-candi/400/600",
@@ -28,11 +30,12 @@ const COMICS = [
   },
   {
     id: "komik-3",
-    title: "Rahasia Geometri Masjid",
-    module: "Masjid Nusantara",
-    color: "bg-emerald-600",
-    image: "https://picsum.photos/seed/comic-mosque/400/600",
-    hint: "mosque comic"
+    title: "Permainan Tradisional",
+    description: "Eksplorasi strategi berhitung lewat permainan Congklak dan Engklek.",
+    module: "Permainan Nusantara",
+    color: "bg-red-500",
+    image: "https://picsum.photos/seed/comic-games/400/600",
+    hint: "traditional games comic"
   }
 ];
 
@@ -40,35 +43,32 @@ export default function ComicListPage() {
   const { profile } = useUser();
 
   return (
-    <div className="min-h-screen bg-[#FAF7F5] pb-20">
-      <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
-        <Link href="/dashboard/student">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Kembali
+    <div className="min-h-screen bg-slate-50 pb-24">
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b flex items-center justify-between px-6 max-w-[500px] mx-auto">
+        <Link href="/">
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <h1 className="font-headline font-bold text-lg flex items-center gap-2 text-primary">
-          <BookOpen className="h-5 w-5" />
-          Komik Petualangan
+        <h1 className="font-headline font-bold text-lg flex items-center gap-2 text-slate-900">
+          <BookOpen className="h-5 w-5 text-primary" />
+          Komik Digital
         </h1>
-        <div className="flex items-center gap-1 text-accent font-bold text-xs bg-accent/10 px-3 py-1 rounded-full">
-          <Star className="h-3 w-3 fill-current" />
-          <span>+5 XP</span>
-        </div>
+        <div className="w-10" />
       </header>
 
-      <main className="container mx-auto px-6 py-10 max-w-5xl">
-        <div className="text-center mb-10 space-y-2">
-          <h2 className="text-3xl font-headline font-bold">Pilih Petualanganmu! 📚</h2>
-          <p className="text-muted-foreground">Unduh dan baca komik seru untuk mendapatkan XP tambahan.</p>
+      <main className="pt-20 px-6 space-y-6">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-headline font-bold text-slate-900">Literasi Nusantara 📚</h2>
+          <p className="text-sm text-muted-foreground">Baca komik seru dan asah kemampuan numerasimu.</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid gap-6">
           {COMICS.map((comic) => {
             const isRead = profile?.completedComics?.includes(comic.id);
             return (
-              <Card key={comic.id} className="group overflow-hidden border-none shadow-xl rounded-3xl transition-all hover:shadow-2xl hover:-translate-y-1">
-                <div className="relative aspect-[3/4]">
+              <Card key={comic.id} className="group overflow-hidden border-none shadow-xl rounded-[2rem] bg-white transition-all hover:shadow-2xl">
+                <div className="relative aspect-[4/3] w-full">
                   <Image 
                     src={comic.image} 
                     alt={comic.title} 
@@ -76,16 +76,16 @@ export default function ComicListPage() {
                     className="object-cover"
                     data-ai-hint={comic.hint}
                   />
-                  <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent`} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   
                   {isRead && (
-                    <div className="absolute top-4 right-4 bg-green-500 text-white p-2 rounded-full shadow-lg">
+                    <div className="absolute top-4 right-4 bg-green-500 text-white p-2 rounded-full shadow-lg animate-in zoom-in-50 duration-300">
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
                   )}
 
                   <div className="absolute bottom-6 left-6 right-6 space-y-2">
-                    <Badge className={`${comic.color} text-white border-none shadow-lg`}>
+                    <Badge className={cn(comic.color, "text-white border-none shadow-lg px-3 py-1 text-[10px] uppercase font-bold tracking-widest")}>
                       {comic.module}
                     </Badge>
                     <h3 className="text-white font-headline font-bold text-xl leading-tight">
@@ -93,10 +93,28 @@ export default function ComicListPage() {
                     </h3>
                   </div>
                 </div>
-                <CardFooter className="p-6 bg-white">
-                  <Link href={`/comics/${comic.id}`} className="w-full">
-                    <Button className={`w-full h-12 font-bold text-md rounded-2xl shadow-lg ${isRead ? 'bg-slate-100 text-slate-500 hover:bg-slate-200' : 'shadow-primary/20'}`} variant={isRead ? "ghost" : "default"}>
-                      {isRead ? "Baca Lagi" : "Unduh & Baca"}
+                <CardContent className="p-6">
+                  <p className="text-sm text-slate-600 line-clamp-2 mb-4 font-medium leading-relaxed">
+                    {comic.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wide">
+                      <Star className="h-3 w-3 fill-current" />
+                      <span>Dapatkan +5 XP</span>
+                    </div>
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
+                      {isRead ? (
+                        <><CheckCircle2 className="h-3 w-3" /> Selesai</>
+                      ) : (
+                        <><Clock className="h-3 w-3" /> Belum Dibaca</>
+                      )}
+                    </Badge>
+                  </div>
+                </CardContent>
+                <CardFooter className="p-6 pt-0 gap-3">
+                  <Link href={`/comics/${comic.id}`} className="flex-1">
+                    <Button className={cn("w-full h-12 font-bold rounded-2xl shadow-lg", isRead ? "bg-slate-100 text-slate-500" : "")}>
+                      {isRead ? "Baca Lagi" : "Mulai Membaca"}
                     </Button>
                   </Link>
                 </CardFooter>

@@ -144,7 +144,6 @@ export default function MobileDashboard() {
               </div>
             </div>
           </div>
-          {/* Decorative shapes */}
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-accent/20 rounded-full blur-2xl" />
         </Card>
@@ -170,29 +169,7 @@ export default function MobileDashboard() {
         })}
       </section>
 
-      {/* AI Recommendation Card */}
-      <section>
-        <Card className="rounded-3xl border-none bg-orange-50 overflow-hidden relative border border-orange-100/50">
-          <div className="p-5 flex items-start gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-2xl flex items-center justify-center shrink-0">
-              <TrendingUp className="h-6 w-6 text-accent" />
-            </div>
-            <div className="space-y-1">
-              <h4 className="font-bold text-sm text-slate-900">
-                {aiLoading ? "Sedang memikirkan tantangan..." : (recommendations?.nextChallenge || "Siap tantangan baru?")}
-              </h4>
-              <p className="text-[10px] text-slate-500 font-medium italic leading-relaxed">
-                "{aiLoading ? "Analisis kemajuan..." : (recommendations?.motivationMessage || "Terus asah kemampuan numerasimu!")}"
-              </p>
-            </div>
-          </div>
-          <Button variant="ghost" className="w-full h-10 bg-orange-100/50 text-accent font-bold text-xs rounded-none border-t border-orange-100">
-            Terima Tantangan <ChevronRight className="h-3 w-3 ml-1" />
-          </Button>
-        </Card>
-      </section>
-
-      {/* Lanjutkan Belajar - Horizontal Scroll */}
+      {/* Lanjutkan Belajar */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h3 className="font-headline font-bold text-lg text-slate-900">Lanjutkan Belajar</h3>
@@ -230,6 +207,33 @@ export default function MobileDashboard() {
             </Link>
           ))}
         </div>
+      </section>
+
+      {/* Komik Digital Section */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            <h3 className="font-headline font-bold text-lg text-slate-900">📚 Komik Digital</h3>
+          </div>
+          <Link href="/comics" className="text-xs font-bold text-primary">Lihat Semua</Link>
+        </div>
+        <Link href="/comics">
+          <Card className="rounded-3xl border-none bg-blue-50 p-6 card-shadow flex items-center justify-between group active:scale-[0.98] transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center shadow-inner">
+                <BookOpen className="h-7 w-7 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-bold text-slate-900">Petualangan Literasi</h4>
+                <p className="text-xs text-slate-500 font-medium">Baca komik seru & dapatkan XP!</p>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
+              <ChevronRight className="h-5 w-5" />
+            </div>
+          </Card>
+        </Link>
       </section>
 
       {/* Aktivitas Terbaru */}
