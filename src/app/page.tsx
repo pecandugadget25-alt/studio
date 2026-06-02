@@ -22,7 +22,8 @@ import {
   Search,
   Zap,
   Trophy,
-  BookOpen
+  BookOpen,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -50,29 +51,39 @@ export default function MobileDashboard() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (profile) {
+    // Only fetch if profile exists and we haven't fetched yet
+    if (profile && !recommendations && !aiLoading) {
       async function fetchRecommendations() {
         setAiLoading(true);
         try {
           const result = await personalizedLearningRecommendation({
             studentName: profile?.nama || "Siswa",
             recentQuizResults: [{ moduleName: "Batik Simetri", score: 80, difficulty: "sedang" }],
-            completedModules: profile.completedModules || [],
+            completedModules: profile?.completedModules || [],
             availableModules: MODULES.map(m => m.name),
             availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi", "Penjaga Budaya Nusantara"]
           });
           setRecommendations(result);
         } catch (error) {
-          console.error("Failed to load AI recommendations", error);
+          console.error("AI Recommendation failed, using defaults:", error);
+          // Set silent fallback so it doesn't try again and again
+          setRecommendations({
+            nextChallenge: "Selesaikan materi Batik hari ini!",
+            motivationMessage: "Setiap langkah kecil membawamu lebih dekat ke puncak prestasi.",
+            recommendations: [],
+            areasForImprovement: [],
+            suggestedBadge: "Juara Numerasi"
+          });
         } finally {
           setAiLoading(false);
         }
       }
       fetchRecommendations();
     }
-  }, [profile?.poin]);
+  }, [profile?.uid, recommendations, aiLoading]);
 
-  if (authLoading || !profile) {
+  // Defensive: Handle loading and non-existent profile
+  if (authLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -80,9 +91,14 @@ export default function MobileDashboard() {
     );
   }
 
-  const currentLevel = profile.level || 1;
-  const currentXPInLevel = profile.poin % 100;
+  if (!user || !profile) {
+    return null; // Let the useEffect router.push handle redirection
+  }
+
+  const currentLevel = profile?.level || 1;
+  const currentXPInLevel = (profile?.poin || 0) % 100;
   const progressPercent = (currentXPInLevel / 100) * 100;
+  const firstName = profile?.nama ? profile.nama.split(' ')[0] : "Siswa";
 
   return (
     <div className="pt-20 pb-32 px-4 space-y-6 bg-slate-50/50 min-h-screen overflow-y-auto">
@@ -90,7 +106,7 @@ export default function MobileDashboard() {
       <section className="px-2">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-headline font-bold text-slate-900">Halo, {profile.nama.split(' ')[0]}! 👋</h2>
+            <h2 className="text-2xl font-headline font-bold text-slate-900">Halo, {firstName}! 👋</h2>
             <p className="text-sm text-muted-foreground font-medium">Semangat belajar hari ini.</p>
           </div>
           <div className="flex gap-2">
@@ -130,23 +146,53 @@ export default function MobileDashboard() {
             <div className="grid grid-cols-3 gap-2 mt-6 pt-6 border-t border-white/10">
               <div className="flex flex-col items-center gap-1">
                 <Flame className="h-5 w-5 text-orange-400 fill-current" />
-                <span className="text-xs font-bold">3 Hari</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold">Streak</span>
+                <span className="text-xs font-bold">Aktif</span>
+                <span className="text-[9px] opacity-60 uppercase font-bold">Status</span>
               </div>
               <div className="flex flex-col items-center gap-1">
                 <Award className="h-5 w-5 text-yellow-400" />
-                <span className="text-xs font-bold">{profile.badges?.length || 0}</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold">Badges</span>
+                <span className="text-xs font-bold">{profile?.badges?.length || 0}</span>
+                <span className="text-[9px] opacity-60 uppercase font-bold">Lencana</span>
               </div>
               <div className="flex flex-col items-center gap-1">
                 <TrendingUp className="h-5 w-5 text-emerald-400" />
-                <span className="text-xs font-bold">TOP 10</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold">Rank</span>
+                <span className="text-xs font-bold">{profile?.poin || 0}</span>
+                <span className="text-[9px] opacity-60 uppercase font-bold">Total XP</span>
               </div>
             </div>
           </div>
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-accent/20 rounded-full blur-2xl" />
+        </Card>
+      </section>
+
+      {/* AI Recommendation Section (Optional) */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 px-1">
+          <Sparkles className="h-4 w-4 text-accent" />
+          <h3 className="font-headline font-bold text-sm">Tantangan Pintar AI</h3>
+        </div>
+        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden">
+          {aiLoading ? (
+            <div className="p-6 flex justify-center">
+              <Loader2 className="animate-spin h-5 w-5 text-accent" />
+            </div>
+          ) : recommendations ? (
+            <div className="p-5 space-y-3">
+              <p className="text-xs font-bold text-accent uppercase tracking-widest">Saran Untukmu</p>
+              <h4 className="font-bold text-sm leading-snug">{recommendations.nextChallenge}</h4>
+              <p className="text-xs text-muted-foreground italic">"{recommendations.motivationMessage}"</p>
+              <Link href="/modules">
+                <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl mt-2 h-10">
+                  Terima Tantangan
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="p-5 text-center">
+              <p className="text-xs text-muted-foreground">Mulai belajar untuk melihat rekomendasi personal.</p>
+            </div>
+          )}
         </Card>
       </section>
 
@@ -173,40 +219,48 @@ export default function MobileDashboard() {
       {/* Lanjutkan Belajar */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="font-headline font-bold text-lg text-slate-900">Lanjutkan Belajar</h3>
+          <h3 className="font-headline font-bold text-lg text-slate-900">Materi Eksplorasi</h3>
           <Link href="/modules" className="text-xs font-bold text-primary">Lihat Semua</Link>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4">
-          {MODULES.map((mod) => (
-            <Link key={mod.id} href={`/modules/${mod.id}`} className="shrink-0 w-64">
-              <Card className="rounded-[1.5rem] border-none overflow-hidden card-shadow bg-white active:scale-95 transition-transform">
-                <div className="relative h-32">
-                  <img 
-                    src={`https://picsum.photos/seed/${mod.img}/600/400`} 
-                    alt={mod.name} 
-                    className="w-full h-full object-cover" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-white", mod.color)}>
-                      <mod.icon className="h-4 w-4" />
+          {MODULES.map((mod) => {
+            const isDone = profile?.completedModules?.includes(mod.id);
+            return (
+              <Link key={mod.id} href={`/modules/${mod.id}`} className="shrink-0 w-64">
+                <Card className="rounded-[1.5rem] border-none overflow-hidden card-shadow bg-white active:scale-95 transition-transform">
+                  <div className="relative h-32">
+                    <img 
+                      src={`https://picsum.photos/seed/${mod.img}/600/400`} 
+                      alt={mod.name} 
+                      className="w-full h-full object-cover" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-white", mod.color)}>
+                        <mod.icon className="h-4 w-4" />
+                      </div>
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">{mod.tag}</span>
                     </div>
-                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">{mod.tag}</span>
+                    {isDone && (
+                      <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-lg">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="p-4 space-y-3">
-                  <h4 className="font-bold text-sm text-slate-900 truncate">{mod.name}</h4>
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                      <span>Progres</span>
-                      <span>{mod.progress}%</span>
+                  <div className="p-4 space-y-3">
+                    <h4 className="font-bold text-sm text-slate-900 truncate">{mod.name}</h4>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                        <span>Progres</span>
+                        <span>{isDone ? 100 : mod.progress}%</span>
+                      </div>
+                      <Progress value={isDone ? 100 : mod.progress} className="h-1.5" />
                     </div>
-                    <Progress value={mod.progress} className="h-1.5" />
                   </div>
-                </div>
-              </Card>
-            </Link>
-          ))}
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -235,25 +289,6 @@ export default function MobileDashboard() {
             </div>
           </Card>
         </Link>
-      </section>
-
-      {/* Aktivitas Terbaru */}
-      <section className="space-y-4">
-        <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Aktivitas Terakhir</h3>
-        <Card className="rounded-3xl border-none bg-white p-5 card-shadow">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center shrink-0">
-              <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-sm text-slate-900 truncate">Kuis Batik Simetri</h4>
-              <p className="text-xs text-slate-500">Selesai • 80/100 Poin</p>
-            </div>
-            <div className="bg-slate-50 px-3 py-1.5 rounded-xl">
-              <span className="text-xs font-bold text-primary">+20 XP</span>
-            </div>
-          </div>
-        </Card>
       </section>
     </div>
   );

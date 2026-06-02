@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from "react";
@@ -12,15 +13,16 @@ import {
   Castle,
   Dices,
   Landmark,
-  BookOpen,
   ChevronRight,
   TrendingUp,
-  Camera
+  Camera,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/firebase";
 import { personalizedLearningRecommendation, type PersonalizedLearningRecommendationOutput } from "@/ai/flows/personalized-learning-recommendation";
+import { cn } from "@/lib/utils";
 
 const MODULES = [
   { id: 'batik', name: 'Batik Nusantara', icon: MapPin, color: 'bg-orange-500', tag: 'Simetri' },
@@ -42,42 +44,51 @@ export default function StudentDashboard() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !recommendations && !aiLoading) {
       async function fetchRecommendations() {
         setAiLoading(true);
         try {
           const result = await personalizedLearningRecommendation({
             studentName: profile?.nama || "Siswa",
             recentQuizResults: [{ moduleName: "Batik Simetri", score: 80, difficulty: "sedang" }],
-            completedModules: profile.completedModules || [],
+            completedModules: profile?.completedModules || [],
             availableModules: MODULES.map(m => m.name),
             availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi", "Penjaga Budaya Nusantara"]
           });
           setRecommendations(result);
         } catch (error) {
-          console.error("Failed to load AI recommendations", error);
+          console.error("AI Flow failed:", error);
+          setRecommendations({
+            nextChallenge: "Teruslah bereksplorasi!",
+            motivationMessage: "Ayo selesaikan tantangan berikutnya dan raih lebih banyak lencana.",
+            recommendations: [],
+            areasForImprovement: [],
+            suggestedBadge: "Ahli Geometri Batik"
+          });
         } finally {
           setAiLoading(false);
         }
       }
       fetchRecommendations();
     }
-  }, [profile?.poin]);
+  }, [profile?.uid, recommendations, aiLoading]);
 
-  if (authLoading || !profile) {
+  if (authLoading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center">
+      <div className="h-screen w-full flex items-center justify-center bg-slate-50">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
-  const currentLevel = profile.level || 1;
-  const currentXPInLevel = profile.poin % 100;
+  if (!user || !profile) return null;
+
+  const currentLevel = profile?.level || 1;
+  const currentXPInLevel = (profile?.poin || 0) % 100;
   const progressPercent = (currentXPInLevel / 100) * 100;
 
   return (
-    <div className="pt-20 pb-24 px-4 space-y-6">
+    <div className="pt-20 pb-32 px-4 space-y-6 bg-slate-50 min-h-screen overflow-y-auto">
       {/* Level Card */}
       <section className="bg-primary rounded-3xl p-6 text-primary-foreground shadow-lg">
         <div className="flex justify-between items-start mb-4">
@@ -92,7 +103,7 @@ export default function StudentDashboard() {
         <div className="space-y-2">
           <div className="flex justify-between text-xs font-bold">
             <span>{currentXPInLevel} / 100 XP</span>
-            <span>Next Level</span>
+            <span>Level {currentLevel + 1}</span>
           </div>
           <Progress value={progressPercent} className="h-3 bg-white/20" />
         </div>
@@ -101,10 +112,10 @@ export default function StudentDashboard() {
       {/* AI Recommendation Section */}
       <section className="space-y-4">
         <div className="flex items-center gap-2 px-1">
-          <TrendingUp className="h-4 w-4 text-accent" />
-          <h3 className="font-headline font-bold text-sm">Tantangan Pintar AI</h3>
+          <Sparkles className="h-4 w-4 text-accent" />
+          <h3 className="font-headline font-bold text-sm">Rekomendasi Pintar AI</h3>
         </div>
-        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden">
+        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden min-h-[140px] flex flex-col justify-center">
           {aiLoading ? (
             <div className="p-6 flex justify-center">
               <Loader2 className="animate-spin h-5 w-5 text-accent" />
@@ -114,39 +125,31 @@ export default function StudentDashboard() {
               <p className="text-xs font-bold text-accent uppercase tracking-widest">Saran Untukmu</p>
               <h4 className="font-bold text-sm leading-snug">{recommendations.nextChallenge}</h4>
               <p className="text-xs text-muted-foreground italic">"{recommendations.motivationMessage}"</p>
-              <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl mt-2 h-10">
-                Terima Tantangan
-              </Button>
+              <Link href="/modules" className="block mt-2">
+                <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl h-10 shadow-sm">
+                  Lanjutkan Petualangan
+                </Button>
+              </Link>
             </div>
-          ) : null}
+          ) : (
+             <div className="p-5 text-center text-xs text-muted-foreground italic">
+               Rekomendasi akan muncul setelah kamu menyelesaikan kuis pertama.
+             </div>
+          )}
         </Card>
       </section>
 
-      {/* AR Quick Action */}
-      <Link href="/ar-scan" className="block">
-        <Card className="bg-slate-900 border-none rounded-2xl p-4 flex items-center justify-between text-white overflow-hidden relative shadow-lg">
-          <div className="z-10">
-            <h3 className="font-bold text-sm mb-1">Visualisasi AR</h3>
-            <p className="text-[10px] opacity-70">Lihat bangun ruang di dunia nyata</p>
-          </div>
-          <div className="bg-white/10 p-3 rounded-full z-10">
-            <Camera className="h-6 w-6" />
-          </div>
-          <div className="absolute -right-4 -bottom-4 bg-primary/20 w-24 h-24 rounded-full blur-2xl" />
-        </Card>
-      </Link>
-
-      {/* Learning Path Simulation */}
+      {/* Learning Path */}
       <section className="space-y-4 pt-2">
-        <h3 className="font-headline font-bold text-sm px-1">Mulai Petualangan</h3>
+        <h3 className="font-headline font-bold text-sm px-1 text-slate-900">Modul Pembelajaran</h3>
         <div className="grid grid-cols-1 gap-4">
-          {MODULES.map((mod, idx) => {
-            const isCompleted = profile.completedModules?.includes(mod.id);
+          {MODULES.map((mod) => {
+            const isCompleted = profile?.completedModules?.includes(mod.id);
             return (
               <Link key={mod.id} href={`/modules/${mod.id}`}>
                 <Card className={cn(
                   "border-none rounded-2xl overflow-hidden shadow-sm transition-transform active:scale-95",
-                  isCompleted ? "bg-slate-50" : "bg-white"
+                  isCompleted ? "bg-slate-50/50" : "bg-white"
                 )}>
                   <div className="flex items-center p-4 gap-4">
                     <div className={cn(
@@ -168,36 +171,6 @@ export default function StudentDashboard() {
               </Link>
             );
           })}
-        </div>
-      </section>
-
-      {/* Quick Comic Access */}
-      <section className="space-y-4 pt-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="font-headline font-bold text-sm">Literasi Budaya</h3>
-          <Link href="/comics" className="text-xs font-bold text-primary">Lihat Semua</Link>
-        </div>
-        <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-4 px-4">
-          {[
-            { id: 'komik-1', title: 'Misteri Batik', img: 'comic-batik' },
-            { id: 'komik-2', title: 'Candi Megah', img: 'comic-candi' },
-          ].map((comic) => (
-            <Link key={comic.id} href={`/comics/${comic.id}`} className="shrink-0 w-32">
-              <div className="aspect-[3/4] bg-slate-100 rounded-2xl overflow-hidden mb-2 shadow-sm border relative">
-                <img 
-                  src={`https://picsum.photos/seed/${comic.img}/300/400`} 
-                  alt={comic.title} 
-                  className="w-full h-full object-cover" 
-                />
-                {profile.completedComics?.includes(comic.id) && (
-                  <div className="absolute top-1 right-1 bg-green-500 rounded-full p-0.5">
-                    <CheckCircle2 className="h-3 w-3 text-white" />
-                  </div>
-                )}
-              </div>
-              <p className="text-[10px] font-bold truncate px-1">{comic.title}</p>
-            </Link>
-          ))}
         </div>
       </section>
     </div>
