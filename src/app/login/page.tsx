@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -28,7 +27,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      const userDocRef = doc(db, "users", userCredential.user.uid);
+      const userDoc = await getDoc(userDocRef);
       
       if (userDoc.exists()) {
         const profile = userDoc.data();
@@ -40,18 +40,31 @@ export default function LoginPage() {
         if (profile.peran === "guru") {
           router.push("/dashboard/teacher");
         } else if (profile.peran === "admin") {
-          router.push("/dashboard/teacher"); // Sementara ke dashboard guru untuk admin
+          router.push("/dashboard/teacher");
         } else {
           router.push("/dashboard/student");
         }
       } else {
-        throw new Error("Profil pengguna tidak ditemukan.");
+        toast({
+          variant: "destructive",
+          title: "Profil Tidak Ditemukan",
+          description: "Data profil Anda tidak ditemukan di sistem. Silakan hubungi admin.",
+        });
       }
     } catch (error: any) {
+      let message = "Email atau kata sandi salah. Silakan coba lagi.";
+      if (error.code === "auth/user-not-found") {
+        message = "Akun tidak ditemukan.";
+      } else if (error.code === "auth/wrong-password") {
+        message = "Kata sandi salah.";
+      } else if (error.code === "auth/invalid-email") {
+        message = "Format email tidak valid.";
+      }
+
       toast({
         variant: "destructive",
         title: "Gagal Masuk",
-        description: "Email atau kata sandi salah. Silakan coba lagi.",
+        description: message,
       });
     } finally {
       setLoading(false);

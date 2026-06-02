@@ -1,4 +1,3 @@
-
 'use client';
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -17,3 +16,7 @@ export * from './provider';
 export * from './auth/use-user';
 export * from './firestore/use-doc';
 export * from './firestore/use-collection';
+
+// Re-export specific hooks for cleaner usage
+export { useFirebase as useFirebaseApp } from './provider';
+export { useAuth, useFirestore } from './provider';

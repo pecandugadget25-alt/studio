@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -14,6 +13,8 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useFirebase } from "@/firebase/provider";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function RegisterPage() {
   const { auth, db } = useFirebase();
@@ -36,21 +37,34 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const uid = userCredential.user.uid;
 
-      await setDoc(doc(db, "users", uid), {
+      const userRef = doc(db, "users", uid);
+      const userData = {
         uid,
         nama: formData.name,
         email: formData.email,
-        peran: formData.peran,
+        peran: formData.peran as 'siswa' | 'guru' | 'admin',
         level: 1,
         poin: 0,
         tanggalDaftar: serverTimestamp()
-      });
+      };
+
+      // Non-blocking mutation call
+      setDoc(userRef, userData)
+        .catch(async (serverError) => {
+          const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'create',
+            requestResourceData: userData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
 
       toast({
         title: "Pendaftaran Berhasil",
-        description: "Akun Anda telah dibuat. Silakan jelajahi aplikasi!",
+        description: "Akun Anda telah dibuat. Selamat datang di ETHNO-ARITH!",
       });
 
+      // Redirect based on role
       router.push(formData.peran === "guru" ? "/dashboard/teacher" : "/dashboard/student");
     } catch (error: any) {
       let message = "Terjadi kesalahan saat mendaftar.";
@@ -58,7 +72,10 @@ export default function RegisterPage() {
         message = "Email sudah digunakan oleh pengguna lain.";
       } else if (error.code === "auth/weak-password") {
         message = "Kata sandi terlalu lemah (minimal 6 karakter).";
+      } else if (error.code === "auth/invalid-email") {
+        message = "Format email tidak valid.";
       }
+      
       toast({
         variant: "destructive",
         title: "Gagal Mendaftar",
@@ -82,7 +99,7 @@ export default function RegisterPage() {
         <div className="h-3 bg-primary" />
         <CardHeader className="space-y-1 pt-8 text-center">
           <CardTitle className="text-3xl font-headline font-bold">Daftar Akun Baru</CardTitle>
-          <CardDescription>Mulai petualangan numerasimu sekarang!</CardDescription>
+          <CardDescription>Mulai petualangan matematikamu sekarang!</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pb-8">
           <form onSubmit={handleRegister} className="space-y-4">

@@ -20,6 +20,8 @@ const FirebaseContext = createContext<FirebaseContextType>({
 });
 
 export const useFirebase = () => useContext(FirebaseContext);
+export const useAuth = () => useContext(FirebaseContext).auth;
+export const useFirestore = () => useContext(FirebaseContext).db;
 
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [services, setServices] = useState<FirebaseContextType>({
