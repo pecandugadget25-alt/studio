@@ -4,7 +4,7 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, ArrowLeft, Star, CheckCircle2 } from "lucide-react";
+import { BookOpen, ArrowLeft, Star, CheckCircle2, Download } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/firebase";
 import Image from "next/image";
@@ -47,27 +47,27 @@ export default function ComicListPage() {
             <ArrowLeft className="h-4 w-4" /> Kembali
           </Button>
         </Link>
-        <h1 className="font-headline font-bold text-lg flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-primary" />
+        <h1 className="font-headline font-bold text-lg flex items-center gap-2 text-primary">
+          <BookOpen className="h-5 w-5" />
           Komik Petualangan
         </h1>
-        <div className="flex items-center gap-1 text-accent font-bold text-sm bg-accent/10 px-3 py-1 rounded-full">
-          <Star className="h-4 w-4 fill-current" />
-          <span>+5 XP / Komik</span>
+        <div className="flex items-center gap-1 text-accent font-bold text-xs bg-accent/10 px-3 py-1 rounded-full">
+          <Star className="h-3 w-3 fill-current" />
+          <span>+5 XP</span>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-12 max-w-5xl">
-        <div className="text-center mb-12 space-y-4">
+      <main className="container mx-auto px-6 py-10 max-w-5xl">
+        <div className="text-center mb-10 space-y-2">
           <h2 className="text-3xl font-headline font-bold">Pilih Petualanganmu! 📚</h2>
-          <p className="text-muted-foreground">Baca komik seru dan temukan matematika di sekitarmu.</p>
+          <p className="text-muted-foreground">Unduh dan baca komik seru untuk mendapatkan XP tambahan.</p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {COMICS.map((comic) => {
             const isRead = profile?.completedComics?.includes(comic.id);
             return (
-              <Card key={comic.id} className="group overflow-hidden border-none shadow-xl rounded-3xl transition-transform hover:-translate-y-2">
+              <Card key={comic.id} className="group overflow-hidden border-none shadow-xl rounded-3xl transition-all hover:shadow-2xl hover:-translate-y-1">
                 <div className="relative aspect-[3/4]">
                   <Image 
                     src={comic.image} 
@@ -76,12 +76,14 @@ export default function ComicListPage() {
                     className="object-cover"
                     data-ai-hint={comic.hint}
                   />
-                  <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent`} />
+                  <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent`} />
+                  
                   {isRead && (
                     <div className="absolute top-4 right-4 bg-green-500 text-white p-2 rounded-full shadow-lg">
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
                   )}
+
                   <div className="absolute bottom-6 left-6 right-6 space-y-2">
                     <Badge className={`${comic.color} text-white border-none shadow-lg`}>
                       {comic.module}
@@ -93,8 +95,8 @@ export default function ComicListPage() {
                 </div>
                 <CardFooter className="p-6 bg-white">
                   <Link href={`/comics/${comic.id}`} className="w-full">
-                    <Button className="w-full h-12 font-bold text-lg rounded-2xl shadow-lg shadow-primary/20">
-                      {isRead ? "Baca Lagi" : "Mulai Baca"}
+                    <Button className={`w-full h-12 font-bold text-md rounded-2xl shadow-lg ${isRead ? 'bg-slate-100 text-slate-500 hover:bg-slate-200' : 'shadow-primary/20'}`} variant={isRead ? "ghost" : "default"}>
+                      {isRead ? "Baca Lagi" : "Unduh & Baca"}
                     </Button>
                   </Link>
                 </CardFooter>

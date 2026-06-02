@@ -8,14 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge as UIBadge } from "@/components/ui/badge";
 import { 
   Trophy, 
-  Flame, 
   Star, 
   ArrowRight, 
-  Camera, 
   MapPin, 
-  Lightbulb,
   CheckCircle2,
-  Clock,
   LogOut,
   Loader2,
   Castle,
@@ -23,7 +19,8 @@ import {
   Landmark,
   Medal,
   TrendingUp,
-  BookOpen
+  BookOpen,
+  ArrowUpRight
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -107,10 +104,6 @@ export default function StudentDashboard() {
           </Link>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/comics" className="hidden md:flex items-center gap-2 bg-purple-50 px-3 py-1 rounded-full text-purple-600 font-bold text-sm border border-purple-100">
-            <BookOpen className="h-4 w-4" />
-            <span>Komik</span>
-          </Link>
           <Link href="/leaderboard" className="hidden md:flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-full text-yellow-600 font-bold text-sm">
             <Trophy className="h-4 w-4" />
             <span>Leaderboard</span>
@@ -155,7 +148,7 @@ export default function StudentDashboard() {
                 <h2 className="text-xl font-headline font-bold">Rekomendasi Pintar</h2>
               </div>
               
-              <Card className="border-accent/30 bg-accent/5 overflow-hidden">
+              <Card className="border-accent/30 bg-accent/5 overflow-hidden rounded-3xl">
                 {aiLoading ? (
                   <CardContent className="py-12 flex justify-center">
                     <Loader2 className="animate-spin h-8 w-8 text-accent" />
@@ -183,7 +176,7 @@ export default function StudentDashboard() {
               </Card>
             </section>
 
-            {/* KOMIK PETUALANGAN SECTION */}
+            {/* KOMIK PETUALANGAN SECTION - SIMPLIFIED ACCESS */}
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -205,12 +198,13 @@ export default function StudentDashboard() {
                       <img 
                         src={`https://picsum.photos/seed/${comic.img}/400/600`} 
                         alt={comic.title} 
-                        className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105" 
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-4">
-                        <p className="text-white text-xs font-bold truncate">{comic.title}</p>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent flex flex-col justify-end p-4">
+                        <p className="text-white text-[10px] font-bold uppercase tracking-wider mb-1">Edisi Budaya</p>
+                        <p className="text-white text-sm font-bold truncate">{comic.title}</p>
                         {profile.completedComics?.includes(comic.id) && (
-                          <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1">
+                          <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1 shadow-lg">
                             <CheckCircle2 className="h-3 w-3 text-white" />
                           </div>
                         )}
@@ -230,15 +224,15 @@ export default function StudentDashboard() {
                   { id: 'masjid', name: 'Masjid Al Akbar', icon: Landmark, color: 'bg-emerald-600', tag: 'Numerasi' },
                   { id: 'games', name: 'Permainan Tradisional', icon: Dices, color: 'bg-red-500', tag: 'Logika' },
                 ].map((mod) => (
-                  <Card key={mod.id} className="hover:shadow-md transition-shadow group overflow-hidden">
+                  <Card key={mod.id} className="hover:shadow-md transition-shadow group overflow-hidden rounded-3xl border-none shadow-sm">
                     <Link href={`/modules/${mod.id}`} className="block">
                       <CardContent className="p-0 flex items-stretch h-32">
                         <div className={`w-24 ${mod.color} flex items-center justify-center text-white`}>
                           <mod.icon className="h-10 w-10" />
                         </div>
-                        <div className="flex-1 p-4 flex flex-col justify-between">
+                        <div className="flex-1 p-5 flex flex-col justify-between">
                           <div>
-                            <UIBadge variant="outline" className="text-[10px] mb-1">{mod.tag}</UIBadge>
+                            <UIBadge variant="outline" className="text-[10px] mb-1 font-bold">{mod.tag}</UIBadge>
                             <h4 className="font-bold text-lg">{mod.name}</h4>
                           </div>
                           <div className="flex items-center text-sm text-primary font-bold">
