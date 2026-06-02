@@ -15,7 +15,8 @@ import {
   Star, 
   Trophy,
   LayoutDashboard,
-  Users
+  Users,
+  Search
 } from "lucide-react";
 import { useUser, useFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -49,7 +50,8 @@ export default function ProfilePage() {
     );
   }
 
-  const isTeacher = profile.peran === 'guru' || profile.peran === 'admin';
+  const isStudent = profile.peran === 'siswa';
+  const isTeacherOrAdmin = profile.peran === 'guru' || profile.peran === 'admin' || profile.peran === 'peneliti';
 
   return (
     <div className="pt-20 pb-24 px-4 space-y-6 max-w-[500px] mx-auto min-h-screen bg-slate-50/50">
@@ -71,12 +73,12 @@ export default function ProfilePage() {
           </div>
         </div>
         <Badge variant="secondary" className="px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-          {isTeacher ? `Panel ${profile.peran}` : `Siswa Level ${profile.level}`}
+          {isStudent ? `Siswa Level ${profile.level}` : `Panel ${profile.peran.toUpperCase()}`}
         </Badge>
       </div>
 
-      {/* Stats Grid for Students */}
-      {!isTeacher && (
+      {/* Stats Grid only for Students */}
+      {isStudent && (
         <div className="grid grid-cols-2 gap-4">
           <Card className="border-none rounded-2xl bg-white shadow-sm p-4 text-center space-y-1">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Poin</p>
@@ -95,8 +97,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Badges Section for Students */}
-      {!isTeacher && (
+      {/* Badges Section only for Students */}
+      {isStudent && (
         <Card className="border-none rounded-2xl bg-white shadow-sm overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -134,22 +136,24 @@ export default function ProfilePage() {
 
       {/* Menu Actions */}
       <div className="space-y-3">
-        {isTeacher && (
+        {isTeacherOrAdmin && (
           <Link href="/teacher" className="block w-full">
             <Button className="w-full justify-start h-16 rounded-3xl gap-4 bg-primary hover:bg-primary/90 text-sm font-bold shadow-lg shadow-primary/20">
               <LayoutDashboard className="h-6 w-6" />
-              Dashboard Guru
+              Dashboard Monitor Guru
             </Button>
           </Link>
         )}
         
-        {isTeacher && (
-          <Button variant="outline" className="w-full justify-start h-14 rounded-3xl gap-4 border-slate-100 bg-white text-sm font-bold">
-            <Users className="h-5 w-5 text-slate-400" /> Kelola Siswa
-          </Button>
+        {isTeacherOrAdmin && (
+          <Link href="/teacher/students" className="block w-full">
+            <Button variant="outline" className="w-full justify-start h-14 rounded-3xl gap-4 border-slate-100 bg-white text-sm font-bold">
+              <Users className="h-5 w-5 text-slate-400" /> Kelola Data Siswa
+            </Button>
+          </Link>
         )}
 
-        {!isTeacher && (
+        {isStudent && (
           <Button variant="outline" className="w-full justify-start h-14 rounded-3xl gap-4 border-slate-100 bg-white text-sm font-bold">
             <History className="h-5 w-5 text-slate-400" /> Riwayat Pembelajaran
           </Button>

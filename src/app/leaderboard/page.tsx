@@ -16,15 +16,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useFirebase, useCollection } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { collection, query, orderBy, limit, where } from "firebase/firestore";
 
 export default function LeaderboardPage() {
   const { db } = useFirebase();
 
+  // Hanya ambil pengguna dengan peran 'siswa' untuk leaderboard
   const topStudentsQuery = useMemo(() => {
     if (!db) return null;
     return query(
       collection(db, "users"), 
+      where("peran", "==", "siswa"),
       orderBy("poin", "desc"), 
       limit(10)
     );
@@ -45,7 +47,7 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-[#FAF7F5] pb-20">
       <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
-        <Link href="/dashboard/student">
+        <Link href="/">
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Kembali
           </Button>
@@ -111,7 +113,7 @@ export default function LeaderboardPage() {
 
         <Card className="rounded-3xl border-none shadow-xl overflow-hidden">
           <CardHeader className="bg-white border-b px-6 py-4">
-            <CardTitle className="text-base sm:text-xl">Peringkat Sepuluh Besar</CardTitle>
+            <CardTitle className="text-base sm:text-xl">Peringkat Sepuluh Besar Siswa</CardTitle>
             <CardDescription className="text-xs sm:text-sm">Jadilah yang terbaik di seluruh Nusantara!</CardDescription>
           </CardHeader>
           <CardContent className="p-0">

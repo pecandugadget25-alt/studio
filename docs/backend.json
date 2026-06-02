@@ -9,7 +9,7 @@
         "uid": { "type": "string" },
         "nama": { "type": "string" },
         "email": { "type": "string", "format": "email" },
-        "peran": { "type": "string", "enum": ["siswa", "guru", "admin"] },
+        "peran": { "type": "string", "enum": ["siswa", "guru", "admin", "peneliti"] },
         "level": { "type": "number", "description": "Level pembelajaran pengguna." },
         "poin": { "type": "number", "description": "Total XP yang dikumpulkan." },
         "completedModules": { "type": "array", "items": { "type": "string" }, "description": "Daftar ID modul yang telah diselesaikan." },
