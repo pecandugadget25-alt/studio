@@ -16,7 +16,8 @@ import {
   LogOut,
   Loader2,
   CheckCircle2,
-  Clock
+  Clock,
+  BookOpen
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -56,40 +57,41 @@ export default function TeacherDashboard() {
 
   // Statistik Kalkulasi
   const stats = useMemo(() => {
-    if (!students) return { total: 0, avgXP: 0, completionRate: 0, needyCount: 0 };
+    if (!students) return { total: 0, avgXP: 0, completionRate: 0, needyCount: 0, comicReads: 0 };
     
     const total = students.length;
     const totalXP = students.reduce((acc, s) => acc + (s.poin || 0), 0);
     const avgXP = total > 0 ? Math.round(totalXP / total) : 0;
     const needyCount = students.filter(s => (s.poin || 0) < 50).length;
     
+    const totalComicReads = students.reduce((acc, s) => acc + (s.completedComics?.length || 0), 0);
+    
     // Simulasi rate penyelesaian (total modul selesai / total modul tersedia)
     const totalModulesDone = students.reduce((acc, s) => acc + (s.completedModules?.length || 0), 0);
     const completionRate = total > 0 ? Math.round((totalModulesDone / (total * 4)) * 100) : 0;
 
-    return { total, avgXP, completionRate, needyCount };
+    return { total, avgXP, completionRate, needyCount, comicReads: totalComicReads };
   }, [students]);
 
-  // Data untuk Grafik (Jumlah penyelesaian per modul)
-  const chartData = useMemo(() => {
+  // Data untuk Grafik (Jumlah penyelesaian per komik)
+  const comicData = useMemo(() => {
     if (!students) return [];
-    const modules = {
-      "Batik": "batik_nusantara",
-      "Candi": "candi_nusantara",
-      "Masjid": "masjid_al_akbar",
-      "Permainan": "traditional_games"
+    const comics = {
+      "Misteri Batik": "komik-1",
+      "Candi Megah": "komik-2",
+      "Geometri Masjid": "komik-3"
     };
 
-    return Object.entries(modules).map(([name, id]) => ({
-      module: name,
-      completions: students.filter(s => s.completedModules?.includes(id)).length
+    return Object.entries(comics).map(([name, id]) => ({
+      name,
+      reads: students.filter(s => s.completedComics?.includes(id)).length
     }));
   }, [students]);
 
   const chartConfig = {
-    completions: {
-      label: "Siswa Selesai",
-      color: "hsl(var(--primary))",
+    reads: {
+      label: "Siswa Membaca",
+      color: "hsl(var(--accent))",
     },
   } satisfies ChartConfig;
 
@@ -116,6 +118,9 @@ export default function TeacherDashboard() {
           <Button variant="ghost" className="w-full justify-start gap-2">
             <BarChart3 className="h-4 w-4" /> Analisis Belajar
           </Button>
+          <Button variant="ghost" className="w-full justify-start gap-2">
+            <BookOpen className="h-4 w-4" /> Monitor Komik
+          </Button>
         </nav>
         <div className="p-4 border-t space-y-2">
           <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground">
@@ -133,9 +138,6 @@ export default function TeacherDashboard() {
           <h1 className="font-headline font-bold text-lg">Ringkasan Aktivitas Siswa Realtime</h1>
           <div className="flex items-center gap-4">
             <Badge variant="outline" className="font-bold border-primary text-primary">Guru: {profile.nama}</Badge>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-              {profile.nama.charAt(0)}
-            </div>
           </div>
         </header>
 
@@ -144,7 +146,7 @@ export default function TeacherDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { title: "Total Siswa", value: stats.total.toString(), sub: "Aktif di kelas", icon: Users },
-              { title: "Rata-rata XP", value: stats.avgXP.toString(), sub: "Poin per siswa", icon: TrendingUp },
+              { title: "Total Baca Komik", value: stats.comicReads.toString(), sub: "Semua petualangan", icon: BookOpen },
               { title: "Selesai Modul", value: `${stats.completionRate}%`, sub: "Progress total", icon: CheckCircle2 },
               { title: "Perlu Bantuan", value: stats.needyCount.toString(), sub: "Poin < 50 XP", icon: AlertCircle, destructive: stats.needyCount > 0 },
             ].map((stat, i) => (
@@ -168,27 +170,27 @@ export default function TeacherDashboard() {
           </div>
 
           <div className="grid lg:grid-cols-12 gap-6">
-            {/* Chart Section */}
+            {/* Chart Section - Comic Monitoring */}
             <Card className="lg:col-span-7 border-none shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg">Sebaran Penyelesaian Modul</CardTitle>
-                <CardDescription>Jumlah siswa yang berhasil menyelesaikan kuis akhir per modul</CardDescription>
+                <CardTitle className="text-lg">Monitor Pembaca Komik</CardTitle>
+                <CardDescription>Jumlah siswa yang telah menyelesaikan setiap petualangan komik</CardDescription>
               </CardHeader>
               <CardContent className="h-[350px] pb-6">
                 <ChartContainer config={chartConfig} className="h-full w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
+                    <BarChart data={comicData}>
                       <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
                       <XAxis 
-                        dataKey="module" 
+                        dataKey="name" 
                         axisLine={false} 
                         tickLine={false}
                         tick={{ fontSize: 12, fontWeight: 500 }}
                       />
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Bar 
-                        dataKey="completions" 
-                        fill="var(--color-completions)" 
+                        dataKey="reads" 
+                        fill="var(--color-reads)" 
                         radius={[6, 6, 0, 0]} 
                         barSize={60}
                       />
@@ -205,7 +207,6 @@ export default function TeacherDashboard() {
                   <CardTitle className="text-lg">Progres Siswa</CardTitle>
                   <CardDescription>Detail level dan poin terakhir</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="h-8 text-xs">Export CSV</Button>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -241,32 +242,32 @@ export default function TeacherDashboard() {
             </Card>
           </div>
 
-          {/* Aktivitas Terbaru */}
+          {/* Aktivitas Komik Terbaru */}
           <Card className="border-none shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg">Aktivitas Modul Siswa</CardTitle>
-              <CardDescription>Modul apa saja yang telah dikuasai oleh siswa Anda</CardDescription>
+              <CardTitle className="text-lg">Monitoring Literasi Budaya</CardTitle>
+              <CardDescription>Daftar komik petualangan yang telah diselesaikan oleh siswa</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {students?.slice(0, 6).map((student, i) => (
-                  <div key={i} className="flex flex-col gap-3 p-4 rounded-2xl border bg-white hover:border-primary/30 transition-colors">
+                  <div key={i} className="flex flex-col gap-3 p-4 rounded-2xl border bg-white hover:border-purple-300 transition-colors">
                     <div className="flex items-center justify-between">
                       <p className="font-bold text-sm">{student.nama}</p>
-                      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Aktif</Badge>
+                      <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">Literasi</Badge>
                     </div>
                     <div className="space-y-1.5">
-                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Modul Selesai:</p>
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Komik Selesai:</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {student.completedModules && student.completedModules.length > 0 ? (
-                          student.completedModules.map((mod: string, idx: number) => (
-                            <Badge key={idx} variant="outline" className="text-[10px] bg-slate-50">
-                              {mod.split('_').join(' ')}
+                        {student.completedComics && student.completedComics.length > 0 ? (
+                          student.completedComics.map((comicId: string, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">
+                              {comicId === 'komik-1' ? 'Misteri Batik' : comicId === 'komik-2' ? 'Candi Megah' : 'Geometri Masjid'}
                             </Badge>
                           ))
                         ) : (
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground italic">
-                            <Clock className="h-3 w-3" /> Belum ada modul selesai
+                            <Clock className="h-3 w-3" /> Belum ada komik dibaca
                           </div>
                         )}
                       </div>

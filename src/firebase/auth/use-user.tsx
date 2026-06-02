@@ -14,6 +14,7 @@ export interface UserProfile {
   level: number;
   poin: number;
   completedModules?: string[];
+  completedComics?: string[];
   badges?: string[];
 }
 

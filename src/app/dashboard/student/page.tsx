@@ -22,7 +22,8 @@ import {
   Dices,
   Landmark,
   Medal,
-  TrendingUp
+  TrendingUp,
+  BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -106,6 +107,10 @@ export default function StudentDashboard() {
           </Link>
         </div>
         <div className="flex items-center gap-4">
+          <Link href="/comics" className="hidden md:flex items-center gap-2 bg-purple-50 px-3 py-1 rounded-full text-purple-600 font-bold text-sm border border-purple-100">
+            <BookOpen className="h-4 w-4" />
+            <span>Komik</span>
+          </Link>
           <Link href="/leaderboard" className="hidden md:flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-full text-yellow-600 font-bold text-sm">
             <Trophy className="h-4 w-4" />
             <span>Leaderboard</span>
@@ -130,13 +135,13 @@ export default function StudentDashboard() {
               <div className="relative z-10 max-w-lg">
                 <h1 className="text-3xl font-headline font-bold mb-2">Semangat Belajar, {profile.nama.split(' ')[0]}! 🚀</h1>
                 <p className="opacity-90 mb-6">Kamu berada di Level {currentLevel}. Kumpulkan {xpForNextLevel - currentXPInLevel} XP lagi untuk naik level!</p>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4">
                   <Link href="/modules/batik">
                     <Button className="bg-white text-primary hover:bg-slate-100 font-bold px-6">Lanjutkan Petualangan</Button>
                   </Link>
-                  <Link href="/ar-scan">
-                    <Button variant="outline" className="border-white text-white hover:bg-white/10 font-bold px-6">
-                      <Camera className="mr-2 h-4 w-4" /> Scan Budaya AR
+                  <Link href="/comics">
+                    <Button variant="secondary" className="bg-purple-600 text-white hover:bg-purple-700 font-bold px-6">
+                      <BookOpen className="mr-2 h-4 w-4" /> Baca Komik
                     </Button>
                   </Link>
                 </div>
@@ -176,6 +181,44 @@ export default function StudentDashboard() {
                   </div>
                 ) : null}
               </Card>
+            </section>
+
+            {/* KOMIK PETUALANGAN SECTION */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-purple-600" />
+                  <h2 className="text-xl font-headline font-bold">Komik Petualangan</h2>
+                </div>
+                <Link href="/comics">
+                  <Button variant="link" className="text-primary font-bold">Lihat Semua</Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  { id: 'komik-1', title: 'Misteri Batik', color: 'bg-orange-500', img: 'comic-batik' },
+                  { id: 'komik-2', title: 'Candi Megah', color: 'bg-primary', img: 'comic-candi' },
+                  { id: 'komik-3', title: 'Geometri Masjid', color: 'bg-emerald-600', img: 'comic-mosque' }
+                ].map((comic) => (
+                  <Link key={comic.id} href={`/comics/${comic.id}`}>
+                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden group cursor-pointer shadow-md">
+                      <img 
+                        src={`https://picsum.photos/seed/${comic.img}/400/600`} 
+                        alt={comic.title} 
+                        className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-4">
+                        <p className="text-white text-xs font-bold truncate">{comic.title}</p>
+                        {profile.completedComics?.includes(comic.id) && (
+                          <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1">
+                            <CheckCircle2 className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </section>
 
             <section className="space-y-4">
