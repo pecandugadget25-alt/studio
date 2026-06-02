@@ -13,6 +13,8 @@ export interface UserProfile {
   peran: 'siswa' | 'guru' | 'admin';
   level: number;
   poin: number;
+  completedModules?: string[];
+  badges?: string[];
 }
 
 export function useUser() {
@@ -30,7 +32,10 @@ export function useUser() {
         const docRef = doc(db, 'users', firebaseUser.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setProfile(docSnap.data() as UserProfile);
+          const data = docSnap.data() as UserProfile;
+          // Calculate level based on XP: 100 XP per level
+          const calculatedLevel = Math.floor((data.poin || 0) / 100) + 1;
+          setProfile({ ...data, level: calculatedLevel });
         }
       } else {
         setProfile(null);

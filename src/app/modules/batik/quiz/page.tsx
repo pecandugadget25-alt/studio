@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, ArrowLeft, Loader2, Star, CheckCircle2, XCircle } from "lucide-react";
+import { Trophy, ArrowLeft, Loader2, Star, CheckCircle2, XCircle, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser, useFirestore } from "@/firebase";
@@ -73,17 +73,18 @@ export default function BatikQuizPage() {
     setIsSubmitting(true);
     const userRef = doc(db, "users", user.uid);
     
-    const xpGained = score * 10;
+    const xpGained = score * 20; // XP lebih besar untuk kuis akhir
     const updateData = {
       poin: increment(xpGained),
-      completedModules: arrayUnion("batik_nusantara")
+      completedModules: arrayUnion("batik_nusantara"),
+      badges: arrayUnion("Ahli Geometri Batik")
     };
 
     updateDoc(userRef, updateData)
       .then(() => {
         toast({
-          title: "Kuis Selesai!",
-          description: `Selamat! Kamu mendapatkan ${xpGained} XP tambahan.`,
+          title: "Pencapaian Baru!",
+          description: `Selamat! Kamu mendapatkan lencana "Ahli Geometri Batik" dan ${xpGained} XP.`,
         });
         router.push("/dashboard/student");
       })
@@ -101,21 +102,27 @@ export default function BatikQuizPage() {
   if (showResult) {
     return (
       <div className="min-h-screen bg-[#FAF7F5] flex items-center justify-center p-6">
-        <Card className="w-full max-w-md text-center p-8 rounded-3xl shadow-2xl border-none">
-          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Trophy className="h-12 w-12 text-primary" />
+        <Card className="w-full max-w-md text-center p-8 rounded-3xl shadow-2xl border-none overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-full h-2 bg-primary" />
+          <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <MapPin className="h-12 w-12 text-orange-600" />
           </div>
-          <CardTitle className="text-3xl font-headline mb-2">Hebat!</CardTitle>
+          <CardTitle className="text-3xl font-headline mb-2">Luar Biasa!</CardTitle>
           <CardDescription className="text-lg mb-8">
             Kamu menjawab {score} dari {QUESTIONS.length} pertanyaan dengan benar.
           </CardDescription>
           
-          <div className="bg-slate-50 p-6 rounded-2xl mb-8 flex items-center justify-center gap-4">
-             <Star className="h-8 w-8 text-accent fill-current" />
-             <div className="text-left">
-               <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Poin Didapat</p>
-               <p className="text-3xl font-bold">+{score * 10} XP</p>
-             </div>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="bg-slate-50 p-4 rounded-2xl flex flex-col items-center">
+               <Star className="h-6 w-6 text-yellow-500 fill-current mb-1" />
+               <p className="text-[10px] font-bold text-muted-foreground uppercase">XP Bonus</p>
+               <p className="text-xl font-bold">+{score * 20}</p>
+            </div>
+            <div className="bg-orange-50 p-4 rounded-2xl flex flex-col items-center border border-orange-100">
+               <Trophy className="h-6 w-6 text-orange-500 mb-1" />
+               <p className="text-[10px] font-bold text-orange-600 uppercase">Lencana Baru</p>
+               <p className="text-xs font-bold text-orange-800">Ahli Batik</p>
+            </div>
           </div>
 
           <Button 
@@ -123,7 +130,7 @@ export default function BatikQuizPage() {
             onClick={handleFinish}
             disabled={isSubmitting}
           >
-            {isSubmitting ? <Loader2 className="animate-spin" /> : "Klaim Hadiah & Selesai"}
+            {isSubmitting ? <Loader2 className="animate-spin" /> : "Klaim Lencana & Selesai"}
           </Button>
         </Card>
       </div>
@@ -140,12 +147,12 @@ export default function BatikQuizPage() {
             </Button>
           </Link>
           <div className="text-right">
-            <p className="text-sm font-bold text-muted-foreground">PERTANYAAN</p>
+            <p className="text-sm font-bold text-muted-foreground uppercase">Kuis Ahli Batik</p>
             <p className="text-xl font-bold">{currentQuestion + 1} / {QUESTIONS.length}</p>
           </div>
         </div>
 
-        <Progress value={((currentQuestion + 1) / QUESTIONS.length) * 100} className="h-3" />
+        <Progress value={((currentQuestion + 1) / QUESTIONS.length) * 100} className="h-3 shadow-sm" />
 
         <Card className="rounded-3xl shadow-xl border-none overflow-hidden">
           <div className="h-2 bg-primary" />
@@ -186,22 +193,6 @@ export default function BatikQuizPage() {
             })}
           </CardContent>
         </Card>
-
-        {selectedOption !== null && (
-          <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 ${isCorrect ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-            {isCorrect ? (
-              <>
-                <CheckCircle2 className="h-5 w-5" />
-                <p className="font-bold">Benar! Kamu hebat.</p>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-5 w-5" />
-                <p className="font-bold">Oops! Jawaban yang benar adalah {QUESTIONS[currentQuestion].options[QUESTIONS[currentQuestion].correct]}.</p>
-              </>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
   "entities": {
     "User": {
       "title": "User Profile",
-      "description": "Informasi profil pengguna ETHNO-ARITH.",
+      "description": "Informasi profil pengguna ETHNO-ARITH dengan fitur gamifikasi.",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
@@ -13,6 +13,7 @@
         "level": { "type": "number", "description": "Level pembelajaran pengguna." },
         "poin": { "type": "number", "description": "Total XP yang dikumpulkan." },
         "completedModules": { "type": "array", "items": { "type": "string" }, "description": "Daftar ID modul yang telah diselesaikan." },
+        "badges": { "type": "array", "items": { "type": "string" }, "description": "Koleksi lencana prestasi siswa." },
         "tanggalDaftar": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "nama", "email", "peran"]
@@ -24,7 +25,7 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
-      "description": "Koleksi profil pengguna."
+      "description": "Koleksi profil pengguna dengan data gamifikasi."
     }
   }
 }
