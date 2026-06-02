@@ -109,23 +109,26 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F5] flex flex-col items-center justify-center p-6">
-      <Link href="/" className="mb-8 flex flex-col items-center gap-2">
-        <div className="relative w-20 h-20 mb-2">
+      <div className="mb-8 flex flex-col items-center gap-2">
+        <div className="relative w-[100px] h-[100px] mb-2">
           <Image 
             src="/logo.png" 
-            alt="ETHNO-ARITH Logo" 
+            alt="Logo" 
             fill 
             className="object-contain"
             priority
           />
         </div>
-        <span className="font-headline font-bold text-2xl tracking-tight text-primary">ETHNO-ARITH</span>
-      </Link>
+        <div className="text-center">
+          <h1 className="font-headline font-bold text-2xl tracking-tight text-primary">ETHNO-ARITH</h1>
+          <p className="text-xs font-medium text-slate-500">Ethnomathematics AR Learning Ecosystem</p>
+        </div>
+      </div>
       
       <Card className="w-full max-w-md border-none shadow-2xl rounded-3xl overflow-hidden">
         <div className="h-3 bg-primary" />
         <CardHeader className="space-y-1 pt-8 text-center">
-          <CardTitle className="text-3xl font-headline font-bold">Daftar Akun Baru</CardTitle>
+          <CardTitle className="text-2xl font-headline font-bold">Daftar Akun Baru</CardTitle>
           <CardDescription>Mulai petualangan matematikamu sekarang!</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pb-8">
