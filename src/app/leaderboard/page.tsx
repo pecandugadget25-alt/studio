@@ -17,34 +17,28 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useFirebase, useCollection } from "@/firebase";
-import { collection, query, orderBy, limit, where } from "firebase/firestore";
+import { collection } from "firebase/firestore";
 
 export default function LeaderboardPage() {
   const { db } = useFirebase();
 
-  // Defensive Query: Only query if db is ready
-  const topStudentsQuery = useMemo(() => {
+  // Query dasar ke users (tanpa orderBy/where komposit untuk menghindari error index)
+  const usersQuery = useMemo(() => {
     if (!db) return null;
-    try {
-      return query(
-        collection(db, "users"), 
-        where("peran", "==", "siswa"),
-        orderBy("poin", "desc"), 
-        limit(10)
-      );
-    } catch (e) {
-      console.error("Query formation failed:", e);
-      return null;
-    }
+    return collection(db, "users");
   }, [db]);
 
-  const { data: students, loading, error } = useCollection(topStudentsQuery);
+  const { data: allUsers, loading, error } = useCollection(usersQuery);
 
-  // Safely handle student data
+  // Proses data di sisi klien: Filter siswa, urutkan poin, limit 10
   const displayData = useMemo(() => {
-    if (loading || error || !students) return [];
-    return students.filter(s => s && s.uid); // Ensure valid objects
-  }, [students, loading, error]);
+    if (loading || error || !allUsers) return [];
+    
+    return allUsers
+      .filter(u => u.peran === 'siswa' && (u.poin || 0) >= 0) // Tampilkan semua siswa, utamakan yang punya XP
+      .sort((a, b) => (b.poin || 0) - (a.poin || 0))
+      .slice(0, 10);
+  }, [allUsers, loading, error]);
 
   const topThree = displayData.slice(0, 3);
 
@@ -85,10 +79,10 @@ export default function LeaderboardPage() {
         ) : (
           <>
             {/* Podium Visual */}
-            <div className="grid grid-cols-3 gap-2 items-end pt-8 pb-4">
+            <div className="grid grid-cols-3 gap-2 items-end pt-8 pb-4 min-h-[220px]">
               {/* Rank 2 */}
               <div className="flex flex-col items-center space-y-2">
-                {topThree[1] && (
+                {topThree[1] ? (
                   <>
                     <div className="relative">
                       <div className="w-16 h-16 rounded-full border-4 border-slate-200 overflow-hidden bg-slate-50 shadow-md">
@@ -103,15 +97,19 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="text-center w-full px-1">
                       <p className="font-bold text-[10px] truncate">{topThree[1].nama || "Siswa"}</p>
-                      <Badge variant="secondary" className="mt-1 text-[8px] bg-slate-100">{topThree[1].poin || 0} XP</Badge>
+                      <Badge variant="secondary" className="mt-1 text-[8px] bg-slate-100">{(topThree[1].poin || 0)} XP</Badge>
                     </div>
                   </>
+                ) : (
+                   <div className="w-16 h-16 rounded-full border-2 border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-center">
+                     <span className="text-slate-300 text-xs">#2</span>
+                   </div>
                 )}
               </div>
 
               {/* Rank 1 */}
               <div className="flex flex-col items-center space-y-2 -translate-y-4">
-                {topThree[0] && (
+                {topThree[0] ? (
                   <>
                     <div className="relative">
                       <Crown className="absolute -top-6 left-1/2 -translate-x-1/2 h-8 w-8 text-yellow-500 drop-shadow-md" />
@@ -127,15 +125,15 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="text-center w-full px-1">
                       <p className="font-bold text-xs truncate">{topThree[0].nama || "Juara"}</p>
-                      <Badge className="bg-yellow-500 mt-1 text-[10px] text-white border-none shadow-sm">{topThree[0].poin || 0} XP</Badge>
+                      <Badge className="bg-yellow-500 mt-1 text-[10px] text-white border-none shadow-sm">{(topThree[0].poin || 0)} XP</Badge>
                     </div>
                   </>
-                )}
+                ) : null}
               </div>
 
               {/* Rank 3 */}
               <div className="flex flex-col items-center space-y-2">
-                {topThree[2] && (
+                {topThree[2] ? (
                   <>
                     <div className="relative">
                       <div className="w-16 h-16 rounded-full border-4 border-amber-500/30 overflow-hidden bg-slate-50 shadow-md">
@@ -150,9 +148,13 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="text-center w-full px-1">
                       <p className="font-bold text-[10px] truncate">{topThree[2].nama || "Siswa"}</p>
-                      <Badge variant="secondary" className="mt-1 text-[8px] bg-amber-50 text-amber-700">{topThree[2].poin || 0} XP</Badge>
+                      <Badge variant="secondary" className="mt-1 text-[8px] bg-amber-50 text-amber-700">{(topThree[2].poin || 0)} XP</Badge>
                     </div>
                   </>
+                ) : (
+                  <div className="w-16 h-16 rounded-full border-2 border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-center">
+                    <span className="text-slate-300 text-xs">#3</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -193,7 +195,7 @@ export default function LeaderboardPage() {
                             </div>
                             <div className="min-w-0">
                               <p className="font-bold text-xs truncate text-slate-800">{student.nama || "Siswa"}</p>
-                              <p className="text-[9px] text-muted-foreground font-bold uppercase">LV. {student.level || 1}</p>
+                              <p className="text-[9px] text-muted-foreground font-bold uppercase">LV. {Math.floor((student.poin || 0) / 100) + 1}</p>
                             </div>
                           </div>
                         </TableCell>
