@@ -1,8 +1,9 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseProvider } from "@/firebase/provider";
+import { BottomNav } from "@/components/BottomNav";
+import { AppBar } from "@/components/AppBar";
 
 export const metadata: Metadata = {
   title: 'ETHNO-ARITH | Pembelajaran Numerasi Berbasis Budaya',
@@ -20,10 +21,17 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </head>
-      <body className="font-body antialiased bg-background selection:bg-primary/20">
+      <body className="font-body antialiased selection:bg-primary/20">
         <FirebaseProvider>
-          {children}
+          <div className="app-container">
+            <AppBar />
+            <main className="min-h-screen">
+              {children}
+            </main>
+            <BottomNav />
+          </div>
         </FirebaseProvider>
         <Toaster />
       </body>
