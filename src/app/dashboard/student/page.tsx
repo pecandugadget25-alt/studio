@@ -10,7 +10,6 @@ import {
   Trophy, 
   Flame, 
   BookOpen, 
-  Gamepad2, 
   Star, 
   ArrowRight, 
   Camera, 
@@ -19,7 +18,8 @@ import {
   CheckCircle2,
   Clock,
   LogOut,
-  Loader2
+  Loader2,
+  Castle
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -82,6 +82,7 @@ export default function StudentDashboard() {
   }
 
   const isBatikDone = profile.completedModules?.includes("batik_nusantara");
+  const isCandiDone = profile.completedModules?.includes("candi_nusantara");
 
   return (
     <div className="min-h-screen bg-[#FAF7F5] pb-20">
@@ -118,7 +119,7 @@ export default function StudentDashboard() {
             <section className="bg-primary rounded-3xl p-8 text-primary-foreground relative overflow-hidden shadow-xl shadow-primary/20">
               <div className="relative z-10 max-w-lg">
                 <h1 className="text-3xl font-headline font-bold mb-2">Selamat Datang, {profile.nama.split(' ')[0]}! 👋</h1>
-                <p className="opacity-90 mb-6">Kamu telah mengumpulkan {profile.poin} XP. Terus belajar untuk membuka lencana baru!</p>
+                <p className="opacity-90 mb-6">Kamu telah mengumpulkan {profile.poin} XP. Selesaikan modul candi untuk membuka lencana Arsitek Muda!</p>
                 <div className="flex gap-4">
                   <Link href="/modules/batik">
                     <Button className="bg-white text-primary hover:bg-slate-100 font-bold px-6">Lanjutkan Belajar</Button>
@@ -173,7 +174,7 @@ export default function StudentDashboard() {
               <div className="grid md:grid-cols-2 gap-4">
                 {[
                   { id: 'batik', name: 'Batik Nusantara', progress: isBatikDone ? 100 : 0, icon: MapPin, color: 'bg-orange-500' },
-                  { id: 'candi', name: 'Candi Nusantara', progress: 0, icon: BookOpen, color: 'bg-primary' },
+                  { id: 'candi', name: 'Candi Nusantara', progress: isCandiDone ? 100 : 0, icon: Castle, color: 'bg-primary' },
                 ].map((mod) => (
                   <Card key={mod.id} className="hover:shadow-md transition-shadow group">
                     <Link href={`/modules/${mod.id}`} className="block">
@@ -225,14 +226,22 @@ export default function StudentDashboard() {
                 <div className="flex flex-wrap gap-4">
                   {isBatikDone && (
                     <div className="p-4 rounded-2xl bg-orange-100 text-orange-600 flex flex-col items-center gap-2">
-                      <Trophy className="h-8 w-8" />
+                      <MapPin className="h-8 w-8" />
                       <span className="text-[10px] font-bold text-center uppercase">Ahli Batik</span>
                     </div>
                   )}
-                  <div className="p-4 rounded-2xl bg-muted/30 border-2 border-dashed flex flex-col items-center justify-center opacity-40">
-                    <Clock className="h-8 w-8 mb-1" />
-                    <span className="text-[10px] font-bold">Terkunci</span>
-                  </div>
+                  {isCandiDone && (
+                    <div className="p-4 rounded-2xl bg-blue-100 text-blue-600 flex flex-col items-center gap-2">
+                      <Castle className="h-8 w-8" />
+                      <span className="text-[10px] font-bold text-center uppercase">Arsitek Muda</span>
+                    </div>
+                  )}
+                  {!isBatikDone && !isCandiDone && (
+                    <div className="p-4 rounded-2xl bg-muted/30 border-2 border-dashed flex flex-col items-center justify-center opacity-40">
+                      <Clock className="h-8 w-8 mb-1" />
+                      <span className="text-[10px] font-bold">Terkunci</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,3 +1,4 @@
+
 {
   "placeholderImages": [
     {
@@ -11,6 +12,18 @@
       "description": "Borobudur temple showcasing architectural geometry.",
       "imageUrl": "https://picsum.photos/seed/borobudur/800/600",
       "imageHint": "indonesian temple"
+    },
+    {
+      "id": "temple-blocks",
+      "description": "Close up of ancient temple stone blocks.",
+      "imageUrl": "https://picsum.photos/seed/templeblock/800/600",
+      "imageHint": "stone blocks"
+    },
+    {
+      "id": "temple-gate",
+      "description": "Majestic gate of an Indonesian temple.",
+      "imageUrl": "https://picsum.photos/seed/templegate/800/600",
+      "imageHint": "temple gate"
     },
     {
       "id": "mosque-architecture",
