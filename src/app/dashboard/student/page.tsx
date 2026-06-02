@@ -38,9 +38,6 @@ export default function StudentDashboard() {
     if (!authLoading && !user) {
       router.push("/login");
     }
-    if (profile && profile.peran !== 'siswa') {
-       // Optional: Redirect if not student
-    }
   }, [user, profile, authLoading, router]);
 
   useEffect(() => {
@@ -54,7 +51,7 @@ export default function StudentDashboard() {
               { moduleName: "Batik Simetri", score: 75, difficulty: "sedang" },
               { moduleName: "Geometri Candi", score: 45, difficulty: "sedang" }
             ],
-            completedModules: ["Pengenalan Batik"],
+            completedModules: profile.completedModules || [],
             availableModules: ["Geometri Candi", "Masjid Al Akbar", "Permainan Tradisional"],
             availableBadges: ["Ahli Geometri Batik", "Penjaga Warisan"]
           });
@@ -67,7 +64,7 @@ export default function StudentDashboard() {
       }
       fetchRecommendations();
     }
-  }, [profile]);
+  }, [profile?.poin, profile?.completedModules]);
 
   const handleLogout = async () => {
     if (auth) {
@@ -84,9 +81,10 @@ export default function StudentDashboard() {
     );
   }
 
+  const isBatikDone = profile.completedModules?.includes("batik_nusantara");
+
   return (
     <div className="min-h-screen bg-[#FAF7F5] pb-20">
-      {/* Top Navbar */}
       <nav className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-2">
           <Link href="/" className="font-headline font-bold text-primary flex items-center gap-2">
@@ -105,7 +103,7 @@ export default function StudentDashboard() {
               <span>{profile.poin} XP</span>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout} title="Keluar">
+          <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="h-5 w-5 text-muted-foreground" />
           </Button>
           <div className="w-8 h-8 rounded-full bg-slate-200 border overflow-hidden">
@@ -116,12 +114,11 @@ export default function StudentDashboard() {
 
       <main className="container mx-auto px-6 py-8">
         <div className="grid lg:grid-cols-12 gap-8">
-          
           <div className="lg:col-span-8 space-y-8">
             <section className="bg-primary rounded-3xl p-8 text-primary-foreground relative overflow-hidden shadow-xl shadow-primary/20">
               <div className="relative z-10 max-w-lg">
                 <h1 className="text-3xl font-headline font-bold mb-2">Selamat Datang, {profile.nama.split(' ')[0]}! 👋</h1>
-                <p className="opacity-90 mb-6">Kamu berada di Level {profile.level}! Selesaikan tantangan untuk membuka lebih banyak modul.</p>
+                <p className="opacity-90 mb-6">Kamu telah mengumpulkan {profile.poin} XP. Terus belajar untuk membuka lencana baru!</p>
                 <div className="flex gap-4">
                   <Link href="/modules/batik">
                     <Button className="bg-white text-primary hover:bg-slate-100 font-bold px-6">Lanjutkan Belajar</Button>
@@ -133,15 +130,12 @@ export default function StudentDashboard() {
                   </Link>
                 </div>
               </div>
-              <div className="absolute top-0 right-0 w-64 h-full bg-white/5 skew-x-12 -mr-12" />
               <Trophy className="absolute top-8 right-8 h-32 w-32 text-white/10 rotate-12" />
             </section>
 
             <section className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-accent/20 rounded-lg">
-                  <Lightbulb className="h-5 w-5 text-accent" />
-                </div>
+                <Lightbulb className="h-5 w-5 text-accent" />
                 <h2 className="text-xl font-headline font-bold">Rekomendasi Belajarmu</h2>
               </div>
               
@@ -158,10 +152,6 @@ export default function StudentDashboard() {
                         <h3 className="text-lg font-bold">{recommendations.nextChallenge}</h3>
                       </div>
                       <p className="text-sm italic text-muted-foreground">"{recommendations.motivationMessage}"</p>
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold text-muted-foreground">TARGET BADGE:</p>
-                        <Badge className="bg-accent hover:bg-accent/90">{recommendations.suggestedBadge}</Badge>
-                      </div>
                     </CardContent>
                     <div className="bg-white/50 p-6 flex flex-col justify-center border-l border-accent/20">
                       <p className="text-sm font-bold mb-3">Area Peningkatan:</p>
@@ -174,11 +164,7 @@ export default function StudentDashboard() {
                       </ul>
                     </div>
                   </div>
-                ) : (
-                   <CardContent className="py-8 text-center text-muted-foreground">
-                    Belum ada rekomendasi. Selesaikan kuis untuk mulai mendapatkan saran!
-                  </CardContent>
-                )}
+                ) : null}
               </Card>
             </section>
 
@@ -186,12 +172,10 @@ export default function StudentDashboard() {
               <h2 className="text-xl font-headline font-bold">Lanjutkan Modul</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 {[
-                  { id: 'batik', name: 'Batik Nusantara', progress: 75, icon: MapPin, color: 'bg-orange-500' },
-                  { id: 'candi', name: 'Candi Nusantara', progress: 30, icon: BookOpen, color: 'bg-primary' },
-                  { id: 'masjid', name: 'Masjid Al Akbar', progress: 0, icon: Flame, color: 'bg-teal-500' },
-                  { id: 'games', name: 'Permainan Tradisional', progress: 0, icon: Gamepad2, color: 'bg-amber-500' },
+                  { id: 'batik', name: 'Batik Nusantara', progress: isBatikDone ? 100 : 0, icon: MapPin, color: 'bg-orange-500' },
+                  { id: 'candi', name: 'Candi Nusantara', progress: 0, icon: BookOpen, color: 'bg-primary' },
                 ].map((mod) => (
-                  <Card key={mod.id} className="hover:shadow-md transition-shadow group cursor-pointer">
+                  <Card key={mod.id} className="hover:shadow-md transition-shadow group">
                     <Link href={`/modules/${mod.id}`} className="block">
                       <CardContent className="p-4 flex items-center gap-4">
                         <div className={`w-12 h-12 ${mod.color} rounded-xl flex items-center justify-center text-white shadow-lg`}>
@@ -222,16 +206,10 @@ export default function StudentDashboard() {
               <CardContent className="space-y-6">
                 <div className="relative pt-1">
                   <div className="flex mb-2 items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-primary/10">
-                        {profile.poin} XP
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-semibold inline-block text-primary">
-                        Target 1000 XP
-                      </span>
-                    </div>
+                    <span className="text-xs font-semibold py-1 px-2 uppercase rounded-full text-primary bg-primary/10">
+                      {profile.poin} XP
+                    </span>
+                    <span className="text-xs font-semibold text-primary">Target 1000 XP</span>
                   </div>
                   <Progress value={(profile.poin / 1000) * 100} className="h-3" />
                 </div>
@@ -245,14 +223,12 @@ export default function StudentDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-4">
-                  {[
-                    { name: 'Penjelajah Awal', color: 'bg-orange-100 text-orange-600' },
-                  ].map((badge, i) => (
-                    <div key={i} className={`p-4 rounded-2xl ${badge.color} flex flex-col items-center gap-2 group cursor-help`}>
-                      <Trophy className="h-8 w-8 transition-transform group-hover:scale-110" />
-                      <span className="text-[10px] font-bold text-center uppercase leading-tight">{badge.name}</span>
+                  {isBatikDone && (
+                    <div className="p-4 rounded-2xl bg-orange-100 text-orange-600 flex flex-col items-center gap-2">
+                      <Trophy className="h-8 w-8" />
+                      <span className="text-[10px] font-bold text-center uppercase">Ahli Batik</span>
                     </div>
-                  ))}
+                  )}
                   <div className="p-4 rounded-2xl bg-muted/30 border-2 border-dashed flex flex-col items-center justify-center opacity-40">
                     <Clock className="h-8 w-8 mb-1" />
                     <span className="text-[10px] font-bold">Terkunci</span>
@@ -261,7 +237,6 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
           </div>
-
         </div>
       </main>
     </div>
