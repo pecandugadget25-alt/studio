@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck, Loader2, Box } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useFirebase } from "@/firebase/provider";
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -38,12 +39,10 @@ export default function LoginPage() {
           description: `Selamat datang kembali, ${profile.nama}!`,
         });
 
-        if (profile.peran === "guru") {
-          router.push("/dashboard/teacher");
-        } else if (profile.peran === "admin") {
+        if (profile.peran === "guru" || profile.peran === "admin") {
           router.push("/dashboard/teacher");
         } else {
-          router.push("/dashboard/student");
+          router.push("/");
         }
       } else {
         toast({
@@ -54,13 +53,9 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       let message = "Email atau kata sandi salah. Silakan coba lagi.";
-      if (error.code === "auth/user-not-found") {
-        message = "Akun tidak ditemukan.";
-      } else if (error.code === "auth/wrong-password") {
-        message = "Kata sandi salah.";
-      } else if (error.code === "auth/invalid-email") {
-        message = "Format email tidak valid.";
-      }
+      if (error.code === "auth/user-not-found") message = "Akun tidak ditemukan.";
+      else if (error.code === "auth/wrong-password") message = "Kata sandi salah.";
+      else if (error.code === "auth/invalid-email") message = "Format email tidak valid.";
 
       toast({
         variant: "destructive",
@@ -75,14 +70,21 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#FAF7F5] flex flex-col items-center justify-center p-6">
       <div className="mb-8 flex flex-col items-center gap-2">
-        <div className="relative w-[140px] h-[140px] mb-2">
-          <Image 
-            src="/logo.png" 
-            alt="Logo" 
-            fill 
-            className="object-contain"
-            priority
-          />
+        <div className="relative w-[120px] h-[120px] mb-2">
+          {!imgError ? (
+            <Image 
+              src="/images/ethno-arith-logo.svg" 
+              alt="ETHNO-ARITH Logo" 
+              fill 
+              className="object-contain"
+              priority
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-full h-full bg-primary rounded-3xl flex items-center justify-center shadow-lg">
+              <Box className="h-16 w-16 text-white" />
+            </div>
+          )}
         </div>
         <div className="text-center">
           <h1 className="font-headline font-bold text-3xl tracking-tight text-primary">ETHNO-ARITH</h1>
@@ -90,7 +92,7 @@ export default function LoginPage() {
         </div>
       </div>
       
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-3xl overflow-hidden">
+      <Card className="w-full max-w-md border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
         <div className="h-3 bg-primary" />
         <CardHeader className="space-y-1 pt-8 text-center">
           <CardTitle className="text-2xl font-headline font-bold">Selamat Datang</CardTitle>
@@ -104,7 +106,7 @@ export default function LoginPage() {
                 id="email" 
                 type="email"
                 placeholder="nama@sekolah.edu" 
-                className="h-12 bg-slate-50"
+                className="h-12 bg-slate-50 rounded-2xl"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
@@ -118,13 +120,13 @@ export default function LoginPage() {
               <Input 
                 id="password" 
                 type="password" 
-                className="h-12 bg-slate-50" 
+                className="h-12 bg-slate-50 rounded-2xl" 
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
               />
             </div>
-            <Button type="submit" className="w-full h-12 text-lg font-bold" disabled={loading}>
+            <Button type="submit" className="w-full h-12 text-lg font-bold rounded-2xl" disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Masuk"}
             </Button>
           </form>

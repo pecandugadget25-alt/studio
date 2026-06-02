@@ -8,6 +8,9 @@ import { AppBar } from "@/components/AppBar";
 export const metadata: Metadata = {
   title: 'ETHNO-ARITH | Pembelajaran Numerasi Berbasis Budaya',
   description: 'Meningkatkan kemampuan numerasi siswa melalui etnomatematika dan Augmented Reality.',
+  icons: {
+    icon: '/images/ethno-arith-logo.svg',
+  }
 };
 
 export default function RootLayout({

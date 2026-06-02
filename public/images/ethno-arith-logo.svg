@@ -1,0 +1,18 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Glassy AR corners -->
+  <path d="M20 40V20H40" stroke="#FF7A00" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M160 20H180V40" stroke="#0B3B91" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M180 160V180H160" stroke="#34D399" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M40 180H20V160" stroke="#FF7A00" stroke-width="6" fill="none" stroke-linecap="round"/>
+  
+  <!-- Isometric Cube for Math/Geometry -->
+  <path d="M100 40L155 70V130L100 160L45 130V70L100 40Z" fill="#0B3B91" />
+  <path d="M100 40L155 70L100 100L45 70L100 40Z" fill="#34D399" opacity="0.8" />
+  <path d="M100 100V160L45 130V70L100 100Z" fill="#FF7A00" opacity="0.9" />
+  <path d="M100 100L155 70V130L100 160V100Z" fill="#0B3B91" opacity="0.7" />
+  
+  <!-- Math Symbols -->
+  <text x="100" y="80" font-family="Arial" font-size="28" fill="white" text-anchor="middle" font-weight="bold" style="user-select: none;">+</text>
+  <text x="75" y="125" font-family="Arial" font-size="22" fill="white" text-anchor="middle" font-weight="bold" style="user-select: none;">×</text>
+  <path d="M125 120 L135 120 L130 135 Z" fill="white" />
+</svg>

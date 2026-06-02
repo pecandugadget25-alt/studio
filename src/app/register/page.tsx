@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Link from "next/link";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck, Loader2, Box } from "lucide-react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useFirebase } from "@/firebase/provider";
@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -31,15 +32,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!auth || !db) {
-      toast({
-        variant: "destructive",
-        title: "Sistem Belum Siap",
-        description: "Layanan Firebase sedang diinisialisasi. Silakan tunggu beberapa saat.",
-      });
-      return;
-    }
+    if (!auth || !db) return;
 
     setLoading(true);
 
@@ -58,44 +51,26 @@ export default function RegisterPage() {
         tanggalDaftar: serverTimestamp()
       };
 
-      setDoc(userRef, userData)
-        .then(() => {
-          console.log("[Registration] Firestore: Profil berhasil disimpan.");
-        })
-        .catch(async (serverError) => {
-          const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'create',
-            requestResourceData: userData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
+      await setDoc(userRef, userData).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: userRef.path,
+          operation: 'create',
+          requestResourceData: userData,
         });
+        errorEmitter.emit('permission-error', permissionError);
+      });
 
       toast({
         title: "Pendaftaran Berhasil",
-        description: "Selamat datang di ETHNO-ARITH, " + formData.name + "!",
+        description: `Selamat datang di ETHNO-ARITH, ${formData.name}!`,
       });
 
-      const targetPath = formData.peran === "guru" ? "/dashboard/teacher" : "/dashboard/student";
+      const targetPath = formData.peran === "guru" ? "/dashboard/teacher" : "/";
       router.push(targetPath);
-
     } catch (error: any) {
       let friendlyMessage = "Gagal mendaftar karena masalah teknis.";
-      
-      switch (error.code) {
-        case "auth/email-already-in-use":
-          friendlyMessage = "Email ini sudah terdaftar.";
-          break;
-        case "auth/invalid-email":
-          friendlyMessage = "Format email tidak valid.";
-          break;
-        case "auth/weak-password":
-          friendlyMessage = "Kata sandi terlalu lemah (min. 6 karakter).";
-          break;
-        case "auth/network-request-failed":
-          friendlyMessage = "Koneksi internet bermasalah.";
-          break;
-      }
+      if (error.code === "auth/email-already-in-use") friendlyMessage = "Email ini sudah terdaftar.";
+      else if (error.code === "auth/weak-password") friendlyMessage = "Kata sandi terlalu lemah (min. 6 karakter).";
 
       toast({
         variant: "destructive",
@@ -109,15 +84,22 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF7F5] flex flex-col items-center justify-center p-6">
-      <div className="mb-8 flex flex-col items-center gap-2">
+      <div className="mb-6 flex flex-col items-center gap-2">
         <div className="relative w-[100px] h-[100px] mb-2">
-          <Image 
-            src="/logo.png" 
-            alt="Logo" 
-            fill 
-            className="object-contain"
-            priority
-          />
+          {!imgError ? (
+            <Image 
+              src="/images/ethno-arith-logo.svg" 
+              alt="ETHNO-ARITH Logo" 
+              fill 
+              className="object-contain"
+              priority
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-full h-full bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+              <Box className="h-10 w-10 text-white" />
+            </div>
+          )}
         </div>
         <div className="text-center">
           <h1 className="font-headline font-bold text-2xl tracking-tight text-primary">ETHNO-ARITH</h1>
@@ -125,7 +107,7 @@ export default function RegisterPage() {
         </div>
       </div>
       
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-3xl overflow-hidden">
+      <Card className="w-full max-w-md border-none shadow-2xl rounded-[2.5rem] overflow-hidden">
         <div className="h-3 bg-primary" />
         <CardHeader className="space-y-1 pt-8 text-center">
           <CardTitle className="text-2xl font-headline font-bold">Daftar Akun Baru</CardTitle>
@@ -138,7 +120,7 @@ export default function RegisterPage() {
               <Input 
                 id="name" 
                 placeholder="Budi Santoso" 
-                className="h-12 bg-slate-50"
+                className="h-12 bg-slate-50 rounded-2xl"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
@@ -150,7 +132,7 @@ export default function RegisterPage() {
                 id="email" 
                 type="email" 
                 placeholder="nama@sekolah.edu" 
-                className="h-12 bg-slate-50"
+                className="h-12 bg-slate-50 rounded-2xl"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
@@ -161,7 +143,7 @@ export default function RegisterPage() {
               <Input 
                 id="password" 
                 type="password" 
-                className="h-12 bg-slate-50"
+                className="h-12 bg-slate-50 rounded-2xl"
                 placeholder="Min. 6 karakter"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -185,7 +167,7 @@ export default function RegisterPage() {
                 </div>
               </RadioGroup>
             </div>
-            <Button type="submit" className="w-full h-12 text-lg font-bold" disabled={loading}>
+            <Button type="submit" className="w-full h-12 text-lg font-bold rounded-2xl" disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Daftar Sekarang"}
             </Button>
           </form>
