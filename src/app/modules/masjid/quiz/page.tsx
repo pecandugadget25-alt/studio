@@ -40,7 +40,7 @@ const QUESTIONS = [
 export default function MasjidQuizPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { profile, user } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -78,17 +78,18 @@ export default function MasjidQuizPage() {
     setIsSubmitting(true);
     const userRef = doc(db, "users", user.uid);
     
-    const xpGained = 10;
+    const xpGained = score * 5;
     const updateData = {
       poin: increment(xpGained),
-      completedModules: arrayUnion("masjid_al_akbar")
+      completedModules: arrayUnion("masjid"),
+      badges: arrayUnion("Ahli Matematika Masjid")
     };
 
     updateDoc(userRef, updateData)
       .then(() => {
         toast({
           title: "Modul Masjid Selesai!",
-          description: `Selamat! Kamu mendapatkan ${xpGained} XP dan lencana Penjaga Warisan.`,
+          description: `Selamat! Kamu mendapatkan ${xpGained} XP dan lencana Wali Masjid.`,
         });
         router.push("/dashboard/student");
       })
@@ -119,7 +120,7 @@ export default function MasjidQuizPage() {
              <Star className="h-8 w-8 text-amber-500 fill-current" />
              <div className="text-left">
                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Pencapaian Baru</p>
-               <p className="text-3xl font-bold">+10 XP</p>
+               <p className="text-3xl font-bold">+{score * 5} XP</p>
              </div>
           </div>
 
@@ -191,22 +192,6 @@ export default function MasjidQuizPage() {
             })}
           </CardContent>
         </Card>
-
-        {selectedOption !== null && (
-          <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 ${isCorrect ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-            {isCorrect ? (
-              <>
-                <CheckCircle2 className="h-5 w-5" />
-                <p className="font-bold">Jawaban Benar! Anda pengamat arsitektur yang teliti.</p>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-5 w-5" />
-                <p className="font-bold">Kurang tepat. Jawaban yang benar adalah {QUESTIONS[currentQuestion].options[QUESTIONS[currentQuestion].correct]}.</p>
-              </>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

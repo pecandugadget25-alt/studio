@@ -17,7 +17,7 @@ import { FirestorePermissionError } from "@/firebase/errors";
 const QUESTIONS = [
   {
     question: "Dalam permainan Congklak, memindahkan biji satu per satu ke lubang lain melatih kemampuan...",
-    options: ["Geometri", "Operasi Hitung (Penjumlahan)", "Statistika", "Pengukuran'],
+    options: ["Geometri", "Operasi Hitung (Penjumlahan)", "Statistika", "Pengukuran"],
     correct: 1
   },
   {
@@ -78,17 +78,18 @@ export default function GamesQuizPage() {
     setIsSubmitting(true);
     const userRef = doc(db, "users", user.uid);
     
-    const xpGained = 10;
+    const xpGained = score * 5;
     const updateData = {
       poin: increment(xpGained),
-      completedModules: arrayUnion("traditional_games")
+      completedModules: arrayUnion("games"),
+      badges: arrayUnion("Juara Numerasi")
     };
 
     updateDoc(userRef, updateData)
       .then(() => {
         toast({
           title: "Modul Selesai!",
-          description: `Selamat! Kamu mendapatkan ${xpGained} XP dan lencana Pemenang Tradisional.`,
+          description: `Selamat! Kamu mendapatkan ${xpGained} XP dan lencana Jago Main.`,
         });
         router.push("/dashboard/student");
       })
@@ -119,7 +120,7 @@ export default function GamesQuizPage() {
              <Star className="h-8 w-8 text-amber-500 fill-current" />
              <div className="text-left">
                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Pencapaian Baru</p>
-               <p className="text-3xl font-bold">+10 XP</p>
+               <p className="text-3xl font-bold">+{score * 5} XP</p>
              </div>
           </div>
 
@@ -191,22 +192,6 @@ export default function GamesQuizPage() {
             })}
           </CardContent>
         </Card>
-
-        {selectedOption !== null && (
-          <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 ${isCorrect ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-            {isCorrect ? (
-              <>
-                <CheckCircle2 className="h-5 w-5" />
-                <p className="font-bold">Jawaban Benar! Kamu memang hebat bermain.</p>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-5 w-5" />
-                <p className="font-bold">Kurang tepat. Jawaban yang benar adalah {QUESTIONS[currentQuestion].options[QUESTIONS[currentQuestion].correct]}.</p>
-              </>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

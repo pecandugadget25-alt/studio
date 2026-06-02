@@ -35,7 +35,7 @@ const QUESTIONS = [
 export default function BatikQuizPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { profile, user } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -73,10 +73,10 @@ export default function BatikQuizPage() {
     setIsSubmitting(true);
     const userRef = doc(db, "users", user.uid);
     
-    const xpGained = score * 20; // XP lebih besar untuk kuis akhir
+    const xpGained = score * 10; 
     const updateData = {
       poin: increment(xpGained),
-      completedModules: arrayUnion("batik_nusantara"),
+      completedModules: arrayUnion("batik"),
       badges: arrayUnion("Ahli Geometri Batik")
     };
 
@@ -116,7 +116,7 @@ export default function BatikQuizPage() {
             <div className="bg-slate-50 p-4 rounded-2xl flex flex-col items-center">
                <Star className="h-6 w-6 text-yellow-500 fill-current mb-1" />
                <p className="text-[10px] font-bold text-muted-foreground uppercase">XP Bonus</p>
-               <p className="text-xl font-bold">+{score * 20}</p>
+               <p className="text-xl font-bold">+{score * 10}</p>
             </div>
             <div className="bg-orange-50 p-4 rounded-2xl flex flex-col items-center border border-orange-100">
                <Trophy className="h-6 w-6 text-orange-500 mb-1" />

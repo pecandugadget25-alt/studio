@@ -40,7 +40,7 @@ const QUESTIONS = [
 export default function CandiQuizPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { profile, user } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -78,17 +78,18 @@ export default function CandiQuizPage() {
     setIsSubmitting(true);
     const userRef = doc(db, "users", user.uid);
     
-    const xpGained = 10; // 10 XP per penyelesaian modul kuis
+    const xpGained = score * 5; 
     const updateData = {
       poin: increment(xpGained),
-      completedModules: arrayUnion("candi_nusantara")
+      completedModules: arrayUnion("candi"),
+      badges: arrayUnion("Penjelajah Candi Nusantara")
     };
 
     updateDoc(userRef, updateData)
       .then(() => {
         toast({
           title: "Modul Candi Selesai!",
-          description: `Selamat! Kamu mendapatkan ${xpGained} XP dan lencana Arsitek Muda.`,
+          description: `Selamat! Kamu mendapatkan ${xpGained} XP dan lencana Arsitek Candi.`,
         });
         router.push("/dashboard/student");
       })
@@ -119,7 +120,7 @@ export default function CandiQuizPage() {
              <Star className="h-8 w-8 text-accent fill-current" />
              <div className="text-left">
                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Hadiah Progres</p>
-               <p className="text-3xl font-bold">+10 XP</p>
+               <p className="text-3xl font-bold">+{score * 5} XP</p>
              </div>
           </div>
 
@@ -191,22 +192,6 @@ export default function CandiQuizPage() {
             })}
           </CardContent>
         </Card>
-
-        {selectedOption !== null && (
-          <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 ${isCorrect ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-            {isCorrect ? (
-              <>
-                <CheckCircle2 className="h-5 w-5" />
-                <p className="font-bold">Jawaban Tepat! Anda benar-benar arsitek muda.</p>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-5 w-5" />
-                <p className="font-bold">Kurang tepat. Jawaban yang benar adalah {QUESTIONS[currentQuestion].options[QUESTIONS[currentQuestion].correct]}.</p>
-              </>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
