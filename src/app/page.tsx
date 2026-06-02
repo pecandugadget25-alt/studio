@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from "react";
@@ -84,7 +85,7 @@ export default function MobileDashboard() {
   const progressPercent = (currentXPInLevel / 100) * 100;
 
   return (
-    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen">
+    <div className="pt-20 pb-32 px-4 space-y-6 bg-slate-50/50 min-h-screen overflow-y-auto">
       {/* Header Sapaan */}
       <section className="px-2">
         <div className="flex items-center justify-between">

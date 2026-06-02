@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -43,7 +44,7 @@ export default function ComicListPage() {
   const { profile } = useUser();
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50 pb-32 overflow-y-auto">
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b flex items-center justify-between px-6 max-w-[500px] mx-auto">
         <Link href="/">
           <Button variant="ghost" size="icon" className="rounded-full">

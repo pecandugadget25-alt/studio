@@ -101,7 +101,7 @@ export default function BatikQuizPage() {
 
   if (showResult) {
     return (
-      <div className="min-h-screen bg-[#FAF7F5] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#FAF7F5] flex items-center justify-center p-6 pb-32">
         <Card className="w-full max-w-md text-center p-8 rounded-3xl shadow-2xl border-none overflow-hidden relative">
           <div className="absolute top-0 left-0 w-full h-2 bg-primary" />
           <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -138,7 +138,7 @@ export default function BatikQuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F5] p-6">
+    <div className="min-h-screen bg-[#FAF7F5] p-6 pb-32 overflow-y-auto">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <Link href="/modules/batik">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { use, useState, useEffect } from "react";
@@ -110,7 +111,7 @@ export default function ComicReaderPage({ params }: { params: Promise<{ id: stri
   const downloadUrl = `https://drive.google.com/uc?export=download&id=${comic.driveId}`;
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-white pb-32 overflow-y-auto">
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b flex items-center justify-between px-6 max-w-[500px] mx-auto">
         <Link href="/komik">
           <Button variant="ghost" size="icon" className="rounded-full">

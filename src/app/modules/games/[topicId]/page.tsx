@@ -73,7 +73,7 @@ export default function GamesTopicPage({ params }: { params: Promise<{ topicId: 
   const isLastStep = step === topicContent.content.length - 1;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-32 overflow-y-auto">
       <header className="h-16 border-b flex items-center justify-between px-6 sticky top-0 bg-white z-40">
         <Link href="/modules/games">
           <Button variant="ghost" size="sm" className="gap-2">
@@ -82,7 +82,7 @@ export default function GamesTopicPage({ params }: { params: Promise<{ topicId: 
         </Link>
         <div className="flex items-center gap-3">
           <Badge className="bg-orange-500">{topicContent.badge}</Badge>
-          <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-2 w-24 sm:w-32 bg-slate-100 rounded-full overflow-hidden">
             <div 
               className="h-full bg-orange-500 transition-all duration-500" 
               style={{ width: `${((step + 1) / topicContent.content.length) * 100}%` }}
@@ -91,14 +91,14 @@ export default function GamesTopicPage({ params }: { params: Promise<{ topicId: 
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-12 max-w-4xl">
+      <main className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="space-y-8">
           <div className="space-y-2">
-            <h1 className="text-4xl font-headline font-bold text-orange-700">{topicContent.title}</h1>
+            <h1 className="text-3xl sm:text-4xl font-headline font-bold text-orange-700">{topicContent.title}</h1>
             <p className="text-muted-foreground">Bagian {step + 1} dari {topicContent.content.length}</p>
           </div>
 
-          <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl border-8 border-slate-50">
+          <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl border-4 sm:border-8 border-slate-50">
             <Image 
               src={topicContent.content[step].image} 
               alt={topicContent.title} 
@@ -109,12 +109,12 @@ export default function GamesTopicPage({ params }: { params: Promise<{ topicId: 
           </div>
 
           <Card className="border-none bg-orange-50 rounded-3xl">
-            <CardContent className="p-8 space-y-6">
+            <CardContent className="p-6 sm:p-8 space-y-6">
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-orange-100 rounded-2xl">
+                <div className="p-3 bg-orange-100 rounded-2xl shrink-0">
                   <BookOpen className="h-6 w-6 text-orange-700" />
                 </div>
-                <p className="text-xl leading-relaxed text-slate-800">
+                <p className="text-lg sm:text-xl leading-relaxed text-slate-800">
                   {topicContent.content[step].text}
                 </p>
               </div>
@@ -131,23 +131,23 @@ export default function GamesTopicPage({ params }: { params: Promise<{ topicId: 
               variant="outline" 
               onClick={() => setStep(s => Math.max(0, s - 1))}
               disabled={step === 0}
-              className="h-12 px-6"
+              className="h-12 px-4 sm:px-6"
             >
               Sebelumnya
             </Button>
 
             {isLastStep ? (
               <Link href="/modules/games">
-                <Button className="h-14 px-8 bg-orange-600 hover:bg-orange-700 text-white font-bold text-lg gap-2 shadow-lg">
-                  Selesaikan Topik <CheckCircle2 className="h-5 w-5" />
+                <Button className="h-14 px-6 sm:px-8 bg-orange-600 hover:bg-orange-700 text-white font-bold text-base sm:text-lg gap-2 shadow-lg">
+                  Selesaikan <CheckCircle2 className="h-5 w-5" />
                 </Button>
               </Link>
             ) : (
               <Button 
                 onClick={() => setStep(s => s + 1)}
-                className="h-14 px-8 bg-orange-600 hover:bg-orange-700 text-white font-bold text-lg gap-2 shadow-lg"
+                className="h-14 px-6 sm:px-8 bg-orange-600 hover:bg-orange-700 text-white font-bold text-base sm:text-lg gap-2 shadow-lg"
               >
-                Selanjutnya <ArrowRight className="h-5 w-5" />
+                Lanjut <ArrowRight className="h-5 w-5" />
               </Button>
             )}
           </div>

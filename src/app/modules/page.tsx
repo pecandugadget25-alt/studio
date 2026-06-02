@@ -1,12 +1,12 @@
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Castle, Landmark, Dices, ChevronRight, Star, Clock } from "lucide-react";
+import { MapPin, Castle, Landmark, Dices, ChevronRight, Star, Clock, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/firebase";
-import { Loader2 } from "lucide-react";
 
 const MODULES = [
   { 
@@ -55,7 +55,7 @@ export default function ModulesPage() {
   }
 
   return (
-    <div className="pt-20 pb-24 px-4 space-y-6">
+    <div className="pt-20 pb-32 px-4 space-y-6 overflow-y-auto min-h-screen">
       <div className="px-1">
         <h2 className="text-2xl font-headline font-bold">Modul Budaya</h2>
         <p className="text-xs text-muted-foreground">Pilih materi yang ingin kamu pelajari hari ini.</p>

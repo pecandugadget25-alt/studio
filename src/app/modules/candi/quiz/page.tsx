@@ -106,7 +106,7 @@ export default function CandiQuizPage() {
 
   if (showResult) {
     return (
-      <div className="min-h-screen bg-[#FAF7F5] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#FAF7F5] flex items-center justify-center p-6 pb-32">
         <Card className="w-full max-w-md text-center p-8 rounded-3xl shadow-2xl border-none">
           <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <Castle className="h-12 w-12 text-primary" />
@@ -137,7 +137,7 @@ export default function CandiQuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F5] p-6">
+    <div className="min-h-screen bg-[#FAF7F5] p-6 pb-32 overflow-y-auto">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <Link href="/modules/candi">
