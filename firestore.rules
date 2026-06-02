@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Fungsi pembantu
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Aturan untuk Koleksi Users
+    match /users/{userId} {
+      // Izinkan semua pengguna yang login membaca profil (untuk leaderboard dan monitoring)
+      allow read: if isSignedIn();
+      // Hanya pemilik akun yang bisa membuat atau memperbarui profil mereka
+      allow create: if isSignedIn();
+      allow update: if isOwner(userId);
+    }
+
+    // Aturan default untuk koleksi lainnya agar pengembangan berjalan lancar
+    match /{document=**} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

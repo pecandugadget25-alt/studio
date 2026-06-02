@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -10,14 +9,35 @@
         "nama": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "peran": { "type": "string", "enum": ["siswa", "guru", "admin", "peneliti"] },
-        "level": { "type": "number", "description": "Level pembelajaran pengguna." },
-        "poin": { "type": "number", "description": "Total XP yang dikumpulkan." },
-        "completedModules": { "type": "array", "items": { "type": "string" }, "description": "Daftar ID modul yang telah diselesaikan." },
-        "completedComics": { "type": "array", "items": { "type": "string" }, "description": "Daftar ID komik yang telah dibaca." },
-        "badges": { "type": "array", "items": { "type": "string" }, "description": "Koleksi lencana prestasi siswa." },
+        "level": { "type": "number" },
+        "poin": { "type": "number" },
+        "completedModules": { "type": "array", "items": { "type": "string" } },
+        "completedComics": { "type": "array", "items": { "type": "string" } },
+        "badges": { "type": "array", "items": { "type": "string" } },
         "tanggalDaftar": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "nama", "email", "peran"]
+    },
+    "StudentProgress": {
+      "title": "Student Progress",
+      "description": "Detail progress belajar siswa per modul.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "moduleId": { "type": "string" },
+        "status": { "type": "string" },
+        "lastAccessed": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ScanHistory": {
+      "title": "AR Scan History",
+      "description": "Riwayat penggunaan AR Scanner oleh siswa.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "markerId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -26,7 +46,15 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
-      "description": "Koleksi profil pengguna dengan data gamifikasi."
+      "description": "Koleksi profil pengguna."
+    },
+    "/student_progress/{progressId}": {
+      "schema": "StudentProgress",
+      "description": "Progres belajar siswa."
+    },
+    "/scan_history/{historyId}": {
+      "schema": "ScanHistory",
+      "description": "Riwayat scan AR."
     }
   }
 }
