@@ -1,10 +1,10 @@
 'use client';
 
 import { useUser } from "@/firebase";
-import { Star, Bell } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Star, Bell, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export function AppBar() {
   const { profile } = useUser();
@@ -12,9 +12,9 @@ export function AppBar() {
   if (!profile) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-16 bg-white border-b android-shadow max-w-[500px] mx-auto">
-      <Link href="/dashboard/student" className="flex items-center gap-2">
-        <div className="relative w-10 h-10">
+    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 android-shadow max-w-[500px] mx-auto">
+      <Link href="/" className="flex items-center gap-2">
+        <div className="relative w-9 h-9">
           <Image 
             src="/logo.png" 
             alt="ETHNO-ARITH Logo" 
@@ -27,13 +27,13 @@ export function AppBar() {
       </Link>
       
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">
-          <Star className="h-4 w-4 text-yellow-500 fill-current" />
-          <span className="text-xs font-bold text-yellow-700">{profile.poin}</span>
+        <div className="flex items-center gap-1.5 bg-accent/10 px-3 py-1.5 rounded-2xl border border-accent/20">
+          <Star className="h-4 w-4 text-accent fill-current" />
+          <span className="text-xs font-bold text-accent">{profile.poin}</span>
         </div>
-        <button className="p-2 text-slate-400 hover:text-primary transition-colors">
-          <Bell className="h-5 w-5" />
-        </button>
+        <Link href="/profile" className="w-9 h-9 rounded-full overflow-hidden border-2 border-slate-100 shadow-sm">
+           <img src={`https://picsum.photos/seed/${profile.uid}/100/100`} alt="Profile" className="w-full h-full object-cover" />
+        </Link>
       </div>
     </div>
   );

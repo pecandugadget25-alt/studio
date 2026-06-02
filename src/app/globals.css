@@ -4,31 +4,26 @@
 
 @layer base {
   :root {
-    --background: 24 25% 97%;
-    --foreground: 24 10% 10%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 24 10% 10%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 24 10% 10%;
-    --primary: 11 55% 46%;
-    --primary-foreground: 24 25% 97%;
-    --secondary: 39 67% 92%;
-    --secondary-foreground: 11 55% 20%;
-    --muted: 24 10% 90%;
-    --muted-foreground: 24 10% 40%;
-    --accent: 39 67% 55%;
-    --accent-foreground: 24 25% 97%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 24 10% 88%;
-    --input: 24 10% 88%;
-    --ring: 11 55% 46%;
-    --radius: 1rem;
-    --chart-1: 11 55% 46%;
-    --chart-2: 39 67% 55%;
-    --chart-3: 173 58% 39%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%; /* Modern Blue */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 25 100% 50%; /* Vibrant Orange */
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --radius: 1.25rem;
   }
 }
 
@@ -37,34 +32,42 @@
     @apply border-border;
   }
   body {
-    @apply bg-[#F0F2F5] text-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* Custom styles for mobile-app feel */
 .app-container {
-  @apply mx-auto min-h-screen bg-white shadow-xl;
-  max-width: 500px; /* Standard mobile width for desktop viewing */
+  @apply mx-auto min-h-screen bg-background shadow-none;
+  max-width: 500px;
 }
 
-@media (max-width: 500px) {
+@media (min-width: 768px) {
   .app-container {
-    max-width: 100%;
-    box-shadow: none;
+    @apply shadow-2xl;
+    border-left: 1px solid hsl(var(--border));
+    border-right: 1px solid hsl(var(--border));
   }
 }
 
 .bottom-nav-blur {
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
   background-color: rgba(255, 255, 255, 0.9);
 }
 
 .android-shadow {
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.learning-path-node {
-  @apply relative flex items-center justify-center transition-transform active:scale-90;
+.card-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
