@@ -1,3 +1,4 @@
+
 "use client";
 
 import { use } from "react";
@@ -92,7 +93,9 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
                 <CardDescription>Selesaikan modul ini untuk mendapatkan 200 XP</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full h-14 text-lg font-bold">Mulai Video Pembelajaran</Button>
+                <Link href={`/modules/${id === 'games' ? 'games' : id}`} className="block">
+                  <Button className="w-full h-14 text-lg font-bold">Buka Topik Materi</Button>
+                </Link>
                 <Link href="/ar-scan" className="block">
                   <Button variant="outline" className="w-full h-14 text-lg font-bold gap-2">
                     <Camera className="h-5 w-5" /> Gunakan Scanner AR
@@ -108,7 +111,7 @@ export default function ModuleDetailPage({ params }: { params: Promise<{ id: str
               <CardContent className="p-8 space-y-4 relative z-10">
                 <h3 className="text-xl font-bold">Informasi Penting</h3>
                 <p className="text-sm opacity-90 leading-relaxed">
-                  Modul ini merupakan prasyarat untuk membuka tantangan 'Geometri Kompleks' di Level 6. Pastikan Anda memahami konsep dasar simetri sebelum melanjutkan ke kuis.
+                  Modul ini merupakan bagian dari kurikulum numerasi berbasis budaya. Selesaikan semua topik untuk membuka kuis akhir dan klaim XP tambahan.
                 </p>
               </CardContent>
               <div className="absolute -right-8 -bottom-8 opacity-10">

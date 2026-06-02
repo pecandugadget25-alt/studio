@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Trophy, 
   Flame, 
-  BookOpen, 
   Star, 
   ArrowRight, 
   Camera, 
@@ -19,7 +18,9 @@ import {
   Clock,
   LogOut,
   Loader2,
-  Castle
+  Castle,
+  Dices,
+  Landmark
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -83,6 +84,8 @@ export default function StudentDashboard() {
 
   const isBatikDone = profile.completedModules?.includes("batik_nusantara");
   const isCandiDone = profile.completedModules?.includes("candi_nusantara");
+  const isMasjidDone = profile.completedModules?.includes("masjid_al_akbar");
+  const isGamesDone = profile.completedModules?.includes("traditional_games");
 
   return (
     <div className="min-h-screen bg-[#FAF7F5] pb-20">
@@ -175,6 +178,8 @@ export default function StudentDashboard() {
                 {[
                   { id: 'batik', name: 'Batik Nusantara', progress: isBatikDone ? 100 : 0, icon: MapPin, color: 'bg-orange-500' },
                   { id: 'candi', name: 'Candi Nusantara', progress: isCandiDone ? 100 : 0, icon: Castle, color: 'bg-primary' },
+                  { id: 'masjid', name: 'Masjid Al Akbar', progress: isMasjidDone ? 100 : 0, icon: Landmark, color: 'bg-emerald-600' },
+                  { id: 'games', name: 'Permainan Tradisional', progress: isGamesDone ? 100 : 0, icon: Dices, color: 'bg-red-500' },
                 ].map((mod) => (
                   <Card key={mod.id} className="hover:shadow-md transition-shadow group">
                     <Link href={`/modules/${mod.id}`} className="block">
@@ -236,7 +241,19 @@ export default function StudentDashboard() {
                       <span className="text-[10px] font-bold text-center uppercase">Arsitek Muda</span>
                     </div>
                   )}
-                  {!isBatikDone && !isCandiDone && (
+                  {isMasjidDone && (
+                    <div className="p-4 rounded-2xl bg-emerald-100 text-emerald-600 flex flex-col items-center gap-2">
+                      <Landmark className="h-8 w-8" />
+                      <span className="text-[10px] font-bold text-center uppercase">Wali Budaya</span>
+                    </div>
+                  )}
+                  {isGamesDone && (
+                    <div className="p-4 rounded-2xl bg-red-100 text-red-600 flex flex-col items-center gap-2">
+                      <Dices className="h-8 w-8" />
+                      <span className="text-[10px] font-bold text-center uppercase">Jago Bermain</span>
+                    </div>
+                  )}
+                  {!isBatikDone && !isCandiDone && !isMasjidDone && !isGamesDone && (
                     <div className="p-4 rounded-2xl bg-muted/30 border-2 border-dashed flex flex-col items-center justify-center opacity-40">
                       <Clock className="h-8 w-8 mb-1" />
                       <span className="text-[10px] font-bold">Terkunci</span>
