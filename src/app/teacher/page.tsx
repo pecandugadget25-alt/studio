@@ -1,44 +1,34 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useEffect, useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   Users, 
-  BarChart3, 
-  FileText, 
-  Settings, 
   TrendingUp, 
-  AlertCircle,
-  LogOut,
   Loader2,
   CheckCircle2,
-  Clock,
   BookOpen,
   Camera,
   Download,
   Printer,
   ChevronRight,
-  Filter,
   Search,
   Bell
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useUser, useFirebase, useCollection } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { useUser, useFirestore, useCollection } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
 import { cn } from "@/lib/utils";
-import { TeacherBottomNav } from "@/components/TeacherBottomNav";
 
 export default function TeacherMobileDashboard() {
   const router = useRouter();
-  const { auth, db } = useFirebase();
+  const { db } = useFirestore();
   const { user, profile, loading: authLoading } = useUser();
-  const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Query untuk mengambil semua siswa
   const studentsQuery = useMemo(() => {
     if (!db) return null;
     return query(collection(db, "users"), where("peran", "==", "siswa"));
@@ -46,7 +36,6 @@ export default function TeacherMobileDashboard() {
 
   const { data: students, loading: studentsLoading } = useCollection(studentsQuery);
 
-  // Proteksi rute
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login");
@@ -55,15 +44,12 @@ export default function TeacherMobileDashboard() {
     }
   }, [user, profile, authLoading, router]);
 
-  // Statistik Realtime & Dummy
   const stats = useMemo(() => {
-    if (!students) return { total: 0, activeToday: 0, avgXP: 0, completionRate: 0, comicReads: 0, arScans: 0 };
+    if (!students) return { total: 0, activeToday: 0, avgXP: 0, comicReads: 0, arScans: 0 };
     
     const total = students.length;
     const totalXP = students.reduce((acc, s) => acc + (s.poin || 0), 0);
     const avgXP = total > 0 ? Math.round(totalXP / total) : 0;
-    
-    // Simulasi data tambahan yang belum ada di schema
     const activeToday = Math.round(total * 0.7); 
     const arScans = total * 12; 
     const comicReads = students.reduce((acc, s) => acc + (s.completedComics?.length || 0), 0);
@@ -148,14 +134,16 @@ export default function TeacherMobileDashboard() {
         </Card>
       </section>
 
-      {/* Progress Pembelajaran */}
+      {/* Progress Pembelajaran Quick Access */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h3 className="font-headline font-bold text-lg text-slate-900">Progress Siswa</h3>
-          <Button variant="link" className="text-xs font-bold text-primary p-0 h-auto">Lihat Detail</Button>
+          <Link href="/teacher/students">
+            <Button variant="link" className="text-xs font-bold text-primary p-0 h-auto">Lihat Detail</Button>
+          </Link>
         </div>
         <div className="space-y-3">
-          {students?.slice(0, 3).map((student, i) => (
+          {students?.slice(0, 3).map((student) => (
             <Card key={student.uid} className="rounded-3xl border-none p-5 bg-white shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs">
@@ -169,15 +157,15 @@ export default function TeacherMobileDashboard() {
               </div>
               <div className="grid grid-cols-3 gap-4 pt-2">
                 <div className="space-y-1">
-                  <p className="text-[8px] font-bold uppercase text-slate-400">Batik</p>
+                  <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Batik</p>
                   <Progress value={student.completedModules?.includes('batik') ? 100 : 40} className="h-1" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[8px] font-bold uppercase text-slate-400">Candi</p>
+                  <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Candi</p>
                   <Progress value={student.completedModules?.includes('candi') ? 100 : 20} className="h-1" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[8px] font-bold uppercase text-slate-400">Games</p>
+                  <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Games</p>
                   <Progress value={student.completedModules?.includes('games') ? 100 : 60} className="h-1" />
                 </div>
               </div>
@@ -188,22 +176,27 @@ export default function TeacherMobileDashboard() {
 
       {/* Aktivitas Terbaru */}
       <section className="space-y-4">
-        <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Log Aktivitas</h3>
+        <div className="flex items-center justify-between px-1">
+          <h3 className="font-headline font-bold text-lg text-slate-900">Log Aktivitas</h3>
+          <Link href="/teacher/activity">
+            <Button variant="link" className="text-xs font-bold text-primary p-0 h-auto">Lihat Semua</Button>
+          </Link>
+        </div>
         <Card className="rounded-3xl border-none bg-white p-2 shadow-sm">
           {[
-            { user: "Arie", action: "Selesai kuis Batik", time: "2 menit lalu", icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50" },
-            { user: "Budi", action: "Membaca Komik Candi", time: "15 menit lalu", icon: BookOpen, color: "text-blue-500", bg: "bg-blue-50" },
-            { user: "Citra", action: "Scan AR Candi Borobudur", time: "1 jam lalu", icon: Camera, color: "text-orange-500", bg: "bg-orange-50" },
+            { user: "Arie", action: "Selesai kuis Batik", time: "2 mnt", icon: CheckCircle2, color: "text-green-500", bg: "bg-green-50" },
+            { user: "Budi", action: "Membaca Komik Candi", time: "15 mnt", icon: BookOpen, color: "text-blue-500", bg: "bg-blue-50" },
+            { user: "Citra", action: "Scan AR Borobudur", time: "1 jam", icon: Camera, color: "text-orange-500", bg: "bg-orange-50" },
           ].map((act, i) => (
-            <div key={i} className={cn("flex items-center gap-4 p-4", i !== 2 && "border-b")}>
+            <div key={i} className={cn("flex items-center gap-4 p-4", i !== 2 && "border-b border-slate-50")}>
               <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shrink-0", act.bg)}>
                 <act.icon className={cn("h-5 w-5", act.color)} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-slate-900"><span className="text-primary">{act.user}</span> {act.action}</p>
-                <p className="text-[10px] text-slate-400">{act.time}</p>
+                <p className="text-[10px] text-slate-400">{act.time} lalu</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-300" />
+              <ChevronRight className="h-4 w-4 text-slate-200" />
             </div>
           ))}
         </Card>
@@ -211,21 +204,18 @@ export default function TeacherMobileDashboard() {
 
       {/* Laporan & Export */}
       <section className="space-y-4 pb-4">
-        <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Ekspor Laporan</h3>
+        <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Laporan & Ekspor</h3>
         <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold">
+          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm">
             <Download className="h-5 w-5 text-primary" />
             <span className="text-[10px] uppercase">Excel</span>
           </Button>
-          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold">
+          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm">
             <Printer className="h-5 w-5 text-accent" />
-            <span className="text-[10px] uppercase">Cetak PDF</span>
+            <span className="text-[10px] uppercase">PDF</span>
           </Button>
         </div>
       </section>
-
-      {/* Bottom Nav Guru */}
-      <TeacherBottomNav />
     </div>
   );
 }
