@@ -2,6 +2,12 @@
 {
   "placeholderImages": [
     {
+      "id": "hero-illustration",
+      "description": "Ilustrasi siswa Indonesia belajar numerasi dengan elemen batik, candi, dan AR.",
+      "imageUrl": "https://picsum.photos/seed/ethno-hero-v2/1200/800",
+      "imageHint": "education illustration"
+    },
+    {
       "id": "batik-pattern",
       "description": "Batik Nusantara pattern showcasing symmetry and geometry.",
       "imageUrl": "https://picsum.photos/seed/batik101/800/600",

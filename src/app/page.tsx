@@ -1,11 +1,15 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Trophy, Camera, ShieldCheck, ChevronRight, LayoutDashboard } from 'lucide-react';
 import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function LandingPage() {
+  const heroImage = PlaceHolderImages.find(img => img.id === "hero-illustration") || PlaceHolderImages[0];
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
@@ -67,11 +71,12 @@ export default function LandingPage() {
             </div>
             <div className="relative aspect-square lg:aspect-auto h-[500px] w-full bg-accent/10 rounded-3xl overflow-hidden border-8 border-white shadow-2xl rotate-2">
               <Image 
-                src="https://picsum.photos/seed/ethnohero/1200/800" 
-                alt="Ethno-Arith Hero" 
+                src={heroImage.imageUrl} 
+                alt="ETHNO-ARITH Hero Illustration" 
                 fill 
                 className="object-cover"
-                data-ai-hint="indonesian education"
+                data-ai-hint={heroImage.imageHint}
+                priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent" />
             </div>
