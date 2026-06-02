@@ -32,6 +32,18 @@
       "imageHint": "mosque architecture"
     },
     {
+      "id": "mosque-dome",
+      "description": "Close up of a grand mosque dome showing geometric patterns.",
+      "imageUrl": "https://picsum.photos/seed/mosquedome/800/600",
+      "imageHint": "mosque dome"
+    },
+    {
+      "id": "mosque-tower",
+      "description": "A tall mosque minaret showcasing cylinder geometry.",
+      "imageUrl": "https://picsum.photos/seed/minaret/800/600",
+      "imageHint": "mosque minaret"
+    },
+    {
       "id": "traditional-games",
       "description": "Children playing traditional Indonesian games.",
       "imageUrl": "https://picsum.photos/seed/games/800/600",
