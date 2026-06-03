@@ -7,20 +7,12 @@ import {
   Camera, 
   X, 
   Image as ImageIcon, 
-  RefreshCw, 
-  Info, 
   Loader2, 
   Zap, 
-  ShieldCheck,
-  Video,
-  BookOpen,
-  PlayCircle,
-  Box,
-  CheckCircle2,
-  AlertCircle,
+  BookOpen, 
+  PlayCircle, 
+  ChevronRight, 
   History,
-  ChevronRight,
-  Star,
   QrCode
 } from "lucide-react";
 import Link from "next/link";
@@ -39,7 +31,6 @@ export default function SmartScannerPage() {
 
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<any>(null);
   
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -59,22 +50,9 @@ export default function SmartScannerPage() {
 
   useEffect(() => {
     return () => {
-      const stopEverything = async () => {
-        if (scannerRef.current) {
-          if (scannerRef.current.isScanning) {
-            try {
-              await scannerRef.current.stop();
-            } catch (e) {
-              console.warn("Cleanup stop failed", e);
-            }
-          }
-          try {
-            scannerRef.current.clear();
-          } catch (e) {}
-          scannerRef.current = null;
-        }
-      };
-      stopEverything();
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(console.warn);
+      }
     };
   }, []);
 
@@ -93,17 +71,10 @@ export default function SmartScannerPage() {
 
   const startCamera = async () => {
     try {
-      setError(null);
       setScanResult(null);
-      
-      if (scannerRef.current) {
-        await stopScanner();
-      }
+      if (scannerRef.current) await stopScanner();
 
-      const html5QrCode = new Html5Qrcode("reader", {
-        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-        verbose: false
-      });
+      const html5QrCode = new Html5Qrcode("reader");
       scannerRef.current = html5QrCode;
 
       await html5QrCode.start(
@@ -114,9 +85,11 @@ export default function SmartScannerPage() {
       );
       setIsCameraActive(true);
     } catch (err: any) {
-      console.error(err);
-      const msg = err?.message || "Gagal mengakses kamera.";
-      setError(msg.includes("Permission denied") ? "Izin kamera ditolak. Silakan aktifkan di pengaturan browser." : msg);
+      toast({
+        variant: "destructive",
+        title: "Akses Kamera Gagal",
+        description: "Pastikan Anda memberikan izin kamera pada browser.",
+      });
       setIsCameraActive(false);
     }
   };
@@ -133,24 +106,19 @@ export default function SmartScannerPage() {
     if (!file || isProcessing) return;
 
     setIsProcessing(true);
-    setError(null);
-    setScanResult(null);
-    
     const html5QrCode = new Html5Qrcode("reader-hidden");
     
     try {
       const decodedText = await html5QrCode.scanFile(file, true);
       await handleQRAction(decodedText, 'gallery');
     } catch (err) {
-      console.error(err);
       toast({
         variant: "destructive",
-        title: "QR Tidak Ditemukan",
-        description: "Gambar tidak terbaca sebagai QR Code valid.",
+        title: "QR Tidak Terdeteksi",
+        description: "Pastikan gambar berisi QR Code yang jelas.",
       });
       setIsProcessing(false);
     } finally {
-      html5QrCode.clear();
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -197,15 +165,15 @@ export default function SmartScannerPage() {
     if (type === 'unknown') {
       toast({
         variant: "destructive",
-        title: "QR Tidak Terdaftar",
-        description: "Format QR Code tidak dikenal oleh ETHNO-ARITH.",
+        title: "QR Tidak Valid",
+        description: "QR Code ini tidak dikenali oleh sistem ETHNO-ARITH.",
       });
       setIsProcessing(false);
       return;
     }
 
     try {
-      const logData = {
+      await addDoc(collection(db, "scan_logs"), {
         uid: user.uid,
         studentName: profile.nama,
         qrType: type,
@@ -213,13 +181,9 @@ export default function SmartScannerPage() {
         source,
         xpEarned: xp,
         timestamp: serverTimestamp()
-      };
-
-      await addDoc(collection(db, "scan_logs"), logData);
+      });
       
-      const userRef = doc(db, "users", user.uid);
       const newScanCount = (profile.scanCount || 0) + 1;
-      
       const updatePayload: any = {
         poin: increment(xp),
         scanCount: increment(1)
@@ -227,28 +191,24 @@ export default function SmartScannerPage() {
 
       if (newScanCount === 1) updatePayload.badges = arrayUnion("Explorer QR");
       else if (newScanCount === 10) updatePayload.badges = arrayUnion("Pemburu Pengetahuan");
-      else if (newScanCount === 50) updatePayload.badges = arrayUnion("Master Eksplorasi");
-      else if (newScanCount === 100) updatePayload.badges = arrayUnion("Legenda ETHNO");
 
-      await updateDoc(userRef, updatePayload);
-
-      setScanResult({ type, xp, targetUrl, value });
+      await updateDoc(doc(db, "users", user.uid), updatePayload);
+      setScanResult({ type, xp, targetUrl });
       setIsProcessing(false);
 
       toast({
-        title: "Pindaian Berhasil! 🎯",
-        description: `Mendapatkan +${xp} XP untuk ${type}.`,
+        title: "Berhasil!",
+        description: `Mendapatkan +${xp} XP dari pindaian ${type}.`,
       });
-
     } catch (err) {
-      console.error("Firestore sync error", err);
+      console.error(err);
       setIsProcessing(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-32 flex flex-col max-w-[500px] mx-auto overflow-y-auto">
-      <header className="sticky top-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b flex items-center justify-between px-6">
+      <header className="sticky top-0 z-50 h-16 bg-white border-b flex items-center justify-between px-6">
         <Link href="/">
           <Button variant="ghost" size="icon" className="rounded-full">
             <X className="h-5 w-5" />
@@ -266,34 +226,14 @@ export default function SmartScannerPage() {
           <div id="reader" className="w-full h-full"></div>
           <div id="reader-hidden" className="hidden"></div>
           
-          {!isCameraActive && !isProcessing && !scanResult && !error && (
+          {!isCameraActive && !isProcessing && !scanResult && (
             <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 p-8 text-center">
               <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center border-2 border-dashed border-white/20">
                 <Camera className="h-10 w-10 text-white/40" />
               </div>
-              <p className="text-white/60 text-sm font-medium">Aktifkan kamera untuk memindai materi ETHNO-ARITH.</p>
+              <p className="text-white/60 text-sm font-medium">Klik tombol di bawah untuk mulai memindai.</p>
               <Button size="lg" className="bg-accent hover:bg-accent/90 font-bold px-8 h-14 rounded-2xl" onClick={startCamera}>
                 Mulai Kamera
-              </Button>
-            </div>
-          )}
-
-          {isCameraActive && !isProcessing && (
-            <div className="absolute inset-0 pointer-events-none z-10">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64">
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-accent rounded-tl-xl" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-accent rounded-tr-xl" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-accent rounded-bl-xl" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-accent rounded-br-xl" />
-                <div className="absolute top-0 left-0 right-0 h-1 bg-accent/40 animate-[scan_2s_ease-in-out_infinite] blur-sm" />
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto bg-black/60 text-white border-white/20 rounded-full font-bold gap-2 backdrop-blur-md"
-                onClick={stopScanner}
-              >
-                <X className="h-4 w-4" /> Berhenti
               </Button>
             </div>
           )}
@@ -307,7 +247,7 @@ export default function SmartScannerPage() {
         </div>
 
         {scanResult && (
-          <section className="px-6 animate-in slide-in-from-bottom-4 duration-500">
+          <section className="px-6">
             <Card className="border-none rounded-[2rem] bg-white shadow-xl border-2 border-accent/20">
               <CardContent className="p-6 space-y-6">
                 <div className="flex items-center gap-4">
@@ -315,37 +255,35 @@ export default function SmartScannerPage() {
                     {scanResult.type === 'video' ? <PlayCircle className="h-7 w-7" /> : <BookOpen className="h-7 w-7" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-accent uppercase mb-1">Berhasil Memindai</p>
-                    <h3 className="font-bold text-lg text-slate-900 truncate uppercase">Akses {scanResult.type}</h3>
+                    <p className="text-[10px] font-bold text-accent uppercase mb-1">Ditemukan</p>
+                    <h3 className="font-bold text-lg text-slate-900 truncate uppercase">{scanResult.type}</h3>
                   </div>
                 </div>
-                <Button className="w-full h-14 rounded-2xl font-bold text-lg gap-2" onClick={() => router.push(scanResult.targetUrl)}>
-                  Buka Sekarang <ChevronRight className="h-5 w-5" />
+                <Button className="w-full h-14 rounded-2xl font-bold text-lg" onClick={() => router.push(scanResult.targetUrl)}>
+                  Buka Konten <ChevronRight className="h-5 w-5 ml-2" />
                 </Button>
               </CardContent>
             </Card>
           </section>
         )}
 
-        <section className="px-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Button 
-              variant={isCameraActive ? 'default' : 'outline'}
-              className={cn("h-24 rounded-3xl flex-col gap-2 font-bold border-2 transition-all", isCameraActive ? "bg-primary border-primary text-white" : "bg-white border-slate-100 text-slate-600")}
-              onClick={startCamera}
-            >
-              <Camera className="h-7 w-7" />
-              <span className="text-[10px] uppercase">Kamera</span>
-            </Button>
-            <Button 
-              variant="outline"
-              className="h-24 rounded-3xl bg-white border-slate-100 border-2 flex-col gap-2 font-bold text-slate-600"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <ImageIcon className="h-7 w-7" />
-              <span className="text-[10px] uppercase">Galeri</span>
-            </Button>
-          </div>
+        <section className="px-6 grid grid-cols-2 gap-4">
+          <Button 
+            variant={isCameraActive ? 'default' : 'outline'}
+            className={cn("h-24 rounded-3xl flex-col gap-2 font-bold border-2", isCameraActive ? "bg-primary border-primary text-white" : "bg-white text-slate-600")}
+            onClick={startCamera}
+          >
+            <Camera className="h-7 w-7" />
+            <span className="text-[10px] uppercase">Kamera</span>
+          </Button>
+          <Button 
+            variant="outline"
+            className="h-24 rounded-3xl bg-white border-2 flex-col gap-2 font-bold text-slate-600"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <ImageIcon className="h-7 w-7" />
+            <span className="text-[10px] uppercase">Galeri</span>
+          </Button>
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
         </section>
 
@@ -371,13 +309,6 @@ export default function SmartScannerPage() {
           </div>
         </section>
       </main>
-
-      <style jsx global>{`
-        @keyframes scan {
-          0%, 100% { top: 0%; }
-          50% { top: 100%; }
-        }
-      `}</style>
     </div>
   );
 }

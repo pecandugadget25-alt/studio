@@ -7,23 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Users, 
   Loader2,
-  BookOpen,
-  Camera,
-  Search,
   Bell,
-  Star,
   Activity,
-  Trophy,
-  ChevronRight,
   QrCode,
-  TrendingUp,
-  Monitor
+  TrendingUp
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -56,15 +48,11 @@ export default function TeacherMobileDashboard() {
   const { data: scanLogs } = useCollection(scanLogsQuery);
 
   const stats = useMemo(() => {
-    if (!students || students.length === 0) return { total: 0, activeToday: 0, avgXP: 0, totalScans: 0 };
-    
+    if (!students || students.length === 0) return { total: 0, activeToday: 0, totalScans: 0 };
     const total = students.length;
-    const totalXP = students.reduce((acc, s) => acc + (Number(s.poin) || 0), 0);
-    const avgXP = total > 0 ? Math.round(totalXP / total) : 0;
     const totalScans = students.reduce((acc, s) => acc + (Number(s.scanCount) || 0), 0);
     const activeToday = Math.max(1, Math.round(total * 0.7)); 
-
-    return { total, activeToday, avgXP, totalScans };
+    return { total, activeToday, totalScans };
   }, [students]);
 
   if (authLoading || studentsLoading || !profile) {
@@ -74,8 +62,6 @@ export default function TeacherMobileDashboard() {
       </div>
     );
   }
-
-  if (profile.peran === 'siswa') return null;
 
   return (
     <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
@@ -128,7 +114,7 @@ export default function TeacherMobileDashboard() {
               {['Video', 'Modul', 'AR', 'Kuis', 'Komik'].map((t) => (
                 <div key={t} className="space-y-1">
                    <p className="text-[8px] font-bold text-muted-foreground uppercase">{t}</p>
-                   <p className="text-xl font-bold">{Math.floor(Math.random() * 20) + 5}</p>
+                   <p className="text-xl font-bold">{Math.floor(Math.random() * 10) + 2}</p>
                 </div>
               ))}
               <div className="space-y-1">
