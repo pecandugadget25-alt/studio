@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
@@ -10,7 +11,10 @@ import {
   Bell,
   Activity,
   QrCode,
-  TrendingUp
+  TrendingUp,
+  BrainCircuit,
+  ChevronRight,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,7 +39,6 @@ export default function TeacherMobileDashboard() {
     }
   }, [user, profile, authLoading, router]);
 
-  // Handle random stats in useEffect to prevent hydration mismatch
   useEffect(() => {
     const types = ['Video', 'Modul', 'AR', 'Kuis', 'Komik'];
     const stats: Record<string, number> = {};
@@ -93,6 +96,28 @@ export default function TeacherMobileDashboard() {
         <p className="text-sm text-muted-foreground font-medium">Monitoring aktivitas belajar hari ini.</p>
       </section>
 
+      {/* AI Analysis Quick Link */}
+      <section className="px-1">
+         <Link href="/teacher/ai-analysis">
+            <Card className="rounded-3xl border-none bg-gradient-to-br from-indigo-600 to-primary text-white p-5 shadow-lg relative overflow-hidden active:scale-[0.98] transition-all">
+               <div className="relative z-10 flex items-center justify-between">
+                  <div className="space-y-1">
+                     <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-yellow-300" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">Baru di ETHNO-ARITH</span>
+                     </div>
+                     <h3 className="text-lg font-headline font-bold leading-tight">AI Analisis Individu Siswa</h3>
+                     <p className="text-[10px] opacity-80 leading-relaxed max-w-[200px]">Dapatkan laporan psikometri & akademik mendalam untuk setiap siswa.</p>
+                  </div>
+                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                     <BrainCircuit className="h-7 w-7 text-white" />
+                  </div>
+               </div>
+               <div className="absolute -right-4 -bottom-4 bg-white/10 w-24 h-24 rounded-full blur-2xl" />
+            </Card>
+         </Link>
+      </section>
+
       <section className="grid grid-cols-2 gap-4">
         <Card className="rounded-3xl border-none p-4 bg-white shadow-sm flex flex-col gap-2">
           <div className="p-2 bg-blue-50 w-fit rounded-lg text-primary">
@@ -134,28 +159,6 @@ export default function TeacherMobileDashboard() {
               </div>
            </div>
         </Card>
-      </section>
-
-      <section className="space-y-4">
-        <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Pindaian Terbaru</h3>
-        <div className="space-y-3">
-          {scanLogs?.map((log: any) => (
-            <Card key={log.id} className="rounded-2xl border-none p-4 bg-white shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                  <QrCode className="h-5 w-5 text-slate-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-slate-900 truncate">
-                    <span className="text-primary">{log.studentName}</span> memindai {log.qrType}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">{log.qrValue}</p>
-                </div>
-                <Badge className="bg-green-50 text-green-700 border-none text-[9px] font-bold">+{log.xpEarned} XP</Badge>
-              </div>
-            </Card>
-          ))}
-        </div>
       </section>
 
       <section className="grid grid-cols-2 gap-4 pb-10">

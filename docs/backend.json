@@ -12,41 +12,42 @@
         "peran": { "type": "string", "enum": ["siswa", "guru", "admin", "peneliti"] },
         "level": { "type": "number" },
         "poin": { "type": "number" },
-        "scanCount": { "type": "number", "description": "Total pemindaian QR yang berhasil." },
+        "scanCount": { "type": "number" },
         "completedModules": { "type": "array", "items": { "type": "string" } },
         "completedComics": { "type": "array", "items": { "type": "string" } },
-        "completedVideos": { "type": "array", "items": { "type": "string" }, "description": "Daftar ID video yang sudah selesai ditonton." },
+        "completedVideos": { "type": "array", "items": { "type": "string" } },
         "badges": { "type": "array", "items": { "type": "string" } },
         "tanggalDaftar": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "nama", "email", "peran"]
     },
-    "ScanLog": {
-      "title": "Universal Scan Log",
-      "description": "Log pindaian QR edukatif universal.",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "studentName": { "type": "string" },
-        "qrType": { "type": "string" },
-        "title": { "type": "string" },
-        "url": { "type": "string" },
-        "source": { "type": "string" },
-        "xpEarned": { "type": "number" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
-    },
     "Activity": {
       "title": "User Activity Log",
-      "description": "Log aktivitas harian siswa untuk monitoring guru dan riwayat siswa.",
+      "description": "Log aktivitas harian siswa untuk monitoring.",
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
-        "activityType": { "type": "string", "enum": ["login", "scan_qr", "video", "comic", "quiz", "ar", "module"] },
+        "activityType": { "type": "string" },
         "title": { "type": "string" },
         "description": { "type": "string" },
         "xp": { "type": "number" },
         "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "StudentAIAnalysis": {
+      "title": "Student AI Analysis",
+      "description": "Hasil analisis mendalam berbasis AI untuk individu siswa.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "learningProfile": { "type": "string" },
+        "strengths": { "type": "array", "items": { "type": "string" } },
+        "weaknesses": { "type": "array", "items": { "type": "string" } },
+        "narrative": { "type": "string" },
+        "recommendations": { "type": "array", "items": { "type": "string" } },
+        "riskLevel": { "type": "string", "enum": ["aman", "perhatian", "risiko"] },
+        "generatedAt": { "type": "string", "format": "date-time" }
       }
     }
   },
@@ -58,13 +59,13 @@
       "schema": "User",
       "description": "Koleksi profil pengguna."
     },
-    "/scan_logs/{logId}": {
-      "schema": "ScanLog",
-      "description": "Riwayat pemindaian QR universal."
-    },
     "/activities/{activityId}": {
       "schema": "Activity",
-      "description": "Log aktivitas siswa terpadu."
+      "description": "Log aktivitas siswa."
+    },
+    "/student_ai_analysis/{analysisId}": {
+      "schema": "StudentAIAnalysis",
+      "description": "Riwayat analisis AI siswa oleh guru."
     }
   }
 }
