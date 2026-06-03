@@ -19,8 +19,10 @@ import {
   Search,
   Bell,
   Star,
-  Activity
+  Activity,
+  Trophy
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -148,7 +150,7 @@ export default function TeacherMobileDashboard() {
           </Link>
         </div>
         <div className="space-y-3">
-          {students?.sort((a, b) => (b.poin || 0) - (a.poin || 0)).slice(0, 3).map((student, idx) => (
+          {[...students || []].sort((a, b) => (b.poin || 0) - (a.poin || 0)).slice(0, 3).map((student, idx) => (
             <Card key={student.uid} className="rounded-3xl border-none p-5 bg-white shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs">
