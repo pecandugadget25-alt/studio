@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ export default function TeacherMobileDashboard() {
   const router = useRouter();
   const db = useFirestore();
   const { user, profile, loading: authLoading } = useUser();
+  const [randomStats, setRandomStats] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!authLoading) {
@@ -33,6 +34,16 @@ export default function TeacherMobileDashboard() {
       }
     }
   }, [user, profile, authLoading, router]);
+
+  // Handle random stats in useEffect to prevent hydration mismatch
+  useEffect(() => {
+    const types = ['Video', 'Modul', 'AR', 'Kuis', 'Komik'];
+    const stats: Record<string, number> = {};
+    types.forEach(t => {
+      stats[t] = Math.floor(Math.random() * 10) + 2;
+    });
+    setRandomStats(stats);
+  }, []);
 
   const studentsQuery = useMemo(() => {
     if (!db) return null;
@@ -114,7 +125,7 @@ export default function TeacherMobileDashboard() {
               {['Video', 'Modul', 'AR', 'Kuis', 'Komik'].map((t) => (
                 <div key={t} className="space-y-1">
                    <p className="text-[8px] font-bold text-muted-foreground uppercase">{t}</p>
-                   <p className="text-xl font-bold">{Math.floor(Math.random() * 10) + 2}</p>
+                   <p className="text-xl font-bold">{randomStats[t] || '...'}</p>
                 </div>
               ))}
               <div className="space-y-1">
