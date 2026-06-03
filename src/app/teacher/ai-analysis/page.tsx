@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,20 +15,18 @@ import {
   BrainCircuit,
   Star,
   Target,
-  AlertTriangle,
   UserCheck,
   LineChart,
-  Database,
-  Info
+  Database
 } from "lucide-react";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, query, where, addDoc, serverTimestamp, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, addDoc, serverTimestamp, limit, getDocs } from "firebase/firestore";
 import { analyzeStudentIndividually, type StudentAnalysisOutput } from "@/ai/flows/student-individual-analysis";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-// Memastikan halaman tidak di-cache dan selalu mengambil data terbaru dari Firestore
+// MENCEGAH CACHE: Wajib dinamis agar data siswa muncul
 export const dynamic = "force-dynamic";
 
 export default function TeacherAIAnalysisPage() {
@@ -39,30 +37,23 @@ export default function TeacherAIAnalysisPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<StudentAnalysisOutput | null>(null);
 
-  // AUDIT FIX: Menggunakan query dasar tanpa filter 'where' di Firestore
-  // untuk menjamin data terbaca 100% (filtering dilakukan di sisi client)
-  const usersQuery = useMemo(() => {
+  // SOURCE DATA: 100% Identik dengan halaman Data Siswa
+  const studentsQuery = useMemo(() => {
     if (!db) return null;
-    return collection(db, "users");
+    return query(collection(db, "users"), where("peran", "==", "siswa"));
   }, [db]);
 
-  const { data: allUsers, loading: studentsLoading } = useCollection(usersQuery);
+  const { data: students, loading: studentsLoading } = useCollection(studentsQuery);
 
-  // Proses data di sisi klien: Filter peran siswa dan filter pencarian nama
+  // Filter client-side untuk responsivitas pencarian
   const filteredStudents = useMemo(() => {
-    if (!allUsers) return [];
-    
-    // 1. Filter hanya yang berperan siswa
-    const studentsOnly = allUsers.filter(u => u.peran === 'siswa');
-    
-    // 2. Filter berdasarkan pencarian nama/email
-    if (!searchTerm.trim()) return studentsOnly;
-    
-    return studentsOnly.filter(s => 
+    if (!students) return [];
+    if (!searchTerm.trim()) return students;
+    return students.filter(s => 
       s.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       s.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [allUsers, searchTerm]);
+  }, [students, searchTerm]);
 
   const handleGenerateAI = async () => {
     if (!selectedStudent || !db) return;
@@ -71,7 +62,7 @@ export default function TeacherAIAnalysisPage() {
     setAnalysisResult(null);
 
     try {
-      // Ambil aktivitas asli dari database untuk konteks AI
+      // Ambil riwayat aktivitas nyata untuk input AI
       const activitiesSnapshot = await getDocs(
         query(collection(db, "activities"), where("userId", "==", selectedStudent.uid), limit(20))
       );
@@ -83,7 +74,6 @@ export default function TeacherAIAnalysisPage() {
         timestamp: d.data().timestamp?.toDate()?.toISOString()
       }));
 
-      // Panggil AI Flow
       const result = await analyzeStudentIndividually({
         nama: selectedStudent.nama,
         level: selectedStudent.level || 1,
@@ -97,7 +87,7 @@ export default function TeacherAIAnalysisPage() {
 
       setAnalysisResult(result);
 
-      // Simpan ke riwayat Firestore
+      // Simpan ke Firestore
       await addDoc(collection(db, "student_ai_analysis"), {
         studentId: selectedStudent.uid,
         studentName: selectedStudent.nama,
@@ -105,17 +95,10 @@ export default function TeacherAIAnalysisPage() {
         generatedAt: serverTimestamp()
       });
 
-      toast({
-        title: "Analisis Selesai",
-        description: `Laporan untuk ${selectedStudent.nama} telah siap.`
-      });
+      toast({ title: "Analisis Selesai", description: `Laporan ${selectedStudent.nama} siap.` });
     } catch (error) {
       console.error(error);
-      toast({
-        variant: "destructive",
-        title: "AI Error",
-        description: "Gagal memproses analisis."
-      });
+      toast({ variant: "destructive", title: "AI Error", description: "Gagal memproses analisis." });
     } finally {
       setIsAnalyzing(false);
     }
@@ -139,48 +122,41 @@ export default function TeacherAIAnalysisPage() {
               <ArrowLeft className="h-5 w-5 text-slate-600" />
             </Button>
           </Link>
-          <h1 className="font-headline font-bold text-lg text-primary uppercase">AI Analisis</h1>
+          <h1 className="font-headline font-bold text-lg text-primary">AI ANALISIS</h1>
         </div>
-        <BrainCircuit className="h-6 w-6 text-primary/20" />
       </header>
 
+      {/* PANEL AUDIT: Membuktikan sinkronisasi source data */}
+      <div className="bg-slate-900 text-[10px] font-mono text-blue-400 p-3 rounded-xl space-y-1 shadow-inner">
+        <div className="flex items-center gap-2 text-primary border-b border-slate-800 pb-1 mb-1">
+           <Database className="h-3 w-3" />
+           <span className="font-bold uppercase">Firestore Data Link</span>
+        </div>
+        <p>Collection: <span className="text-white">users</span></p>
+        <p>Found Docs: <span className="text-yellow-400 font-bold">{students.length}</span></p>
+        <p>Status: <span className={students.length > 0 ? "text-green-400" : "text-red-400"}>{students.length > 0 ? "Data Synced" : "Searching..."}</span></p>
+      </div>
+
       {!selectedStudent ? (
-        <section className="space-y-4 animate-in fade-in duration-500">
+        <section className="space-y-4">
           <div className="px-1">
-            <h2 className="text-2xl font-headline font-bold text-slate-900">Pilih Siswa 🕵️‍♂️</h2>
-            <p className="text-sm text-muted-foreground">Analisis progres belajar dengan kecerdasan AI.</p>
+            <h2 className="text-2xl font-headline font-bold text-slate-900">Analisis Siswa 🕵️‍♂️</h2>
+            <p className="text-sm text-muted-foreground">Pilih siswa untuk memulai konsultasi AI.</p>
           </div>
 
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <Input 
-              placeholder="Cari nama atau email..." 
-              className="pl-12 h-14 bg-white rounded-2xl border-none shadow-sm focus-visible:ring-2 ring-primary/20 text-base"
+              placeholder="Cari nama siswa..." 
+              className="pl-12 h-14 bg-white rounded-2xl border-none shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* DEBUG INFO: Wajib Tampil Sesuai Permintaan Audit */}
-          <div className="bg-slate-900 text-white p-4 rounded-2xl space-y-1 shadow-lg">
-             <div className="flex items-center gap-2 mb-1">
-                <Database className="h-3 w-3 text-primary" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Firestore Audit</span>
-             </div>
-             <p className="text-[11px] font-mono">Collection Aktif: <span className="text-green-400">users</span></p>
-             <p className="text-[11px] font-mono">Jumlah Dokumen: <span className="text-green-400">{allUsers?.length || 0}</span></p>
-             <p className="text-[11px] font-mono">Siswa Terfilter: <span className="text-green-400">{filteredStudents.length}</span></p>
-             {filteredStudents.length > 0 && (
-               <p className="text-[11px] font-mono truncate">Siswa Pertama: <span className="text-yellow-400">{filteredStudents[0].nama}</span></p>
-             )}
-          </div>
-
           <div className="space-y-3 pt-2">
             {studentsLoading ? (
-              <div className="py-20 flex flex-col items-center gap-3">
-                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                 <p className="text-[10px] text-muted-foreground font-bold uppercase">Menghubungkan...</p>
-              </div>
+              <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
             ) : filteredStudents.length > 0 ? (
               filteredStudents.map((s) => (
                 <Card 
@@ -189,32 +165,20 @@ export default function TeacherAIAnalysisPage() {
                   onClick={() => setSelectedStudent(s)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
-                      <img 
-                        src={`https://picsum.photos/seed/${s.uid}/100/100`} 
-                        alt={s.nama} 
-                        onError={(e) => (e.currentTarget.src = 'https://placehold.co/100/100?text=S')}
-                      />
+                    <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white">
+                      <img src={`https://picsum.photos/seed/${s.uid}/100/100`} alt={s.nama} onError={(e) => (e.currentTarget.src = 'https://placehold.co/100/100?text=S')} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-sm text-slate-900 truncate">{s.nama}</h4>
-                      <div className="flex items-center gap-3 mt-1">
-                        <Badge variant="secondary" className="bg-blue-50 text-primary text-[9px] font-bold px-2">LV. {s.level || 1}</Badge>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                          <span className="text-[10px] font-bold text-slate-500">{s.poin || 0} XP</span>
-                        </div>
-                      </div>
+                      <p className="text-[10px] text-slate-500 font-bold">LV. {s.level || 1} • {s.poin || 0} XP</p>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                      <ChevronRight className="h-4 w-4" />
-                    </div>
+                    <ChevronRight className="h-4 w-4 text-slate-300" />
                   </div>
                 </Card>
               ))
             ) : (
               <div className="py-20 text-center space-y-4 bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
-                <AlertTriangle className="h-10 w-10 text-slate-200 mx-auto" />
+                <Database className="h-10 w-10 text-slate-100 mx-auto" />
                 <p className="text-sm font-bold text-slate-400">Siswa tidak ditemukan.</p>
               </div>
             )}
@@ -225,19 +189,11 @@ export default function TeacherAIAnalysisPage() {
           <div className="flex items-center justify-between px-1">
              <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg">
-                   <img 
-                    src={`https://picsum.photos/seed/${selectedStudent.uid}/100/100`} 
-                    alt="Siswa" 
-                    onError={(e) => (e.currentTarget.src = 'https://placehold.co/100/100?text=S')}
-                   />
+                   <img src={`https://picsum.photos/seed/${selectedStudent.uid}/100/100`} alt="Siswa" />
                 </div>
                 <div>
                    <h3 className="font-headline font-bold text-slate-900 leading-tight">{selectedStudent.nama}</h3>
-                   <p className="text-[10px] text-muted-foreground font-bold">LV. {selectedStudent.level} • {selectedStudent.poin} XP</p>
-                   <Button variant="link" className="p-0 h-auto text-[10px] font-bold text-primary uppercase" onClick={() => {
-                     setSelectedStudent(null);
-                     setAnalysisResult(null);
-                   }}>Ganti Siswa</Button>
+                   <Button variant="link" className="p-0 h-auto text-[10px] font-bold text-primary uppercase" onClick={() => { setSelectedStudent(null); setAnalysisResult(null); }}>Ganti Siswa</Button>
                 </div>
              </div>
              {analysisResult && (
@@ -250,109 +206,49 @@ export default function TeacherAIAnalysisPage() {
           {!analysisResult && !isAnalyzing ? (
             <Card className="rounded-[2rem] border-none bg-white p-8 text-center space-y-6 shadow-xl relative overflow-hidden">
                <div className="relative z-10 space-y-4">
-                  <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto">
-                    <Sparkles className="h-10 w-10 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-xl font-headline font-bold text-slate-900">Analisis ETHNO-AI</h4>
-                    <p className="text-xs text-muted-foreground px-6 leading-relaxed">
-                      AI akan meninjau level, poin, {selectedStudent.scanCount} pindaian QR, dan riwayat aktivitas untuk memberikan laporan mendalam.
-                    </p>
-                  </div>
-                  <Button 
-                    className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-lg gap-2"
-                    onClick={handleGenerateAI}
-                  >
-                    <UserCheck className="h-5 w-5" /> Analisis Sekarang
+                  <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto"><Sparkles className="h-10 w-10 text-primary" /></div>
+                  <h4 className="text-xl font-headline font-bold text-slate-900">Analisis ETHNO-AI</h4>
+                  <p className="text-xs text-muted-foreground px-6 leading-relaxed">Tinjau progres belajar {selectedStudent.nama} secara mendalam.</p>
+                  <Button className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-lg gap-2" onClick={handleGenerateAI}>
+                    <UserCheck className="h-5 w-5" /> Analisis Siswa
                   </Button>
                </div>
             </Card>
           ) : isAnalyzing ? (
-            <Card className="rounded-[2.5rem] border-none p-12 bg-white shadow-sm flex flex-col items-center justify-center space-y-6 min-h-[300px]">
-               <div className="relative">
-                  <Loader2 className="h-16 w-12 animate-spin text-primary" />
-                  <BrainCircuit className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-primary/40" />
-               </div>
-               <div className="text-center space-y-2">
-                  <h4 className="font-bold text-slate-900">Mengkonsultasikan Data...</h4>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">ETHNO-AI sedang memproses laporan</p>
-               </div>
-            </Card>
+            <div className="py-20 flex flex-col items-center justify-center space-y-4">
+               <Loader2 className="h-10 w-10 animate-spin text-primary" />
+               <p className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">Memproses Laporan AI...</p>
+            </div>
           ) : (
             <div className="space-y-6 pb-10">
-               {/* 1. Ringkasan & Engagement */}
                <Card className="rounded-[2.5rem] border-none bg-white p-6 shadow-sm space-y-4 border-l-8 border-primary">
-                  <div className="flex items-center gap-2">
-                    <LineChart className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Ringkasan Kemampuan</span>
-                  </div>
+                  <div className="flex items-center gap-2"><LineChart className="h-4 w-4 text-primary" /><span className="text-[10px] font-bold text-primary uppercase tracking-widest">Ringkasan Kemampuan</span></div>
                   <h3 className="text-xl font-headline font-bold text-slate-900">{analysisResult?.engagementLevel} Learner</h3>
                   <p className="text-sm text-slate-600 leading-relaxed font-medium">"{analysisResult?.summary}"</p>
                </Card>
 
-               {/* 2. Kelebihan & Kekurangan */}
                <div className="grid grid-cols-2 gap-4">
                   <Card className="rounded-3xl border-none p-5 bg-emerald-50 space-y-3">
                      <p className="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1"><Star className="h-3 w-3 fill-current" /> Kelebihan</p>
-                     <ul className="space-y-2">
-                        {analysisResult?.strengths.map((s, i) => (
-                          <li key={i} className="text-[9px] font-bold text-emerald-900 leading-tight flex gap-1">
-                             <span className="text-emerald-400">✓</span> {s}
-                          </li>
-                        ))}
-                     </ul>
+                     <ul className="space-y-1">{analysisResult?.strengths.map((s, i) => (<li key={i} className="text-[9px] font-bold text-emerald-900 flex gap-1">✓ {s}</li>))}</ul>
                   </Card>
                   <Card className="rounded-3xl border-none p-5 bg-orange-50 space-y-3">
                      <p className="text-[10px] font-bold text-orange-600 uppercase flex items-center gap-1"><Target className="h-3 w-3" /> Kekurangan</p>
-                     <ul className="space-y-2">
-                        {analysisResult?.weaknesses.map((w, i) => (
-                          <li key={i} className="text-[9px] font-bold text-orange-900 leading-tight flex gap-1">
-                             <span className="text-orange-300">•</span> {w}
-                          </li>
-                        ))}
-                     </ul>
+                     <ul className="space-y-1">{analysisResult?.weaknesses.map((w, i) => (<li key={i} className="text-[9px] font-bold text-orange-900 flex gap-1">• {w}</li>))}</ul>
                   </Card>
                </div>
 
-               {/* 3. Rekomendasi Guru */}
                <Card className="rounded-3xl border-none p-6 bg-slate-900 text-white space-y-4 shadow-xl">
-                  <div className="flex items-center gap-2">
-                    <BrainCircuit className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Instruksi Untuk Guru</span>
-                  </div>
-                  <div className="space-y-3">
-                     {analysisResult?.teacherRecommendations.map((r, i) => (
-                        <div key={i} className="flex gap-3 items-start">
-                           <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">{i + 1}</div>
-                           <p className="text-xs font-medium leading-relaxed opacity-90">{r}</p>
-                        </div>
-                     ))}
-                  </div>
+                  <div className="flex items-center gap-2"><BrainCircuit className="h-4 w-4 text-primary" /><span className="text-[10px] font-bold uppercase tracking-widest text-primary">Instruksi Untuk Guru</span></div>
+                  <div className="space-y-2">{analysisResult?.teacherRecommendations.map((r, i) => (<p key={i} className="text-xs font-medium opacity-90">{i + 1}. {r}</p>))}</div>
                </Card>
 
-               {/* 4. Rekomendasi Siswa */}
                <Card className="rounded-3xl border-none p-6 bg-blue-50 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-blue-600" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Pesan Motivasi Siswa</span>
-                  </div>
-                  <div className="space-y-3">
-                     {analysisResult?.studentRecommendations.map((r, i) => (
-                        <p key={i} className="text-xs font-bold text-blue-900 leading-relaxed italic">"★ {r}"</p>
-                     ))}
-                  </div>
+                  <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-blue-600" /><span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Pesan Motivasi Siswa</span></div>
+                  <div className="space-y-2">{analysisResult?.studentRecommendations.map((r, i) => (<p key={i} className="text-xs font-bold text-blue-900 italic">"★ {r}"</p>))}</div>
                </Card>
 
-               <Button 
-                variant="outline" 
-                className="w-full h-14 rounded-2xl font-bold border-2 border-slate-200 text-slate-500 hover:bg-slate-50"
-                onClick={() => {
-                  setAnalysisResult(null);
-                  setSelectedStudent(null);
-                }}
-               >
-                 Tutup Laporan
-               </Button>
+               <Button variant="outline" className="w-full h-14 rounded-2xl font-bold border-2 border-slate-200" onClick={() => { setAnalysisResult(null); setSelectedStudent(null); }}>Tutup Laporan</Button>
             </div>
           )}
         </section>

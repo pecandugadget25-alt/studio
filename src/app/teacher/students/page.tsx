@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState, useEffect } from "react";
@@ -13,7 +14,8 @@ import {
   ChevronRight, 
   ArrowLeft,
   Star,
-  Loader2
+  Loader2,
+  Database
 } from "lucide-react";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -28,13 +30,7 @@ export default function TeacherStudentsPage() {
   const { profile, loading: authLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Guard: Hanya Guru/Admin
-  useEffect(() => {
-    if (!authLoading && profile && profile.peran === 'siswa') {
-      router.push("/");
-    }
-  }, [profile, authLoading, router]);
-
+  // QUERY UTAMA: Identik dengan yang akan digunakan AI Analysis
   const studentsQuery = useMemo(() => {
     if (!db) return null;
     return query(collection(db, "users"), where("peran", "==", "siswa"));
@@ -59,8 +55,7 @@ export default function TeacherStudentsPage() {
 
   return (
     <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
-      {/* Header navigasi */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 android-shadow max-w-[500px] mx-auto">
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 max-w-[500px] mx-auto">
         <div className="flex items-center gap-3">
           <Link href="/teacher">
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -69,6 +64,17 @@ export default function TeacherStudentsPage() {
           </Link>
           <h1 className="font-headline font-bold text-lg text-primary tracking-tight">DATA SISWA</h1>
         </div>
+      </div>
+
+      {/* PANEL AUDIT: Membuktikan sumber data */}
+      <div className="bg-slate-900 text-[10px] font-mono text-green-400 p-3 rounded-xl space-y-1 shadow-inner">
+        <div className="flex items-center gap-2 text-primary border-b border-slate-800 pb-1 mb-1">
+           <Database className="h-3 w-3" />
+           <span className="font-bold uppercase">Firestore Audit Source</span>
+        </div>
+        <p>Path: <span className="text-white">/users</span></p>
+        <p>Query: <span className="text-white">peran == 'siswa'</span></p>
+        <p>Found: <span className="text-yellow-400 font-bold">{students.length} Documents</span></p>
       </div>
 
       <section className="px-1 flex items-center justify-between">
@@ -81,7 +87,6 @@ export default function TeacherStudentsPage() {
         </div>
       </section>
 
-      {/* Pencarian */}
       <section className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -92,12 +97,8 @@ export default function TeacherStudentsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button variant="outline" className="h-12 w-12 rounded-2xl bg-white border-none shadow-sm p-0">
-          <Filter className="h-5 w-5 text-slate-600" />
-        </Button>
       </section>
 
-      {/* Daftar Siswa */}
       <section className="space-y-4">
         {filteredStudents.length > 0 ? (
           filteredStudents.map((student) => (
@@ -118,26 +119,10 @@ export default function TeacherStudentsPage() {
                       <ChevronRight className="h-4 w-4 text-slate-300" />
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-[9px] uppercase font-bold px-2">Level {Math.floor((Number(student.poin) || 0) / 100) + 1}</Badge>
+                      <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-[9px] uppercase font-bold px-2">Level {student.level || 1}</Badge>
                       <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-100">
                         <Star className="h-3 w-3 text-yellow-500 fill-current" />
                         <span className="text-[10px] font-bold text-yellow-700">{student.poin || 0} XP</span>
-                      </div>
-                    </div>
-
-                    {/* Progress Modul */}
-                    <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-slate-50">
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Batik</p>
-                        <Progress value={student.completedModules?.includes('batik') ? 100 : 0} className="h-1" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Candi</p>
-                        <Progress value={student.completedModules?.includes('candi') ? 100 : 0} className="h-1" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Games</p>
-                        <Progress value={student.completedModules?.includes('games') ? 100 : 0} className="h-1" />
                       </div>
                     </div>
                   </div>
@@ -146,11 +131,9 @@ export default function TeacherStudentsPage() {
             </Link>
           ))
         ) : (
-          <div className="py-20 text-center space-y-4">
-            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
-              <Users className="h-10 w-10 text-slate-300" />
-            </div>
-            <p className="text-slate-400 font-medium italic">Siswa tidak ditemukan.</p>
+          <div className="py-20 text-center space-y-4 bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
+             <Database className="h-10 w-10 text-slate-200 mx-auto" />
+             <p className="text-sm font-bold text-slate-400">Belum ada siswa di database.</p>
           </div>
         )}
       </section>
