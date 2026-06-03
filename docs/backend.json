@@ -15,6 +15,7 @@
         "scanCount": { "type": "number", "description": "Total pemindaian QR yang berhasil." },
         "completedModules": { "type": "array", "items": { "type": "string" } },
         "completedComics": { "type": "array", "items": { "type": "string" } },
+        "completedVideos": { "type": "array", "items": { "type": "string" }, "description": "Daftar ID video yang sudah selesai ditonton." },
         "badges": { "type": "array", "items": { "type": "string" } },
         "tanggalDaftar": { "type": "string", "format": "date-time" }
       },
@@ -26,9 +27,11 @@
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
+        "studentName": { "type": "string" },
         "qrType": { "type": "string" },
         "title": { "type": "string" },
         "url": { "type": "string" },
+        "source": { "type": "string" },
         "xpEarned": { "type": "number" },
         "timestamp": { "type": "string", "format": "date-time" }
       }
@@ -41,7 +44,7 @@
         "userId": { "type": "string" },
         "userName": { "type": "string" },
         "action": { "type": "string" },
-        "type": { "type": "string", "enum": ["quiz", "comic", "ar", "module", "scan"] },
+        "type": { "type": "string", "enum": ["quiz", "comic", "ar", "module", "scan", "video"] },
         "timestamp": { "type": "string", "format": "date-time" }
       }
     }
