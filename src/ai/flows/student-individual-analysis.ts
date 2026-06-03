@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Genkit flow untuk melakukan analisis mendalam individu siswa.
- * Menghasilkan laporan terperinci sesuai spesifikasi kurikulum ETHNO-ARITH.
+ * Menghasilkan laporan terperinci berbasis data realtime untuk kurikulum ETHNO-ARITH.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,18 +10,20 @@ import { z } from 'genkit';
 const StudentDataSchema = z.object({
   nama: z.string(),
   level: z.number(),
-  poin: z.number(),
-  badges: z.array(z.string()).optional(),
-  completedModules: z.array(z.string()).optional(),
+  poin: z.number().describe('Total XP siswa'),
+  badgeCount: z.number().describe('Jumlah lencana yang dimiliki'),
+  completedModules: z.array(z.string()).describe('Daftar nama modul yang selesai'),
+  unfinishedModules: z.array(z.string()).describe('Daftar nama modul yang belum selesai'),
+  activitySummary: z.string().optional().describe('Ringkasan aktivitas terakhir siswa'),
 });
 
 const AnalysisOutputSchema = z.object({
   summary: z.string().describe('Ringkasan kemampuan numerasi dan budaya siswa.'),
-  strengths: z.array(z.string()).describe('3-4 Kelebihan utama siswa dalam pembelajaran.'),
-  weaknesses: z.array(z.string()).describe('3-4 Kekurangan atau area yang butuh perbaikan.'),
-  teacherRecommendations: z.array(z.string()).describe('3-4 saran konkret untuk Guru dalam membimbing siswa ini.'),
-  prediction: z.string().describe('Prediksi perkembangan belajar siswa di masa depan.'),
-  riskLevel: z.enum(['aman', 'perhatian', 'risiko']).describe('Tingkat risiko kesulitan belajar.'),
+  strengths: z.array(z.string()).describe('3-4 Kelebihan utama siswa.'),
+  improvementAreas: z.array(z.string()).describe('3-4 Area yang perlu dikembangkan.'),
+  teacherRecommendations: z.array(z.string()).describe('Saran konkret untuk Guru.'),
+  prediction: z.string().describe('Prediksi perkembangan belajar siswa.'),
+  riskLevel: z.enum(['aman', 'perhatian', 'risiko']).describe('Tingkat risiko akademik.'),
 });
 
 export type StudentAnalysisInput = z.infer<typeof StudentDataSchema>;
@@ -37,23 +39,32 @@ const prompt = ai.definePrompt({
   output: { schema: AnalysisOutputSchema },
   system: `Anda adalah Senior AI Education Consultant di platform ETHNO-ARITH.
   
-Tugas Anda adalah menganalisis data progres siswa SD dalam mempelajari etnomatematika.
+Tugas Anda adalah menganalisis data progres siswa SD secara JUJUR, PERSONAL, dan DINAMIS berdasarkan data nyata. 
+JANGAN gunakan template statis. Setiap siswa harus mendapatkan analisis berbeda.
 
-KATEGORI LAPORAN:
-1. Ringkasan Kemampuan: Narasi singkat tentang pemahaman materi.
-2. Kelebihan & Kekurangan: Fokus pada numerasi dan literasi budaya.
-3. Rekomendasi Guru: Instruksi teknis untuk pengajaran di kelas.
-4. Prediksi Perkembangan: Ramalan kemajuan belajar berdasarkan poin dan modul.
+LOGIKA ANALISIS:
+1. Jika XP = 0 & Modul Selesai = 0: Analisis sebagai 'Fase Orientasi/Pemula'. Fokus pada motivasi memulai.
+2. Jika XP > 0: Analisis 'Grafik Pertumbuhan'. Bahas bagaimana poin dikumpulkan.
+3. Jika Badge Count >= 3: Berikan apresiasi atas 'Konsistensi Belajar' dan dedikasi.
+4. Jika ada Unfinished Modules: Berikan rekomendasi spesifik untuk menyelesaikan materi tersebut.
+5. Jika SEMUA modul selesai: Analisis sebagai 'Siswa Unggul/Pahlawan Numerasi'.
 
-Gunakan bahasa Indonesia yang edukatif, suportif, dan objektif.`,
-  prompt: `Lakukan analisis untuk siswa:
+HASILKAN DALAM BAHASA INDONESIA YANG EDUKATIF DAN SUPORTIF.`,
+  prompt: `Lakukan analisis mendalam untuk siswa berikut:
 Nama: {{{nama}}}
 Level: {{{level}}}
-XP: {{{poin}}}
-Lencana: {{#each badges}}{{{this}}}, {{/each}}
+Total XP: {{{poin}}}
+Jumlah Lencana: {{{badgeCount}}}
 Modul Selesai: {{#each completedModules}}{{{this}}}, {{/each}}
+Modul Belum Selesai: {{#each unfinishedModules}}{{{this}}}, {{/each}}
+Riwayat Aktivitas: {{{activitySummary}}}
 
-Jika data XP < 10, nyatakan bahwa siswa masih dalam tahap orientasi awal.`
+Instruksi Output:
+- summary: Narasi singkat (2-3 kalimat) tentang profil belajar saat ini.
+- strengths: Daftar poin kelebihan numerasi/budaya.
+- improvementAreas: Daftar poin yang masih harus dipelajari (terutama modul yang belum selesai).
+- teacherRecommendations: Langkah teknis untuk guru di kelas.
+- prediction: Ramalan kemajuan jika pola belajar dipertahankan.`
 });
 
 const studentIndividualAnalysisFlow = ai.defineFlow(
@@ -70,11 +81,11 @@ const studentIndividualAnalysisFlow = ai.defineFlow(
     } catch (error) {
       console.error('AI Analysis Error:', error);
       return {
-        summary: "Siswa sedang memulai petualangan belajarnya.",
-        strengths: ["Memiliki kemauan belajar"],
-        weaknesses: ["Data aktivitas terbatas"],
-        teacherRecommendations: ["Berikan motivasi untuk mencoba modul pertama"],
-        prediction: "Siswa akan berkembang pesat setelah menyelesaikan 1 modul.",
+        summary: "Siswa sedang berada dalam tahap awal eksplorasi numerasi budaya.",
+        strengths: ["Memiliki akun aktif di platform"],
+        improvementAreas: ["Memulai pengerjaan modul pertama"],
+        teacherRecommendations: ["Berikan bimbingan langsung untuk memandu penggunaan aplikasi"],
+        prediction: "Siswa akan segera berkembang setelah mencoba fitur Smart Scan.",
         riskLevel: "perhatian"
       };
     }
