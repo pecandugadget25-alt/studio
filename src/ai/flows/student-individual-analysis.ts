@@ -18,12 +18,12 @@ const StudentDataSchema = z.object({
 });
 
 const AnalysisOutputSchema = z.object({
-  summary: z.string().describe('Ringkasan kemampuan numerasi dan budaya siswa yang menyebutkan nama modul spesifik.'),
-  strengths: z.array(z.string()).describe('3-4 Kelebihan utama siswa berdasarkan materi yang dikuasai.'),
-  improvementAreas: z.array(z.string()).describe('3-4 Area yang perlu dikembangkan berdasarkan modul yang tertunda.'),
-  teacherRecommendations: z.array(z.string()).describe('Saran konkret untuk Guru membantu siswa.'),
-  studentRecommendations: z.array(z.string()).describe('Saran langsung untuk Siswa meningkatkan belajarnya.'),
-  prediction: z.string().describe('Prediksi perkembangan belajar jika materi spesifik dituntaskan.'),
+  summary: z.string().describe('Ringkasan kemampuan numerasi dan budaya siswa.'),
+  strengths: z.array(z.string()).describe('Kelebihan utama siswa.'),
+  improvementAreas: z.array(z.string()).describe('Area yang perlu dikembangkan atau modul yang tertunda.'),
+  teacherRecommendations: z.array(z.string()).describe('Saran konkret untuk Guru.'),
+  studentRecommendations: z.array(z.string()).describe('Saran langsung untuk Siswa.'),
+  prediction: z.string().describe('Prediksi perkembangan belajar masa depan.'),
   riskLevel: z.enum(['aman', 'perhatian', 'risiko']).describe('Tingkat risiko akademik.'),
 });
 
@@ -40,32 +40,34 @@ const prompt = ai.definePrompt({
   output: { schema: AnalysisOutputSchema },
   system: `Anda adalah Senior AI Education Consultant di platform ETHNO-ARITH.
   
-Tugas Anda adalah menganalisis data progres siswa secara FAKTUAL, JUJUR, dan DINAMIS berdasarkan daftar modul dan status XP.
+Tugas Anda adalah menganalisis data progres siswa secara FAKTUAL dan DINAMIS.
 
-DATA KONTEKS:
-- Nama: {{{nama}}}
+ATURAN LOGIKA BERDASARKAN MILESTONE XP:
+1. SISWA BARU (XP = 0): Fokus pada motivasi orientasi.
+2. AKTIF AWAL (XP 1 - 50): Apresiasi langkah pertama. Jika badgeCount = 0, sarankan lencana pertama.
+3. BERKEMBANG (XP 51 - 150): Acknowledge pertumbuhan, fokus pada penyelesaian modul.
+4. MAHIR (XP > 150): Fokus pada penguasaan mendalam dan konsistensi.
+
+ATURAN LOGIKA LENCANA (STRICT):
+- JIKA badgeCount > 0: DILARANG menggunakan kalimat "dapatkan lencana pertama". Gunakan "Pertahankan progresmu dan kumpulkan lebih banyak lencana".
+- JIKA badgeCount = 0: Gunakan "Ayo selesaikan modul pertamamu untuk mendapatkan lencana pertama".
+
+ATURAN LOGIKA MATURITAS:
+- JIKA completedModules >= 2: DILARANG menggunakan kata "pemula", "orientasi", atau "lencana pertama". Anggap siswa sudah masuk fase akselerasi.
+
+ATURAN NARASI:
+- SEBUTKAN NAMA MATERI secara spesifik (Batik, Candi, Masjid, Permainan).
+- Gunakan Bahasa Indonesia yang edukatif dan inspiratif.
+- Sesuaikan tingkat RISIKO: 'aman' (progres rutin), 'perhatian' (progres lambat/XP rendah), 'risiko' (tidak ada aktivitas sama sekali).`,
+  prompt: `Lakukan analisis untuk siswa bernama {{{nama}}}.
+Data Faktual:
 - XP: {{{poin}}}
-- Lencana: {{{badgeCount}}}
+- Jumlah Lencana: {{{badgeCount}}}
 - Modul Selesai: {{#each completedModules}}{{{this}}}, {{/each}}
 - Modul Belum: {{#each unfinishedModules}}{{{this}}}, {{/each}}
+- Ringkasan Aktivitas: {{{activitySummary}}}
 
-ATURAN WAJIB (STRICT RULES):
-1. SEBUTKAN NAMA MATERI secara spesifik dalam analisis Anda. 
-2. JANGAN PERNAH katakan "Belum ada progres signifikan" jika XP > 0 atau ada modul yang selesai. Jika siswa punya 5 XP sekalipun, hargai itu sebagai bukti interaksi awal.
-3. Jika modul selesai ada 1-2, sebutkan modul tersebut di bagian SUMMARY.
-4. Jika modul selesai > 2, nyatakan siswa memiliki minat tinggi pada Etnomatematika.
-5. Jika XP = 0 dan modul selesai = 0, analisis sebagai fase orientasi (AMAN).
-6. Berikan rekomendasi yang BERBEDA untuk Guru dan Siswa.
-7. SESUAIKAN TINGKAT RISIKO: 
-   - 'aman': XP bertambah dalam log aktivitas atau modul selesai > 0.
-   - 'perhatian': XP > 0 tapi modul belum ada yang selesai dalam waktu lama.
-   - 'risiko': XP = 0 dan belum ada aktivitas di modul manapun setelah mendaftar.
-
-HASILKAN DALAM BAHASA INDONESIA YANG EDUKATIF BERBASIS DATA NYATA.`,
-  prompt: `Lakukan analisis mendalam untuk siswa: {{{nama}}}. 
-Gunakan fakta bahwa dia memiliki {{{poin}}} XP dan telah menyelesaikan modul: {{#each completedModules}}{{{this}}}, {{/each}}. 
-Modul yang tersisa adalah: {{#each unfinishedModules}}{{{this}}}, {{/each}}.
-Ringkasan aktivitas: {{{activitySummary}}}`
+Hasilkan analisis yang mendalam dan tidak generik.`
 });
 
 const studentIndividualAnalysisFlow = ai.defineFlow(
@@ -81,18 +83,25 @@ const studentIndividualAnalysisFlow = ai.defineFlow(
       return output;
     } catch (error) {
       console.error('AI Analysis Error:', error);
-      // Fallback yang lebih cerdas jika AI gagal
-      const hasProgress = input.poin > 0 || input.completedModules.length > 0;
+      
+      // Fallback cerdas berbasis kategori yang diminta user
+      const isAdvanced = input.poin > 150;
+      const isDeveloping = input.poin > 50 && input.poin <= 150;
+      const hasBadges = input.badgeCount > 0;
+      const hasModules = input.completedModules.length > 0;
+
       return {
-        summary: hasProgress 
-          ? `Siswa atas nama ${input.nama} telah menunjukkan interaksi dengan platform ETHNO-ARITH (XP: ${input.poin}). Fokus saat ini adalah menuntaskan materi ${input.unfinishedModules[0] || 'Nusantara'}.`
-          : "Siswa sedang dalam tahap awal eksplorasi platform.",
-        strengths: hasProgress ? ["Memiliki kemauan mencoba modul", "Interaksi awal berhasil"] : ["Memulai pendaftaran"],
+        summary: hasModules 
+          ? `Siswa telah menunjukkan penguasaan materi ${input.completedModules.join(", ")}.`
+          : `Siswa sedang memulai eksplorasi pada modul ${input.unfinishedModules[0] || 'Nusantara'}.`,
+        strengths: hasModules ? ["Penguasaan modul budaya", "Konsistensi belajar"] : ["Keinginan untuk memulai"],
         improvementAreas: [input.unfinishedModules[0] || "Menyelesaikan modul pertama"],
-        teacherRecommendations: ["Berikan dorongan untuk memindai QR pada modul fisik."],
-        studentRecommendations: ["Ayo selesaikan modul pertamamu untuk dapat lencana!"],
-        prediction: "Siswa akan berkembang setelah memahami konsep dasar numerasi.",
-        riskLevel: hasProgress ? "aman" : "perhatian"
+        teacherRecommendations: ["Berikan apresiasi pada pencapaian XP saat ini."],
+        studentRecommendations: hasBadges 
+          ? ["Pertahankan progresmu dan kumpulkan lebih banyak lencana!"] 
+          : ["Ayo selesaikan modul pertamamu untuk mendapatkan lencana pertama!"],
+        prediction: isAdvanced ? "Siswa akan menjadi tutor sebaya yang baik." : "Siswa akan berkembang seiring penyelesaian modul.",
+        riskLevel: input.poin > 0 ? "aman" : "perhatian"
       };
     }
   }
