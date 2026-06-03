@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,6 @@ import {
   Search, 
   Sparkles, 
   ArrowLeft, 
-  Users, 
   ChevronRight, 
   Loader2,
   BrainCircuit,
@@ -20,7 +20,8 @@ import {
   History,
   ShieldCheck,
   UserCheck,
-  LineChart
+  LineChart,
+  Database
 } from "lucide-react";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -37,7 +38,7 @@ export default function TeacherAIAnalysisPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<StudentAnalysisOutput | null>(null);
 
-  // Sync dengan koleksi users peran siswa (Sama dengan Data Siswa)
+  // AUDIT: Menggunakan Query yang sama persis dengan halaman /teacher/students
   const studentsQuery = useMemo(() => {
     if (!db) return null;
     return query(collection(db, "users"), where("peran", "==", "siswa"));
@@ -45,16 +46,15 @@ export default function TeacherAIAnalysisPage() {
 
   const { data: allStudents, loading: studentsLoading } = useCollection(studentsQuery);
 
-  // Filtering cerdas untuk dropdown pencarian
+  // Filtering cerdas: Menampilkan semua siswa jika kolom pencarian kosong
   const filteredStudents = useMemo(() => {
     if (!allStudents) return [];
-    if (!searchTerm.trim()) return allStudents.slice(0, 5); // Tampilkan 5 terbaru jika belum ngetik
+    if (!searchTerm.trim()) return allStudents; // Tampilkan SEMUA siswa yang ada di collection users peran siswa
     
     return allStudents.filter(s => 
       s.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      s.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.uid?.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 10);
+      s.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   }, [allStudents, searchTerm]);
 
   // Riwayat analisis terakhir untuk siswa yang dipilih
@@ -101,17 +101,6 @@ export default function TeacherAIAnalysisPage() {
         recentActivities: studentActivities
       });
 
-      // Validasi data cukup
-      if ((selectedStudent.poin || 0) < 5 && selectedStudent.scanCount === 0) {
-        toast({
-          variant: "destructive",
-          title: "Data Tidak Cukup",
-          description: "Siswa ini belum memiliki cukup aktivitas untuk dianalisis secara akurat."
-        });
-        setIsAnalyzing(false);
-        return;
-      }
-
       setAnalysisResult(result);
 
       // Simpan ke riwayat Firestore
@@ -124,14 +113,14 @@ export default function TeacherAIAnalysisPage() {
 
       toast({
         title: "Analisis Selesai",
-        description: `Wawasan baru untuk ${selectedStudent.nama} telah tersedia.`
+        description: `Laporan edukasi untuk ${selectedStudent.nama} siap dibaca.`
       });
     } catch (error) {
       console.error(error);
       toast({
         variant: "destructive",
-        title: "AI Gagal",
-        description: "Gagal menghubungkan ke ETHNO-AI. Silakan coba lagi."
+        title: "AI Error",
+        description: "Gagal memproses analisis. Silakan coba lagi."
       });
     } finally {
       setIsAnalyzing(false);
@@ -140,10 +129,10 @@ export default function TeacherAIAnalysisPage() {
 
   const getRiskStyles = (level: string) => {
     switch (level) {
-      case 'aman': return { color: 'bg-green-500', icon: ShieldCheck, text: 'Aman' };
-      case 'perhatian': return { color: 'bg-yellow-500', icon: AlertTriangle, text: 'Perhatian' };
-      case 'risiko': return { color: 'bg-red-500', icon: Zap, text: 'Risiko Tinggi' };
-      default: return { color: 'bg-slate-400', icon: BrainCircuit, text: 'Baru' };
+      case 'aman': return { color: 'bg-green-500', text: '🟢 Aman' };
+      case 'perhatian': return { color: 'bg-yellow-500', text: '🟡 Perhatian' };
+      case 'risiko': return { color: 'bg-red-500', text: '🔴 Risiko' };
+      default: return { color: 'bg-slate-400', text: 'Baru' };
     }
   };
 
@@ -153,7 +142,7 @@ export default function TeacherAIAnalysisPage() {
         <div className="flex items-center gap-3">
           <Link href="/teacher">
             <Button variant="ghost" size="icon" className="rounded-full">
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5 text-slate-600" />
             </Button>
           </Link>
           <h1 className="font-headline font-bold text-lg text-primary">AI ANALISIS</h1>
@@ -166,38 +155,47 @@ export default function TeacherAIAnalysisPage() {
       {!selectedStudent ? (
         <section className="space-y-4">
           <div className="px-1">
-            <h2 className="text-2xl font-headline font-bold text-slate-900">Cari Siswa 🕵️‍♂️</h2>
-            <p className="text-sm text-muted-foreground">Ketik nama atau email siswa untuk memulai analisis.</p>
+            <h2 className="text-2xl font-headline font-bold text-slate-900">Analisis Siswa 🕵️‍♂️</h2>
+            <p className="text-sm text-muted-foreground">Pilih siswa untuk mendapatkan wawasan belajar AI.</p>
           </div>
 
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <Input 
-              placeholder="Contoh: Arie test2..." 
+              placeholder="Cari nama siswa..." 
               className="pl-12 h-14 bg-white rounded-2xl border-none shadow-sm focus-visible:ring-2 ring-primary/20 text-base"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
+          {/* Debug Info Sementara */}
+          <div className="bg-blue-900/5 p-3 rounded-xl border border-blue-100 flex items-center justify-between">
+             <div className="flex items-center gap-2">
+                <Database className="h-3 w-3 text-blue-500" />
+                <span className="text-[10px] font-bold text-blue-700 uppercase">Audit Firestore</span>
+             </div>
+             <div className="flex gap-3">
+                <span className="text-[9px] font-bold">Col: users</span>
+                <span className="text-[9px] font-bold">Found: {allStudents?.length || 0}</span>
+             </div>
+          </div>
+
           <div className="space-y-3">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
-              {searchTerm ? 'Hasil Pencarian' : 'Daftar Siswa Terbaru'}
-            </p>
             {studentsLoading ? (
-              <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+              <div className="py-20 flex flex-col items-center gap-3">
+                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                 <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Menghubungkan ke Database...</p>
+              </div>
             ) : filteredStudents.length > 0 ? (
               filteredStudents.map((s) => (
                 <Card 
                   key={s.uid} 
-                  className="rounded-3xl border-none p-4 bg-white shadow-sm hover:ring-2 ring-primary/40 transition-all cursor-pointer group active:scale-[0.98]"
-                  onClick={() => {
-                    setSelectedStudent(s);
-                    setSearchTerm("");
-                  }}
+                  className="rounded-3xl border-none p-4 bg-white shadow-sm hover:ring-2 ring-primary/40 transition-all cursor-pointer group"
+                  onClick={() => setSelectedStudent(s)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
                       <img 
                         src={`https://picsum.photos/seed/${s.uid}/100/100`} 
                         alt={s.nama} 
@@ -206,8 +204,8 @@ export default function TeacherAIAnalysisPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-sm text-slate-900 truncate">{s.nama}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="bg-blue-50 text-primary text-[9px] uppercase font-bold px-2">Lv {s.level || 1}</Badge>
+                      <div className="flex items-center gap-3 mt-1">
+                        <Badge variant="secondary" className="bg-blue-50 text-primary text-[9px] font-bold px-2">Level {s.level || 1}</Badge>
                         <div className="flex items-center gap-1">
                           <Star className="h-3 w-3 text-yellow-500 fill-current" />
                           <span className="text-[10px] font-bold text-slate-500">{s.poin || 0} XP</span>
@@ -215,22 +213,24 @@ export default function TeacherAIAnalysisPage() {
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-primary" />
+                      <ChevronRight className="h-4 w-4 text-slate-300" />
                     </div>
                   </div>
                 </Card>
               ))
             ) : (
-              <div className="py-10 text-center space-y-2">
-                <AlertTriangle className="h-8 w-8 text-slate-200 mx-auto" />
-                <p className="text-sm text-slate-400 italic">Siswa tidak ditemukan.</p>
+              <div className="py-20 text-center space-y-4">
+                <AlertTriangle className="h-10 w-10 text-slate-200 mx-auto" />
+                <div className="space-y-1">
+                   <p className="text-sm font-bold text-slate-400 italic">Siswa tidak ditemukan.</p>
+                   <p className="text-[10px] text-muted-foreground px-10">Pastikan siswa sudah terdaftar dengan peran 'siswa' di koleksi users.</p>
+                </div>
               </div>
             )}
           </div>
         </section>
       ) : (
         <section className="space-y-6">
-          {/* Header Siswa Terpilih */}
           <div className="flex items-center justify-between px-1">
              <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg">
@@ -242,6 +242,7 @@ export default function TeacherAIAnalysisPage() {
                 </div>
                 <div>
                    <h3 className="font-headline font-bold text-slate-900 leading-tight">{selectedStudent.nama}</h3>
+                   <p className="text-[10px] text-muted-foreground font-bold">LV. {selectedStudent.level} • {selectedStudent.poin} XP</p>
                    <Button variant="link" className="p-0 h-auto text-[10px] font-bold text-primary uppercase" onClick={() => {
                      setSelectedStudent(null);
                      setAnalysisResult(null);
@@ -258,23 +259,22 @@ export default function TeacherAIAnalysisPage() {
           {!analysisResult && !isAnalyzing ? (
             <Card className="rounded-[2rem] border-none bg-white p-8 text-center space-y-6 shadow-xl relative overflow-hidden">
                <div className="relative z-10 space-y-4">
-                  <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto transform rotate-6">
+                  <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto">
                     <Sparkles className="h-10 w-10 text-primary" />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-xl font-headline font-bold text-slate-900">Mulai Analisis?</h4>
+                    <h4 className="text-xl font-headline font-bold text-slate-900">Siap Menganalisis?</h4>
                     <p className="text-xs text-muted-foreground px-6 leading-relaxed">
-                      AI akan meninjau level, poin, {selectedStudent.scanCount} pindaian QR, dan log aktivitas {selectedStudent.nama} untuk memberikan rekomendasi pengajaran.
+                      AI akan meninjau level, poin, {selectedStudent.scanCount} pindaian QR, dan riwayat aktivitas untuk memberikan laporan mendalam.
                     </p>
                   </div>
                   <Button 
-                    className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-lg shadow-primary/20 gap-2"
+                    className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-lg gap-2"
                     onClick={handleGenerateAI}
                   >
-                    <UserCheck className="h-5 w-5" /> Analisis Siswa
+                    <UserCheck className="h-5 w-5" /> Analisis Sekarang
                   </Button>
                </div>
-               <div className="absolute -right-8 -top-8 bg-slate-50 w-32 h-32 rounded-full" />
             </Card>
           ) : isAnalyzing ? (
             <Card className="rounded-[2.5rem] border-none p-12 bg-white shadow-sm flex flex-col items-center justify-center space-y-6 min-h-[300px]">
@@ -283,87 +283,71 @@ export default function TeacherAIAnalysisPage() {
                   <BrainCircuit className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-primary/40" />
                </div>
                <div className="text-center space-y-2">
-                  <h4 className="font-bold text-slate-900">ETHNO-AI Sedang Berpikir...</h4>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Menganalisis Progres Belajar</p>
+                  <h4 className="font-bold text-slate-900">Mengkonsultasikan Data...</h4>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">ETHNO-AI sedang memproses laporan</p>
                </div>
             </Card>
           ) : (
-            /* HASIL LAPORAN AI */
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-500 pb-10">
-               {/* A. Ringkasan Kemampuan */}
+               {/* 1. Ringkasan & Engagement */}
                <Card className="rounded-[2.5rem] border-none bg-white p-6 shadow-sm space-y-4 border-l-8 border-primary">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                       <LineChart className="h-4 w-4" />
-                    </div>
+                    <LineChart className="h-4 w-4 text-primary" />
                     <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Ringkasan Kemampuan</span>
                   </div>
-                  <h3 className="text-xl font-headline font-bold text-slate-900">{analysisResult?.engagementLevel} Explorer</h3>
+                  <h3 className="text-xl font-headline font-bold text-slate-900">{analysisResult?.engagementLevel} Learner</h3>
                   <p className="text-sm text-slate-600 leading-relaxed font-medium">"{analysisResult?.summary}"</p>
                </Card>
 
-               {/* B & C. Kelebihan & Kekurangan */}
+               {/* 2. Kelebihan & Kekurangan */}
                <div className="grid grid-cols-2 gap-4">
                   <Card className="rounded-3xl border-none p-5 bg-emerald-50 space-y-3">
-                     <div className="flex items-center gap-2 text-emerald-600">
-                        <Star className="h-4 w-4 fill-current" />
-                        <span className="text-[10px] font-bold uppercase">Kelebihan</span>
-                     </div>
+                     <p className="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1"><Star className="h-3 w-3 fill-current" /> Kelebihan</p>
                      <ul className="space-y-2">
                         {analysisResult?.strengths.map((s, i) => (
-                          <li key={i} className="text-[10px] font-bold text-emerald-900 flex gap-2">
-                             <span className="text-emerald-400 shrink-0">✓</span> {s}
+                          <li key={i} className="text-[9px] font-bold text-emerald-900 leading-tight flex gap-1">
+                             <span className="text-emerald-400">✓</span> {s}
                           </li>
                         ))}
                      </ul>
                   </Card>
                   <Card className="rounded-3xl border-none p-5 bg-orange-50 space-y-3">
-                     <div className="flex items-center gap-2 text-orange-600">
-                        <Target className="h-4 w-4" />
-                        <span className="text-[10px] font-bold uppercase">Kekurangan</span>
-                     </div>
+                     <p className="text-[10px] font-bold text-orange-600 uppercase flex items-center gap-1"><Target className="h-3 w-3" /> Kekurangan</p>
                      <ul className="space-y-2">
                         {analysisResult?.weaknesses.map((w, i) => (
-                          <li key={i} className="text-[10px] font-bold text-orange-900 flex gap-2">
-                             <span className="text-orange-300 shrink-0">•</span> {w}
+                          <li key={i} className="text-[9px] font-bold text-orange-900 leading-tight flex gap-1">
+                             <span className="text-orange-300">•</span> {w}
                           </li>
                         ))}
                      </ul>
                   </Card>
                </div>
 
-               {/* F. Rekomendasi Guru */}
+               {/* 3. Rekomendasi Guru */}
                <Card className="rounded-3xl border-none p-6 bg-slate-900 text-white space-y-4">
                   <div className="flex items-center gap-2">
                     <BrainCircuit className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Panduan Untuk Guru</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Instruksi Untuk Guru</span>
                   </div>
                   <div className="space-y-3">
                      {analysisResult?.teacherRecommendations.map((r, i) => (
                         <div key={i} className="flex gap-3 items-start">
-                           <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">
-                              {i + 1}
-                           </div>
+                           <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold">{i + 1}</div>
                            <p className="text-xs font-medium leading-relaxed opacity-90">{r}</p>
                         </div>
                      ))}
                   </div>
                </Card>
 
-               {/* G. Rekomendasi Siswa */}
+               {/* 4. Rekomendasi Siswa */}
                <Card className="rounded-3xl border-none p-6 bg-blue-50 space-y-4">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-blue-600" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Pesan Untuk Siswa</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Pesan Motivasi Siswa</span>
                   </div>
                   <div className="space-y-3">
                      {analysisResult?.studentRecommendations.map((r, i) => (
-                        <div key={i} className="flex gap-3 items-start">
-                           <div className="w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center shrink-0 text-[10px] font-bold">
-                              ★
-                           </div>
-                           <p className="text-xs font-bold text-blue-900 leading-relaxed italic">"{r}"</p>
-                        </div>
+                        <p key={i} className="text-xs font-bold text-blue-900 leading-relaxed italic">"★ {r}"</p>
                      ))}
                   </div>
                </Card>
@@ -376,29 +360,6 @@ export default function TeacherAIAnalysisPage() {
                  Analisis Ulang
                </Button>
             </div>
-          )}
-
-          {/* Riwayat Terakhir Mini */}
-          {analysisHistory && analysisHistory.length > 0 && (
-            <section className="space-y-4 pt-4 border-t">
-               <div className="flex items-center gap-2 px-1 text-slate-400">
-                  <History className="h-4 w-4" />
-                  <h4 className="font-headline font-bold text-xs uppercase tracking-widest">Riwayat Analisis Siswa</h4>
-               </div>
-               <div className="space-y-3">
-                  {analysisHistory.map((hist: any) => (
-                    <Card key={hist.id} className="rounded-2xl border-none p-4 bg-white shadow-sm flex items-center justify-between">
-                       <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-bold text-slate-900 truncate uppercase">{hist.engagementLevel} PROFILE</p>
-                          <p className="text-[9px] text-muted-foreground font-medium">
-                            {hist.generatedAt ? new Date(hist.generatedAt.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja'}
-                          </p>
-                       </div>
-                       <div className={cn("w-3 h-3 rounded-full shrink-0 ml-4 shadow-sm", getRiskStyles(hist.riskLevel).color)} />
-                    </Card>
-                  ))}
-               </div>
-            </section>
           )}
         </section>
       )}
