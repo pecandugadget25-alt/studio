@@ -1,48 +1,70 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
-  FileText, 
   ArrowLeft, 
   Bell, 
   Download, 
   Printer, 
-  TrendingUp, 
   BarChart3,
   BookOpen,
   Camera,
   Users,
-  PieChart as PieChartIcon
+  Star,
+  FileText,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
+import { useFirestore, useCollection } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer, Cell, Pie, PieChart } from "recharts";
-
-const MODUL_DATA = [
-  { name: 'Batik', count: 45, fill: 'hsl(var(--accent))' },
-  { name: 'Candi', count: 32, fill: 'hsl(var(--primary))' },
-  { name: 'Games', count: 50, fill: 'hsl(var(--destructive))' },
-  { name: 'Masjid', count: 28, fill: '#10b981' },
-];
-
-const PERFORMANCE_DATA = [
-  { week: 'W1', score: 75 },
-  { week: 'W2', score: 82 },
-  { week: 'W3', score: 78 },
-  { week: 'W4', score: 88 },
-];
+import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer } from "recharts";
 
 export default function TeacherReportsPage() {
+  const { db } = useFirestore();
+
+  const studentsQuery = useMemo(() => {
+    if (!db) return null;
+    return query(collection(db, "users"), where("peran", "==", "siswa"));
+  }, [db]);
+
+  const { data: students, loading } = useCollection(studentsQuery);
+
+  const stats = useMemo(() => {
+    if (!students || students.length === 0) return { total: 0, totalXP: 0, avgXP: 0, modules: 0, arScans: 0 };
+    
+    const total = students.length;
+    const totalXP = students.reduce((acc, s) => acc + (s.poin || 0), 0);
+    const avgXP = Math.round(totalXP / total);
+    const modules = students.reduce((acc, s) => acc + (s.completedModules?.length || 0), 0);
+    const arScans = modules * 3; // Estimasi 1 modul = 3 scan AR
+
+    return { total, totalXP, avgXP, modules, arScans };
+  }, [students]);
+
+  const chartData = [
+    { name: 'Total Siswa', value: stats.total, fill: 'hsl(var(--primary))' },
+    { name: 'Modul Selesai', value: stats.modules, fill: 'hsl(var(--accent))' },
+    { name: 'Scan AR', value: stats.arScans, fill: '#10b981' },
+  ];
+
   const chartConfig = {
-    count: { label: "Penyelesaian", color: "hsl(var(--primary))" },
-    score: { label: "Rata-rata Nilai", color: "hsl(var(--accent))" },
+    value: { label: "Jumlah", color: "hsl(var(--primary))" },
   };
 
+  if (loading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-white">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto">
+    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
       {/* App Bar Guru */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 android-shadow max-w-[500px] mx-auto">
         <div className="flex items-center gap-3">
@@ -53,19 +75,13 @@ export default function TeacherReportsPage() {
           </Link>
           <h1 className="font-headline font-bold text-lg text-primary tracking-tight">LAPORAN KELAS</h1>
         </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="rounded-full bg-slate-50 relative">
-            <Bell className="h-5 w-5 text-slate-400" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </Button>
-        </div>
       </div>
 
       {/* Header */}
       <section className="px-1 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-headline font-bold text-slate-900">Statistik Kelas</h2>
-          <p className="text-sm text-muted-foreground">Periode: Februari 2024</p>
+          <p className="text-sm text-muted-foreground">Periode Realtime</p>
         </div>
         <div className="bg-blue-100 p-3 rounded-2xl">
           <BarChart3 className="h-6 w-6 text-primary" />
@@ -81,79 +97,57 @@ export default function TeacherReportsPage() {
             </div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Scan</span>
           </div>
-          <h3 className="text-2xl font-bold">1,284</h3>
-          <p className="text-[9px] text-green-600 font-bold">+12% dari bulan lalu</p>
+          <h3 className="text-2xl font-bold">{stats.arScans}</h3>
+          <p className="text-[9px] text-green-600 font-bold">Interaksi Siswa</p>
         </Card>
         <Card className="rounded-3xl border-none p-4 bg-white shadow-sm space-y-2">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-50 rounded-lg text-primary">
-              <BookOpen className="h-4 w-4" />
+            <div className="p-1.5 bg-yellow-50 rounded-lg text-yellow-600">
+              <Star className="h-4 w-4" />
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Komik Selesai</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total XP</span>
           </div>
-          <h3 className="text-2xl font-bold">452</h3>
-          <p className="text-[9px] text-blue-600 font-bold">Aktif 85% siswa</p>
+          <h3 className="text-2xl font-bold">{stats.totalXP}</h3>
+          <p className="text-[9px] text-yellow-600 font-bold">XP Seluruh Kelas</p>
         </Card>
       </section>
 
-      {/* Charts Section */}
-      <section className="space-y-4">
-        <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden">
-          <CardHeader className="p-6 pb-0">
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4 text-primary" /> Distribusi Modul
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 h-[250px]">
-            <ChartContainer config={chartConfig} className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={MODUL_DATA} layout="vertical" margin={{ left: -20 }}>
-                  <XAxis type="number" hide />
-                  <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden">
-          <CardHeader className="p-6 pb-0">
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-accent" /> Performa Mingguan
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 h-[200px]">
-             <ChartContainer config={chartConfig} className="h-full w-full">
-               <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={PERFORMANCE_DATA}>
-                    <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="score" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} barSize={30} />
-                  </BarChart>
-               </ResponsiveContainer>
-             </ChartContainer>
-          </CardContent>
-        </Card>
-      </section>
+      {/* Chart Section */}
+      <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-white">
+        <CardHeader className="p-6 pb-0">
+          <CardTitle className="text-sm font-bold flex items-center gap-2">
+             Ringkasan Partisipasi
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 h-[250px]">
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} layout="vertical" margin={{ left: -20 }}>
+                <XAxis type="number" hide />
+                <XAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
 
       {/* Export Section */}
       <section className="space-y-4 pb-4">
         <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Ekspor Data</h3>
         <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold">
+          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm">
             <Download className="h-5 w-5 text-primary" />
             <span className="text-[10px] uppercase">Excel (XLSX)</span>
           </Button>
-          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold">
+          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm">
             <Printer className="h-5 w-5 text-accent" />
             <span className="text-[10px] uppercase">Cetak PDF</span>
           </Button>
         </div>
-        <Button className="w-full h-14 rounded-3xl font-bold gap-2 bg-slate-900">
-          <FileText className="h-5 w-5" /> Generate Report Lengkap
+        <Button className="w-full h-14 rounded-3xl font-bold gap-2 bg-slate-900 text-white shadow-lg">
+          <FileText className="h-5 w-5" /> Download Laporan Lengkap
         </Button>
       </section>
     </div>

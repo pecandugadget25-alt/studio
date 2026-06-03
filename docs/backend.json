@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -38,6 +39,29 @@
         "markerId": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" }
       }
+    },
+    "Activity": {
+      "title": "User Activity Log",
+      "description": "Log aktivitas harian siswa untuk monitoring guru.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "action": { "type": "string" },
+        "type": { "type": "string", "enum": ["quiz", "comic", "ar", "module"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "QuizResult": {
+      "title": "Quiz Result",
+      "description": "Hasil pengerjaan kuis siswa.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "moduleId": { "type": "string" },
+        "score": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -55,6 +79,14 @@
     "/scan_history/{historyId}": {
       "schema": "ScanHistory",
       "description": "Riwayat scan AR."
+    },
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "Log aktivitas siswa."
+    },
+    "/quiz_results/{resultId}": {
+      "schema": "QuizResult",
+      "description": "Hasil kuis siswa."
     }
   }
 }

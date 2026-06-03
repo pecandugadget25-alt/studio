@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, orderBy } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 
 export default function TeacherStudentsPage() {
@@ -30,16 +30,19 @@ export default function TeacherStudentsPage() {
 
   const studentsQuery = useMemo(() => {
     if (!db) return null;
-    return query(collection(db, "users"), where("peran", "==", "siswa"));
+    return query(
+      collection(db, "users"), 
+      where("peran", "==", "siswa")
+    );
   }, [db]);
 
   const { data: students, loading: studentsLoading } = useCollection(studentsQuery);
 
   const filteredStudents = useMemo(() => {
     if (!students) return [];
-    return students.filter(s => 
-      s.nama.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return students
+      .filter(s => s.nama?.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => (b.poin || 0) - (a.poin || 0));
   }, [students, searchTerm]);
 
   if (authLoading || studentsLoading) {
@@ -51,7 +54,7 @@ export default function TeacherStudentsPage() {
   }
 
   return (
-    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto">
+    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
       {/* App Bar Guru */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 android-shadow max-w-[500px] mx-auto">
         <div className="flex items-center gap-3">
@@ -100,48 +103,49 @@ export default function TeacherStudentsPage() {
       {/* Student List */}
       <section className="space-y-3">
         {filteredStudents.map((student) => (
-          <Card key={student.uid} className="rounded-3xl border-none p-4 bg-white shadow-sm hover:ring-2 ring-primary/20 transition-all">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
-                <img 
-                  src={`https://picsum.photos/seed/${student.uid}/100/100`} 
-                  alt={student.nama}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 truncate">{student.nama}</h4>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full">
-                    <MoreVertical className="h-4 w-4 text-slate-400" />
-                  </Button>
+          <Link key={student.uid} href={`/teacher/students/${student.uid}`}>
+            <Card className="rounded-3xl border-none p-4 bg-white shadow-sm hover:ring-2 ring-primary/20 transition-all mb-3">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
+                  <img 
+                    src={`https://picsum.photos/seed/${student.uid}/100/100`} 
+                    alt={student.nama}
+                    className="w-full h-full object-cover"
+                    onError={(e) => (e.currentTarget.src = 'https://placehold.co/100/100?text=S')}
+                  />
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-[9px] uppercase font-bold px-2">Kelas 4A</Badge>
-                  <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-100">
-                    <Star className="h-3 w-3 text-yellow-500 fill-current" />
-                    <span className="text-[10px] font-bold text-yellow-700">{student.poin || 0} XP</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-sm text-slate-900 truncate">{student.nama}</h4>
+                    <ChevronRight className="h-4 w-4 text-slate-300" />
                   </div>
-                </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-600 text-[9px] uppercase font-bold px-2">Level {student.level || 1}</Badge>
+                    <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-100">
+                      <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                      <span className="text-[10px] font-bold text-yellow-700">{student.poin || 0} XP</span>
+                    </div>
+                  </div>
 
-                {/* Progress Mini Grid */}
-                <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-slate-50">
-                  <div className="space-y-1">
-                    <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Batik</p>
-                    <Progress value={student.completedModules?.includes('batik') ? 100 : 35} className="h-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Candi</p>
-                    <Progress value={student.completedModules?.includes('candi') ? 100 : 15} className="h-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Games</p>
-                    <Progress value={student.completedModules?.includes('games') ? 100 : 60} className="h-1" />
+                  {/* Progress Mini Grid */}
+                  <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-slate-50">
+                    <div className="space-y-1">
+                      <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Batik</p>
+                      <Progress value={student.completedModules?.includes('batik') ? 100 : 0} className="h-1" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Candi</p>
+                      <Progress value={student.completedModules?.includes('candi') ? 100 : 0} className="h-1" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">Games</p>
+                      <Progress value={student.completedModules?.includes('games') ? 100 : 0} className="h-1" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
 
         {filteredStudents.length === 0 && (
