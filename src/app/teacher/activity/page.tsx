@@ -13,7 +13,8 @@ import {
   TrendingUp,
   MapPin,
   Loader2,
-  Users
+  Users,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useCollection, useUser } from "@/firebase";
@@ -58,8 +59,6 @@ export default function TeacherActivityPage() {
       default: return { icon: TrendingUp, color: "text-purple-500", bg: "bg-purple-50" };
     }
   };
-
-  const CheckCircle2 = (props: any) => <TrendingUp {...props} />; // Placeholder as CheckCircle2 was missing in previous context usage
 
   if (authLoading || !profile || profile.peran === 'siswa') {
     return (

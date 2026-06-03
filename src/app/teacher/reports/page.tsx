@@ -18,7 +18,7 @@ import {
 import Link from "next/link";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, ResponsiveContainer } from "recharts";
 import { useRouter } from "next/navigation";
 import { analyzeClassPerformance, type ClassAnalysisOutput } from "@/ai/flows/class-performance-analysis";
@@ -59,7 +59,7 @@ export default function TeacherReportsPage() {
     allCompleted.forEach(m => counts[m] = (counts[m] || 0) + 1);
     
     const popular = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, "Batik Nusantara");
-    const difficult = "Candi (Geometri)"; // Simulasi modul sulit
+    const difficult = "Candi (Geometri)"; 
 
     const modules = students.reduce((acc, s) => acc + (s.completedModules?.length || 0), 0);
     const arScans = modules * 3; 
@@ -67,7 +67,6 @@ export default function TeacherReportsPage() {
     return { total, totalXP, avgXP, modules, arScans, popular, difficult };
   }, [students]);
 
-  // Panggil AI Analysis saat stats siap
   useEffect(() => {
     if (stats.total > 0 && !aiAnalysis && !aiLoading) {
       async function fetchAnalysis() {
@@ -76,7 +75,7 @@ export default function TeacherReportsPage() {
           const result = await analyzeClassPerformance({
             totalStudents: stats.total,
             averageXP: stats.avgXP,
-            averageQuiz: 78, // Simulasi rerata kuis
+            averageQuiz: 78,
             popularModule: stats.popular,
             difficultModule: stats.difficult
           });
@@ -92,14 +91,14 @@ export default function TeacherReportsPage() {
   }, [stats, aiAnalysis, aiLoading]);
 
   const chartData = [
-    { name: 'Total Siswa', value: stats.total, fill: 'hsl(var(--primary))' },
-    { name: 'Modul Selesai', value: stats.modules, fill: 'hsl(var(--accent))' },
-    { name: 'Scan AR', value: stats.arScans, fill: '#10b981' },
+    { name: 'Siswa', value: stats.total },
+    { name: 'Modul', value: stats.modules },
+    { name: 'AR Scan', value: stats.arScans },
   ];
 
   const chartConfig = {
     value: { label: "Jumlah", color: "hsl(var(--primary))" },
-  };
+  } satisfies ChartConfig;
 
   if (authLoading || loading || !profile) {
     return (
@@ -111,7 +110,6 @@ export default function TeacherReportsPage() {
 
   return (
     <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
-      {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 android-shadow max-w-[500px] mx-auto">
         <div className="flex items-center gap-3">
           <Link href="/teacher">
@@ -128,7 +126,6 @@ export default function TeacherReportsPage() {
         <p className="text-sm text-muted-foreground">Update Real-time dari Database</p>
       </section>
 
-      {/* AI Analysis Section */}
       <Card className="rounded-[2rem] border-none bg-primary text-white p-6 shadow-lg relative overflow-hidden">
         <div className="relative z-10 space-y-3">
           <div className="flex items-center gap-2">
@@ -149,7 +146,6 @@ export default function TeacherReportsPage() {
         <div className="absolute -right-8 -bottom-8 bg-white/10 w-32 h-32 rounded-full blur-3xl" />
       </Card>
 
-      {/* Grid Ringkasan */}
       <section className="grid grid-cols-2 gap-4">
         <Card className="rounded-3xl border-none p-4 bg-white shadow-sm space-y-2">
           <div className="flex items-center gap-2">
@@ -173,7 +169,6 @@ export default function TeacherReportsPage() {
         </Card>
       </section>
 
-      {/* Grafik */}
       <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-white">
         <CardHeader className="p-6 pb-0">
           <CardTitle className="text-sm font-bold">Ringkasan Aktivitas</CardTitle>
@@ -181,18 +176,17 @@ export default function TeacherReportsPage() {
         <CardContent className="p-6 h-[250px]">
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} layout="vertical" margin={{ left: -20 }}>
+              <BarChart data={chartData} layout="vertical" margin={{ left: -10 }}>
                 <XAxis type="number" hide />
                 <XAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24} />
+                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
         </CardContent>
       </Card>
 
-      {/* Ekspor */}
       <section className="space-y-4 pb-4">
         <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Ekspor Data</h3>
         <div className="grid grid-cols-2 gap-4">

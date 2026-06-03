@@ -65,7 +65,7 @@ export default function RegisterPage() {
         description: `Selamat datang di ETHNO-ARITH, ${formData.name}!`,
       });
 
-      const targetPath = formData.peran === "guru" ? "/dashboard/teacher" : "/";
+      const targetPath = formData.peran === "guru" ? "/teacher" : "/";
       router.push(targetPath);
     } catch (error: any) {
       let friendlyMessage = "Gagal mendaftar karena masalah teknis.";
