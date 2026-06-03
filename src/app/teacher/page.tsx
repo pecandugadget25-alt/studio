@@ -33,21 +33,24 @@ export default function TeacherMobileDashboard() {
   const { db } = useFirestore();
   const { user, profile, loading: authLoading } = useUser();
 
-  // Query khusus untuk mengambil data siswa saja
+  // Guard: Hanya izinkan Guru/Admin/Peneliti
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push("/login");
+      } else if (profile && profile.peran === 'siswa') {
+        // Siswa dilarang masuk panel guru, redirect ke home siswa
+        router.push("/");
+      }
+    }
+  }, [user, profile, authLoading, router]);
+
   const studentsQuery = useMemo(() => {
     if (!db) return null;
     return query(collection(db, "users"), where("peran", "==", "siswa"));
   }, [db]);
 
   const { data: students, loading: studentsLoading } = useCollection(studentsQuery);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    } else if (profile && profile.peran === 'siswa') {
-      router.push("/");
-    }
-  }, [user, profile, authLoading, router]);
 
   const stats = useMemo(() => {
     if (!students) return { total: 0, activeToday: 0, avgXP: 0, comicReads: 0, arScans: 0 };
@@ -56,7 +59,6 @@ export default function TeacherMobileDashboard() {
     const totalXP = students.reduce((acc, s) => acc + (s.poin || 0), 0);
     const avgXP = total > 0 ? Math.round(totalXP / total) : 0;
     
-    // Simulasi data realistis
     const activeToday = Math.round(total * 0.7); 
     const arScans = students.reduce((acc, s) => acc + (s.completedModules?.length || 0) * 3, 0); 
     const comicReads = students.reduce((acc, s) => acc + (s.completedComics?.length || 0), 0);
@@ -71,6 +73,9 @@ export default function TeacherMobileDashboard() {
       </div>
     );
   }
+
+  // Jika state guard belum meredirect tapi render jalan
+  if (profile.peran === 'siswa') return null;
 
   return (
     <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto">

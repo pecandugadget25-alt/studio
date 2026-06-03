@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,21 @@ import {
 import Link from "next/link";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, query, where, orderBy } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export default function TeacherStudentsPage() {
+  const router = useRouter();
   const { db } = useFirestore();
-  const { profile, loading: authLoading } = useUser();
+  const { user, profile, loading: authLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Guard: Hanya Guru/Admin
+  useEffect(() => {
+    if (!authLoading && profile && profile.peran === 'siswa') {
+      router.push("/");
+    }
+  }, [profile, authLoading, router]);
 
   const studentsQuery = useMemo(() => {
     if (!db) return null;
@@ -45,7 +54,7 @@ export default function TeacherStudentsPage() {
       .sort((a, b) => (b.poin || 0) - (a.poin || 0));
   }, [students, searchTerm]);
 
-  if (authLoading || studentsLoading) {
+  if (authLoading || studentsLoading || !profile || profile.peran === 'siswa') {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

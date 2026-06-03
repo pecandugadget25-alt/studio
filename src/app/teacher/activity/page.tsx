@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,15 +21,25 @@ import {
   Users
 } from "lucide-react";
 import Link from "next/link";
-import { useFirestore, useCollection } from "@/firebase";
+import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export default function TeacherActivityPage() {
+  const router = useRouter();
   const { db } = useFirestore();
+  const { profile, loading: authLoading } = useUser();
   const [filter, setFilter] = useState("today");
+
+  // Guard: Hanya Guru/Admin
+  useEffect(() => {
+    if (!authLoading && profile && profile.peran === 'siswa') {
+      router.push("/");
+    }
+  }, [profile, authLoading, router]);
 
   const activitiesQuery = useMemo(() => {
     if (!db) return null;
@@ -51,6 +61,14 @@ export default function TeacherActivityPage() {
       default: return { icon: TrendingUp, color: "text-purple-500", bg: "bg-purple-50" };
     }
   };
+
+  if (authLoading || !profile || profile.peran === 'siswa') {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-white">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
@@ -92,7 +110,7 @@ export default function TeacherActivityPage() {
           <div className="py-20 flex justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : activities.length > 0 ? (
+        ) : activities && activities.length > 0 ? (
           <>
             <div className="absolute left-[27px] top-6 bottom-6 w-0.5 bg-slate-200" />
             {activities.map((act: any) => {

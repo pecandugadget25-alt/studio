@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,13 +18,23 @@ import {
   Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { useFirestore, useCollection } from "@/firebase";
+import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer } from "recharts";
+import { useRouter } from "next/navigation";
 
 export default function TeacherReportsPage() {
+  const router = useRouter();
   const { db } = useFirestore();
+  const { profile, loading: authLoading } = useUser();
+
+  // Guard: Hanya Guru/Admin
+  useEffect(() => {
+    if (!authLoading && profile && profile.peran === 'siswa') {
+      router.push("/");
+    }
+  }, [profile, authLoading, router]);
 
   const studentsQuery = useMemo(() => {
     if (!db) return null;
@@ -40,7 +50,7 @@ export default function TeacherReportsPage() {
     const totalXP = students.reduce((acc, s) => acc + (s.poin || 0), 0);
     const avgXP = Math.round(totalXP / total);
     const modules = students.reduce((acc, s) => acc + (s.completedModules?.length || 0), 0);
-    const arScans = modules * 3; // Estimasi 1 modul = 3 scan AR
+    const arScans = modules * 3; 
 
     return { total, totalXP, avgXP, modules, arScans };
   }, [students]);
@@ -55,7 +65,7 @@ export default function TeacherReportsPage() {
     value: { label: "Jumlah", color: "hsl(var(--primary))" },
   };
 
-  if (loading) {
+  if (authLoading || loading || !profile || profile.peran === 'siswa') {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

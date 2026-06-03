@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from "react";
@@ -43,14 +44,20 @@ export default function MobileDashboard() {
   const [recommendations, setRecommendations] = useState<PersonalizedLearningRecommendationOutput | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
+  // Guard: Redirect jika belum login atau jika peran bukan siswa
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
+    if (!authLoading) {
+      if (!user) {
+        router.push("/login");
+      } else if (profile && profile.peran !== 'siswa') {
+        // Jika Guru/Admin nyasar ke home siswa, lempar ke dashboard guru
+        router.push("/teacher");
+      }
     }
-  }, [user, authLoading, router]);
+  }, [user, profile, authLoading, router]);
 
   useEffect(() => {
-    if (profile && !recommendations && !aiLoading) {
+    if (profile && profile.peran === 'siswa' && !recommendations && !aiLoading) {
       async function fetchRecommendations() {
         setAiLoading(true);
         try {
@@ -64,7 +71,6 @@ export default function MobileDashboard() {
           setRecommendations(result);
         } catch (error) {
           console.error("Dashboard AI invocation failed:", error);
-          // Fallback UI data jika server action gagal
           setRecommendations({
             nextChallenge: "Lanjutkan Modul Batik Nusantara",
             motivationMessage: "Setiap langkah kecil membawamu lebih dekat ke puncak prestasi. Semangat!",
@@ -78,9 +84,9 @@ export default function MobileDashboard() {
       }
       fetchRecommendations();
     }
-  }, [profile?.uid, recommendations, aiLoading]);
+  }, [profile?.uid, profile?.peran, recommendations, aiLoading]);
 
-  if (authLoading) {
+  if (authLoading || (user && !profile)) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -88,7 +94,7 @@ export default function MobileDashboard() {
     );
   }
 
-  if (!user || !profile) {
+  if (!user || !profile || profile.peran !== 'siswa') {
     return null;
   }
 
@@ -128,7 +134,7 @@ export default function MobileDashboard() {
                 <h3 className="text-3xl font-headline font-bold">Level {currentLevel}</h3>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                <Star className="h-8 w-8 text-yellow-300 fill-current" />
+                < Star className="h-8 w-8 text-yellow-300 fill-current" />
               </div>
             </div>
             

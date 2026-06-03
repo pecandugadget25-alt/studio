@@ -10,15 +10,14 @@ export function DynamicNav() {
   const pathname = usePathname();
   const { profile, loading } = useUser();
 
-  if (loading) return null;
+  if (loading || !profile) return null;
 
-  const isTeacherRoute = pathname.startsWith('/teacher');
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   if (isAuthPage) return null;
 
-  // Render Teacher Nav if on teacher route OR if user is a teacher on the profile page
-  if (isTeacherRoute) {
+  // Penentuan navigasi murni berdasarkan peran di database
+  if (profile.peran === 'guru' || profile.peran === 'admin' || profile.peran === 'peneliti') {
     return <TeacherBottomNav />;
   }
 
