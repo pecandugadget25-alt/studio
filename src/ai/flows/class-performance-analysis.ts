@@ -1,22 +1,27 @@
 'use server';
 /**
- * @fileOverview A Genkit flow for analyzing class performance for teachers.
+ * @fileOverview Alur AI untuk analisis performa kelas strategis.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ClassAnalysisInputSchema = z.object({
-  totalStudents: z.number().describe('Jumlah total siswa di kelas.'),
-  averageXP: z.number().describe('Rata-rata poin XP siswa.'),
-  averageQuiz: z.number().describe('Rata-rata nilai kuis siswa.'),
-  popularModule: z.string().describe('Modul yang paling banyak diselesaikan.'),
-  difficultModule: z.string().describe('Modul dengan rata-rata nilai terendah.'),
+  totalStudents: z.number(),
+  activeStudents: z.number(),
+  totalXP: z.number(),
+  totalBadges: z.number(),
+  averageXP: z.number(),
+  moduleStats: z.record(z.string(), z.number()).describe('Statistik penyelesaian per modul'),
+  unfinishedCount: z.number(),
 });
 export type ClassAnalysisInput = z.infer<typeof ClassAnalysisInputSchema>;
 
 const ClassAnalysisOutputSchema = z.object({
-  summary: z.string().describe('Ringkasan analisis performa kelas (Maks 3 kalimat).'),
+  mainInsight: z.string().describe('Analisis naratif utama tentang kondisi kelas.'),
+  strengths: z.array(z.string()).describe('Daftar kekuatan kolektif kelas.'),
+  areasOfConcern: z.array(z.string()).describe('Modul atau aspek yang memerlukan perhatian.'),
+  recommendations: z.array(z.string()).describe('Rekomendasi strategis untuk guru.'),
 });
 export type ClassAnalysisOutput = z.infer<typeof ClassAnalysisOutputSchema>;
 
@@ -30,19 +35,23 @@ const prompt = ai.definePrompt({
   name: 'classAnalysisPrompt',
   input: {schema: ClassAnalysisInputSchema},
   output: {schema: ClassAnalysisOutputSchema},
-  system: `Anda adalah Analis Pendidikan untuk platform ETHNO-ARITH.
+  system: `Anda adalah Analis Senior Pendidikan untuk platform ETHNO-ARITH. 
+Tugas Anda adalah mengevaluasi data pembelajaran kelas dan memberikan wawasan pedagogik formal.
 
-BATASAN TOPIK:
-Anda hanya boleh memberikan analisis terkait: Matematika SD, Numerasi, Geometri, Simetri, Pola, Batik Nusantara, Etnomatematika, dan progres belajar di ETHNO-ARITH.
+ATURAN NARASI:
+- Gunakan Bahasa Indonesia formal akademik.
+- Jangan sebutkan angka teknis mentah secara berlebihan, fokus pada interpretasi.
+- Hubungkan antara partisipasi (Siswa Aktif) dan pencapaian (XP/Modul).
+- Identifikasi kesenjangan pembelajaran berdasarkan modul yang belum tuntas.`,
+  prompt: `Analisis data kelas berikut:
+- Total Siswa: {{{totalStudents}}}
+- Siswa Aktif (>0 XP): {{{activeStudents}}}
+- Total XP: {{{totalXP}}}
+- Total Lencana: {{{totalBadges}}}
+- Rerata XP: {{{averageXP}}}
+- Statistik Modul Selesai: {{#each moduleStats}}{{{@key}}}: {{{this}}} siswa, {{/each}}
 
-JIKA DI LUAR TOPIK:
-Balas: "Maaf, saya hanya dapat membantu materi pembelajaran yang tersedia di ETHNO-ARITH."
-
-ATURAN RINGKASAN:
-- Hasil akhir HARUS maksimal 3 kalimat pendek.
-- Bahasa Indonesia formal namun suportif.
-- Fokus pada: Kondisi kelas, materi kritis, dan rekomendasi guru.`,
-  prompt: `Analisis data kelas: Siswa {{{totalStudents}}}, Rerata XP {{{averageXP}}}, Rerata Kuis {{{averageQuiz}}}%. Modul Populer: {{{popularModule}}}, Modul Sulit: {{{difficultModule}}}. Berikan ringkasan eksekutif 3 kalimat.`
+Hasilkan laporan wawasan dalam format JSON.`
 });
 
 const classAnalysisFlow = ai.defineFlow(
@@ -59,7 +68,10 @@ const classAnalysisFlow = ai.defineFlow(
     } catch (error) {
       console.error('Class Analysis AI Error:', error);
       return {
-        summary: `Kelas aktif dengan rata-rata ${input.averageXP} XP. Modul ${input.difficultModule} memerlukan perhatian khusus. Disarankan penguatan konsep dasar sebelum melanjutkan.`
+        mainInsight: "Sebagian besar siswa masih berada pada tahap orientasi awal. Keterlibatan pada materi kebudayaan mulai terlihat namun memerlukan stimulasi lebih lanjut.",
+        strengths: ["Kesiapan awal penggunaan platform cukup baik"],
+        areasOfConcern: ["Tingkat penyelesaian kuis akhir masih rendah"],
+        recommendations: ["Berikan motivasi harian untuk menyelesaikan modul Batik Nusantara"]
       };
     }
   }

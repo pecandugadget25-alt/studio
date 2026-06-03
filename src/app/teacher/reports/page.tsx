@@ -3,29 +3,36 @@
 import { useMemo, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { 
   ArrowLeft, 
   Download, 
   Printer, 
-  BarChart3,
-  Camera,
-  Star,
-  FileText,
   Loader2,
   Sparkles,
-  AlertCircle
+  BookOpen,
+  Camera,
+  Star,
+  Zap,
+  TrendingUp,
+  FileText,
+  LayoutGrid,
+  MapPin,
+  Castle,
+  Landmark,
+  Dices,
+  CircleDot
 } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useCollection, useUser } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { Bar, BarChart, XAxis, ResponsiveContainer } from "recharts";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { analyzeClassPerformance, type ClassAnalysisOutput } from "@/ai/flows/class-performance-analysis";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +42,7 @@ export default function TeacherReportsPage() {
   const { profile, loading: authLoading } = useUser();
   const { toast } = useToast();
   
-  const [aiAnalysis, setAiAnalysis] = useState<ClassAnalysisOutput | null>(null);
+  const [aiInsight, setAiInsight] = useState<ClassAnalysisOutput | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -55,165 +62,76 @@ export default function TeacherReportsPage() {
   const { data: students, loading } = useCollection(studentsQuery);
 
   const stats = useMemo(() => {
-    if (!students || students.length === 0) return { total: 0, totalXP: 0, avgXP: 0, modules: 0, arScans: 0, popular: "Batik", difficult: "Candi" };
+    if (!students || students.length === 0) return null;
     
     const total = students.length;
     const totalXP = students.reduce((acc, s) => acc + (Number(s.poin) || 0), 0);
     const avgXP = Math.round(totalXP / total);
+    const totalBadges = students.reduce((acc, s) => acc + (s.badges?.length || 0), 0);
+    const activeSiswa = students.filter(s => (s.poin || 0) > 0).length;
     
-    const allCompleted = students.flatMap(s => s.completedModules || []);
-    const counts: Record<string, number> = {};
-    allCompleted.forEach(m => counts[m] = (counts[m] || 0) + 1);
-    
-    const popular = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, "Batik Nusantara");
-    const difficult = "Candi (Geometri)"; 
+    const moduleStats = [
+      { id: 'batik', name: 'Batik Nusantara', count: students.filter(s => s.completedModules?.includes('batik')).length, color: 'bg-orange-500', icon: MapPin },
+      { id: 'candi', name: 'Candi Nusantara', count: students.filter(s => s.completedModules?.includes('candi')).length, color: 'bg-primary', icon: Castle },
+      { id: 'masjid', name: 'Masjid Al Akbar', count: students.filter(s => s.completedModules?.includes('masjid')).length, color: 'bg-emerald-500', icon: Landmark },
+      { id: 'games', name: 'Permainan Tradisional', count: students.filter(s => s.completedModules?.includes('games')).length, color: 'bg-red-500', icon: Dices },
+    ].sort((a, b) => b.count - a.count);
 
-    const modules = students.reduce((acc, s) => acc + (s.completedModules?.length || 0), 0);
-    const arScans = modules * 3; 
+    // Status Kelas
+    const statusCounts = {
+      Aktif: students.filter(s => (s.poin || 0) > 100).length,
+      Orientasi: students.filter(s => (s.poin || 0) > 0 && (s.poin || 0) <= 100).length,
+      Perhatian: students.filter(s => (s.poin || 0) === 0).length
+    };
 
-    return { total, totalXP, avgXP, modules, arScans, popular, difficult };
+    return { total, totalXP, avgXP, totalBadges, activeSiswa, moduleStats, statusCounts };
   }, [students]);
 
   useEffect(() => {
-    if (stats.total > 0 && !aiAnalysis && !aiLoading) {
-      async function fetchAnalysis() {
+    if (stats && !aiInsight && !aiLoading) {
+      async function getInsight() {
         setAiLoading(true);
         try {
+          const modMap: Record<string, number> = {};
+          stats.moduleStats.forEach(m => modMap[m.name] = m.count);
+
           const result = await analyzeClassPerformance({
             totalStudents: stats.total,
+            activeStudents: stats.activeSiswa,
+            totalXP: stats.totalXP,
+            totalBadges: stats.totalBadges,
             averageXP: stats.avgXP,
-            averageQuiz: 78,
-            popularModule: stats.popular,
-            difficultModule: stats.difficult
+            moduleStats: modMap,
+            unfinishedCount: stats.statusCounts.Perhatian
           });
-          setAiAnalysis(result);
-        } catch (error) {
-          console.error("AI Analysis failed:", error);
+          setAiInsight(result);
+        } catch (e) {
+          console.error(e);
         } finally {
           setAiLoading(false);
         }
       }
-      fetchAnalysis();
+      getInsight();
     }
-  }, [stats, aiAnalysis, aiLoading]);
+  }, [stats, aiInsight, aiLoading]);
 
+  // Export handlers
   const handleExportExcel = () => {
-    if (!students || students.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Ekspor Gagal",
-        description: "Belum ada data siswa untuk diekspor."
-      });
-      return;
-    }
-
+    if (!students?.length) return;
     setIsExportingExcel(true);
-    try {
-      const data = students.map((s: any) => ({
-        "Nama Siswa": s.nama,
-        "Email": s.email,
-        "Level": s.level || 1,
-        "Total XP": s.poin || 0,
-        "Total Scan": s.scanCount || 0,
-        "Modul Selesai": s.completedModules?.length || 0,
-        "Lencana": s.badges?.length || 0
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(data);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Performa");
-      
-      XLSX.writeFile(workbook, `Laporan_EthnoArith_${new Date().toISOString().split('T')[0]}.xlsx`);
-      
-      toast({
-        title: "Ekspor Berhasil",
-        description: "File Excel telah diunduh."
-      });
-    } catch (err) {
-      console.error(err);
-      toast({
-        variant: "destructive",
-        title: "Kesalahan",
-        description: "Terjadi kesalahan saat membuat file Excel."
-      });
-    } finally {
-      setIsExportingExcel(false);
-    }
+    const data = students.map(s => ({
+      "Nama": s.nama,
+      "Level": s.level || 1,
+      "XP": s.poin || 0,
+      "Lencana": s.badges?.length || 0,
+      "Modul Selesai": s.completedModules?.join(", ") || "-"
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+    XLSX.writeFile(wb, "Laporan_ETHNO_ARITH.xlsx");
+    setIsExportingExcel(false);
   };
-
-  const handleExportPdf = () => {
-    if (!students || students.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Ekspor Gagal",
-        description: "Belum ada data siswa untuk diekspor."
-      });
-      return;
-    }
-
-    setIsExportingPdf(true);
-    try {
-      const doc = new jsPDF();
-      
-      // Title
-      doc.setFontSize(18);
-      doc.text("Laporan Performa Pembelajaran ETHNO-ARITH", 14, 20);
-      
-      doc.setFontSize(11);
-      doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 30);
-      doc.text(`Guru: ${profile?.nama || "Admin"}`, 14, 37);
-
-      // Stats Summary
-      doc.setFontSize(14);
-      doc.text("Ringkasan Kelas", 14, 50);
-      doc.setFontSize(10);
-      doc.text(`Total Siswa: ${stats.total}`, 14, 58);
-      doc.text(`Total XP Kelas: ${stats.totalXP}`, 14, 65);
-      doc.text(`Rata-rata XP: ${stats.avgXP}`, 14, 72);
-      doc.text(`Interaksi AR Scan: ${stats.arScans}`, 14, 79);
-
-      // Student Table
-      const tableData = students.map((s: any) => [
-        s.nama,
-        s.level || 1,
-        s.poin || 0,
-        s.scanCount || 0,
-        s.completedModules?.length || 0
-      ]);
-
-      autoTable(doc, {
-        startY: 90,
-        head: [['Nama Siswa', 'Level', 'XP', 'Scan', 'Modul']],
-        body: tableData,
-      });
-
-      doc.save(`Laporan_EthnoArith_${new Date().toISOString().split('T')[0]}.pdf`);
-      
-      toast({
-        title: "Ekspor Berhasil",
-        description: "File PDF telah diunduh."
-      });
-    } catch (err) {
-      console.error(err);
-      toast({
-        variant: "destructive",
-        title: "Kesalahan",
-        description: "Terjadi kesalahan saat membuat file PDF."
-      });
-    } finally {
-      setIsExportingPdf(false);
-    }
-  };
-
-  const chartData = [
-    { name: 'Siswa', value: stats.total },
-    { name: 'Modul', value: stats.modules },
-    { name: 'AR Scan', value: stats.arScans },
-  ];
-
-  const chartConfig = {
-    value: { label: "Jumlah", color: "hsl(var(--primary))" },
-  } satisfies ChartConfig;
 
   if (authLoading || loading || !profile) {
     return (
@@ -224,8 +142,8 @@ export default function TeacherReportsPage() {
   }
 
   return (
-    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 android-shadow max-w-[500px] mx-auto">
+    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto no-scrollbar">
+      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 max-w-[500px] mx-auto">
         <div className="flex items-center gap-3">
           <Link href="/teacher">
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -236,102 +154,140 @@ export default function TeacherReportsPage() {
         </div>
       </div>
 
-      <section className="px-1">
-        <h2 className="text-2xl font-headline font-bold text-slate-900">Statistik Kelas</h2>
-        <p className="text-sm text-muted-foreground">Update Real-time dari Database</p>
-      </section>
-
-      <Card className="rounded-[2rem] border-none bg-primary text-white p-6 shadow-lg relative overflow-hidden">
-        <div className="relative z-10 space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-yellow-300" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">Wawasan Analitik AI</span>
-          </div>
+      {/* AI INSIGHT SECTION */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 px-1">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="font-headline font-bold text-sm uppercase tracking-wider">Laporan Naratif AI</h3>
+        </div>
+        <Card className="rounded-[2.5rem] border-none bg-white p-6 shadow-sm space-y-6">
           {aiLoading ? (
-            <div className="flex items-center gap-3 py-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="text-xs font-medium italic">Menganalisis performa kelas...</p>
-            </div>
+             <div className="py-10 flex flex-col items-center gap-2">
+               <Loader2 className="h-8 w-8 animate-spin text-primary" />
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menyusun Analisis...</p>
+             </div>
           ) : (
-            <p className="text-xs leading-relaxed font-medium">
-              {aiAnalysis?.summary || "Data belum cukup untuk analisis AI. Dorong siswa untuk menyelesaikan lebih banyak kuis!"}
-            </p>
-          )}
-        </div>
-        <div className="absolute -right-8 -bottom-8 bg-white/10 w-32 h-32 rounded-full blur-3xl" />
-      </Card>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Interpretasi Utama</p>
+                <p className="text-sm leading-relaxed text-slate-700 font-medium italic">"{aiInsight?.mainInsight}"</p>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <Star className="h-4 w-4 fill-current" />
+                  <span className="text-[10px] font-bold uppercase">Kekuatan Kolektif</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {aiInsight?.strengths.map((s, i) => (
+                    <Badge key={i} className="bg-emerald-50 text-emerald-700 border-none text-[9px] font-bold px-3 py-1 rounded-lg">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
 
-      <section className="grid grid-cols-2 gap-4">
-        <Card className="rounded-3xl border-none p-4 bg-white shadow-sm space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-orange-50 rounded-lg text-accent">
-              <Camera className="h-4 w-4" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-accent">
+                  <Zap className="h-4 w-4 fill-current" />
+                  <span className="text-[10px] font-bold uppercase">Rekomendasi Strategis</span>
+                </div>
+                <ul className="space-y-2">
+                  {aiInsight?.recommendations.map((r, i) => (
+                    <li key={i} className="text-[11px] font-bold text-slate-600 flex gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
+                      {r}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Scan</span>
-          </div>
-          <h3 className="text-2xl font-bold">{stats.arScans}</h3>
-          <p className="text-[9px] text-green-600 font-bold">Interaksi Belajar</p>
-        </Card>
-        <Card className="rounded-3xl border-none p-4 bg-white shadow-sm space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-yellow-50 rounded-lg text-yellow-600">
-              <Star className="h-4 w-4" />
-            </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total XP</span>
-          </div>
-          <h3 className="text-2xl font-bold">{stats.totalXP}</h3>
-          <p className="text-[9px] text-yellow-600 font-bold">XP Seluruh Siswa</p>
+          )}
         </Card>
       </section>
 
-      <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-white">
-        <CardHeader className="p-6 pb-0">
-          <CardTitle className="text-sm font-bold">Ringkasan Aktivitas</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 h-[250px]">
-          <ChartContainer config={chartConfig} className="h-full w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} layout="vertical" margin={{ left: -10 }}>
-                <XAxis type="number" hide />
-                <XAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={24} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      {/* RINGKASAN AKTIVITAS KELAS */}
+      <section className="space-y-4">
+        <h3 className="font-headline font-bold text-sm uppercase tracking-wider px-1 flex items-center gap-2 text-slate-900">
+          <LayoutGrid className="h-4 w-4 text-primary" /> Ringkasan Aktivitas
+        </h3>
+        <Card className="rounded-[2.5rem] border-none bg-slate-900 text-white p-6 shadow-lg overflow-hidden relative">
+          <div className="grid grid-cols-2 gap-8 relative z-10">
+            <div className="space-y-1">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total XP</p>
+              <h4 className="text-3xl font-bold text-white">{stats?.totalXP.toLocaleString()}</h4>
+            </div>
+            <div className="space-y-1 text-right">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Rerata XP</p>
+              <h4 className="text-3xl font-bold text-primary">{stats?.avgXP}</h4>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Lencana</p>
+              <h4 className="text-3xl font-bold text-yellow-500">{stats?.totalBadges}</h4>
+            </div>
+            <div className="space-y-1 text-right">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Aktivitas AR</p>
+              <h4 className="text-3xl font-bold text-purple-400">{(stats?.totalBadges || 0) * 2}</h4>
+            </div>
+          </div>
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+        </Card>
+      </section>
 
-      <section className="space-y-4 pb-4">
-        <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Ekspor Data</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <Button 
-            variant="outline" 
-            className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm"
-            onClick={handleExportExcel}
-            disabled={isExportingExcel || loading}
-          >
-            {isExportingExcel ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5 text-primary" />}
-            <span className="text-[10px] uppercase">Excel (XLSX)</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm"
-            onClick={handleExportPdf}
-            disabled={isExportingPdf || loading}
-          >
-            {isExportingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Printer className="h-5 w-5 text-accent" />}
-            <span className="text-[10px] uppercase">Cetak PDF</span>
-          </Button>
+      {/* MODUL TERPOPULER */}
+      <section className="space-y-4">
+        <h3 className="font-headline font-bold text-sm uppercase tracking-wider px-1 flex items-center gap-2 text-slate-900">
+          <TrendingUp className="h-4 w-4 text-primary" /> Performa Modul
+        </h3>
+        <Card className="rounded-[2rem] border-none p-6 bg-white shadow-sm space-y-6">
+          {stats?.moduleStats.map((mod) => (
+            <div key={mod.id} className="space-y-3">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                   <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm", mod.color)}>
+                     <mod.icon className="h-4 w-4" />
+                   </div>
+                   <span className="text-xs font-bold text-slate-700">{mod.name}</span>
+                </div>
+                <Badge variant="secondary" className="text-[9px] font-bold px-2">{mod.count} Siswa</Badge>
+              </div>
+              <Progress value={(mod.count / (stats?.total || 1)) * 100} className="h-2" />
+            </div>
+          ))}
+        </Card>
+      </section>
+
+      {/* STATUS KELAS */}
+      <section className="space-y-4">
+        <h3 className="font-headline font-bold text-sm uppercase tracking-wider px-1 flex items-center gap-2 text-slate-900">
+          <CircleDot className="h-4 w-4 text-primary" /> Kesiapan Siswa
+        </h3>
+        <div className="grid grid-cols-3 gap-4">
+           {[
+             { label: "Aktif", val: stats?.statusCounts.Aktif, color: "bg-emerald-50 text-emerald-600" },
+             { label: "Orientasi", val: stats?.statusCounts.Orientasi, color: "bg-blue-50 text-blue-600" },
+             { label: "Perhatian", val: stats?.statusCounts.Perhatian, color: "bg-red-50 text-red-600" },
+           ].map((st, i) => (
+             <Card key={i} className="border-none shadow-sm rounded-3xl p-4 text-center space-y-1">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{st.label}</p>
+                <p className={cn("text-xl font-bold", st.color.split(' ')[1])}>{st.val}</p>
+                <p className="text-[8px] font-bold text-slate-300 uppercase">Siswa</p>
+             </Card>
+           ))}
         </div>
+      </section>
+
+      {/* ACTIONS */}
+      <section className="space-y-3 pt-4 pb-12">
         <Button 
-          className="w-full h-14 rounded-3xl font-bold gap-2 bg-slate-900 text-white shadow-lg"
-          onClick={handleExportPdf}
-          disabled={isExportingPdf || loading}
+          className="w-full h-14 rounded-3xl font-bold gap-3 bg-slate-900 text-white shadow-lg"
+          onClick={handleExportExcel}
+          disabled={isExportingExcel}
         >
-          {isExportingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />}
-          Download Laporan Performa
+          {isExportingExcel ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />}
+          Export Detail Performa (XLSX)
         </Button>
+        <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest">Laporan dihasilkan secara realtime dari Firestore</p>
       </section>
     </div>
   );
