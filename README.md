@@ -1,5 +1,11 @@
-# Firebase Studio
+# ETHNO-ARITH
 
-This is a NextJS starter in Firebase Studio.
+Private Research and Development Project.
 
-To get started, take a look at src/app/page.tsx.
+This repository is maintained for source control, development, and deployment purposes.
+
+Documentation, system architecture, research methodologies, datasets, and implementation details are maintained separately and are not publicly available.
+
+Status: Active Development
+
+© All Rights Reserved
