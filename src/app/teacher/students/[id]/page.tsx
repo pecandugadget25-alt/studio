@@ -19,7 +19,8 @@ import {
   BrainCircuit,
   Target,
   LineChart,
-  Lightbulb
+  Lightbulb,
+  Terminal
 } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useDoc, useCollection } from "@/firebase";
@@ -43,7 +44,6 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
 
   const { data: student, loading } = useDoc(studentRef);
 
-  // Ambil aktivitas terakhir untuk konteks AI
   const activityQuery = useMemo(() => {
     if (!db || !id) return null;
     return query(
@@ -63,12 +63,9 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     { id: 'games', name: 'Permainan Tradisional' },
   ];
 
-  const handleGenerateAI = async () => {
-    if (!student) return;
-
-    setIsAnalyzing(true);
-    
-    // Hitung data pendukung
+  // Data Faktual untuk AI
+  const aiContext = useMemo(() => {
+    if (!student) return null;
     const completed = MODULE_LIST
       .filter(m => student.completedModules?.includes(m.id))
       .map(m => m.name);
@@ -77,22 +74,25 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
       .filter(m => !student.completedModules?.includes(m.id))
       .map(m => m.name);
 
-    const activityContext = recentActivities
-      ?.map(a => `${a.title}: ${a.description}`)
-      .join(". ") || "Belum ada aktivitas tercatat.";
+    return {
+      nama: student.nama,
+      level: student.level || 1,
+      poin: student.poin || 0,
+      badgeCount: student.badges?.length || 0,
+      completedModules: completed,
+      unfinishedModules: unfinished,
+      activitySummary: recentActivities?.map(a => `${a.title}: ${a.description}`).join(". ") || "Belum ada aktivitas."
+    };
+  }, [student, recentActivities]);
 
+  const handleGenerateAI = async () => {
+    if (!aiContext) return;
+
+    setIsAnalyzing(true);
     try {
-      const result = await analyzeStudentIndividually({
-        nama: student.nama,
-        level: student.level || 1,
-        poin: student.poin || 0,
-        badgeCount: student.badges?.length || 0,
-        completedModules: completed,
-        unfinishedModules: unfinished,
-        activitySummary: activityContext
-      });
+      const result = await analyzeStudentIndividually(aiContext);
       setAnalysisResult(result);
-      toast({ title: "Analisis Berhasil", description: "Wawasan ETHNO-AI telah diperbarui." });
+      toast({ title: "Analisis Berhasil", description: "Laporan ETHNO-AI telah diperbarui berdasarkan data nyata." });
     } catch (error) {
       console.error(error);
       toast({ variant: "destructive", title: "Gagal", description: "AI sedang sibuk, coba lagi nanti." });
@@ -196,6 +196,34 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
           )}
         </div>
 
+        {/* Debug Panel Sementara */}
+        <Card className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-slate-500">
+            <Terminal className="h-4 w-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Data Input AI (Faktual)</span>
+          </div>
+          <div className="grid grid-cols-2 gap-y-2 text-[9px] font-mono text-slate-600">
+            <div>XP: <span className="font-bold text-primary">{aiContext?.poin}</span></div>
+            <div>LEVEL: <span className="font-bold text-primary">{aiContext?.level}</span></div>
+            <div className="col-span-2">
+              <p className="mb-1">MODUL SELESAI:</p>
+              <div className="flex flex-wrap gap-1">
+                {aiContext?.completedModules.length ? aiContext.completedModules.map((m, i) => (
+                  <span key={i} className="bg-green-100 text-green-700 px-1 rounded">{m}</span>
+                )) : <span className="italic text-slate-400">Nihil</span>}
+              </div>
+            </div>
+            <div className="col-span-2">
+              <p className="mb-1">BELUM SELESAI:</p>
+              <div className="flex flex-wrap gap-1">
+                {aiContext?.unfinishedModules.length ? aiContext.unfinishedModules.map((m, i) => (
+                  <span key={i} className="bg-orange-100 text-orange-700 px-1 rounded">{m}</span>
+                )) : <span className="italic text-slate-400">Semua Selesai</span>}
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {!analysisResult && !isAnalyzing ? (
           <Card className="rounded-[2rem] border-none bg-gradient-to-br from-indigo-600 to-primary p-6 text-center space-y-4 shadow-lg relative overflow-hidden">
             <div className="relative z-10">
@@ -204,11 +232,11 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div className="space-y-1 text-white">
                 <p className="text-xs font-bold uppercase tracking-widest opacity-80">Wawasan Akademik</p>
-                <h4 className="font-headline font-bold text-lg">Generate Analisis Realtime</h4>
-                <p className="text-[10px] opacity-70 leading-relaxed px-4">Dapatkan prediksi performa berdasarkan data aktivitas terbaru siswa.</p>
+                <h4 className="font-headline font-bold text-lg">Laporan Faktual AI</h4>
+                <p className="text-[10px] opacity-70 leading-relaxed px-4">AI akan menganalisis progres materi spesifik yang sedang dikerjakan siswa.</p>
               </div>
               <Button className="w-full h-12 bg-white text-primary font-bold rounded-2xl shadow-xl hover:bg-slate-50 mt-4 active:scale-95 transition-transform" onClick={handleGenerateAI}>
-                Generate Laporan AI
+                Analisis Progres Nyata
               </Button>
             </div>
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
@@ -220,8 +248,8 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
               <Sparkles className="h-4 w-4 text-accent absolute -top-1 -right-1 animate-pulse" />
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Menganalisis Progres...</p>
-              <p className="text-[10px] text-muted-foreground italic">Menghitung XP dan status modul {student.nama}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Memproses Fakta Firestore...</p>
+              <p className="text-[10px] text-muted-foreground italic">Menyusun narasi berbasis modul untuk {student.nama}</p>
             </div>
           </Card>
         ) : (
@@ -249,7 +277,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
               </Card>
               <Card className="rounded-3xl border-none p-5 bg-orange-50 space-y-3">
                 <p className="text-[10px] font-bold text-orange-600 uppercase flex items-center gap-1">
-                   <Target className="h-3 w-3" /> Area Pengembangan
+                   <Target className="h-3 w-3" /> Pengembangan
                 </p>
                 <ul className="space-y-1.5">
                   {analysisResult?.improvementAreas.map((w, i) => (
