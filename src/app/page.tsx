@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from "react";
@@ -51,7 +50,6 @@ export default function MobileDashboard() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    // Only fetch if profile exists and we haven't fetched yet
     if (profile && !recommendations && !aiLoading) {
       async function fetchRecommendations() {
         setAiLoading(true);
@@ -65,11 +63,11 @@ export default function MobileDashboard() {
           });
           setRecommendations(result);
         } catch (error) {
-          console.error("AI Recommendation failed, using defaults:", error);
-          // Set silent fallback so it doesn't try again and again
+          console.error("Dashboard AI invocation failed:", error);
+          // Fallback UI data jika server action gagal
           setRecommendations({
-            nextChallenge: "Selesaikan materi Batik hari ini!",
-            motivationMessage: "Setiap langkah kecil membawamu lebih dekat ke puncak prestasi.",
+            nextChallenge: "Lanjutkan Modul Batik Nusantara",
+            motivationMessage: "Setiap langkah kecil membawamu lebih dekat ke puncak prestasi. Semangat!",
             recommendations: [],
             areasForImprovement: [],
             suggestedBadge: "Juara Numerasi"
@@ -82,7 +80,6 @@ export default function MobileDashboard() {
     }
   }, [profile?.uid, recommendations, aiLoading]);
 
-  // Defensive: Handle loading and non-existent profile
   if (authLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-white">
@@ -92,7 +89,7 @@ export default function MobileDashboard() {
   }
 
   if (!user || !profile) {
-    return null; // Let the useEffect router.push handle redirection
+    return null;
   }
 
   const currentLevel = profile?.level || 1;
@@ -166,13 +163,13 @@ export default function MobileDashboard() {
         </Card>
       </section>
 
-      {/* AI Recommendation Section (Optional) */}
+      {/* AI Recommendation Section */}
       <section className="space-y-4">
         <div className="flex items-center gap-2 px-1">
           <Sparkles className="h-4 w-4 text-accent" />
           <h3 className="font-headline font-bold text-sm">Tantangan Pintar AI</h3>
         </div>
-        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden">
+        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden min-h-[140px] flex flex-col justify-center">
           {aiLoading ? (
             <div className="p-6 flex justify-center">
               <Loader2 className="animate-spin h-5 w-5 text-accent" />
@@ -190,7 +187,7 @@ export default function MobileDashboard() {
             </div>
           ) : (
             <div className="p-5 text-center">
-              <p className="text-xs text-muted-foreground">Mulai belajar untuk melihat rekomendasi personal.</p>
+              <p className="text-xs text-muted-foreground italic">Mulai belajar untuk melihat rekomendasi personal.</p>
             </div>
           )}
         </Card>

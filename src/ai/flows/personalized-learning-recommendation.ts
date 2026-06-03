@@ -69,14 +69,16 @@ const personalizedLearningRecommendationFlow = ai.defineFlow(
       if (!output) throw new Error('AI generated empty output');
       return output;
     } catch (error) {
-      console.error('Gemini API Quota or Connection Error:', error);
-      // Fallback response for resilience
+      // Menangani error kuota (429) atau error API lainnya tanpa menghentikan aplikasi
+      console.error('Gemini API Error (Handled):', error);
+      
+      // Mengembalikan respon fallback yang aman dan bermakna bagi siswa
       return {
         recommendations: ["Batik Nusantara", "Candi Nusantara"],
-        areasForImprovement: ["Selesaikan modul dasar yang tersedia"],
-        nextChallenge: "Tuntaskan modul Batik hari ini untuk membuka tantangan baru!",
-        suggestedBadge: "Juara Numerasi",
-        motivationMessage: "Langkah kecil hari ini adalah awal kesuksesan besar di masa depan. Semangat belajar!"
+        areasForImprovement: ["Latih lagi konsep simetri pada modul Batik"],
+        nextChallenge: "Selesaikan 1 kuis di modul Batik Nusantara untuk membuka tantangan baru!",
+        suggestedBadge: "Ahli Geometri Batik",
+        motivationMessage: `Halo ${input.studentName}, teruslah belajar! Setiap tantangan yang kamu selesaikan akan membawamu lebih dekat ke puncak klasemen.`
       };
     }
   }
