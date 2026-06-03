@@ -20,7 +20,7 @@ import {
   Target,
   LineChart,
   Lightbulb,
-  Terminal
+  GraduationCap
 } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useDoc, useCollection } from "@/firebase";
@@ -28,6 +28,8 @@ import { doc, collection, query, where, orderBy, limit } from "firebase/firestor
 import { analyzeStudentIndividually, type StudentAnalysisOutput } from "@/ai/flows/student-individual-analysis";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+
+const SHOW_AI_DEBUG = false; // Flag untuk menyembunyikan debug di produksi
 
 export default function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -50,7 +52,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
       collection(db, "activities"),
       where("userId", "==", id),
       orderBy("timestamp", "desc"),
-      limit(5)
+      limit(10)
     );
   }, [db, id]);
 
@@ -63,7 +65,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     { id: 'games', name: 'Permainan Tradisional' },
   ];
 
-  // Data Faktual untuk AI
+  // Persiapan data FAKTUAL untuk AI
   const aiContext = useMemo(() => {
     if (!student) return null;
     const completed = MODULE_LIST
@@ -81,7 +83,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
       badgeCount: student.badges?.length || 0,
       completedModules: completed,
       unfinishedModules: unfinished,
-      activitySummary: recentActivities?.map(a => `${a.title}: ${a.description}`).join(". ") || "Belum ada aktivitas."
+      activitySummary: recentActivities?.map(a => `${a.title}: ${a.description}`).join(". ") || "Siswa baru mendaftar."
     };
   }, [student, recentActivities]);
 
@@ -103,9 +105,9 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
 
   const getRiskStyles = (level: string) => {
     switch (level) {
-      case 'aman': return { color: 'bg-green-500', text: '🟢 Aman' };
-      case 'perhatian': return { color: 'bg-yellow-500', text: '🟡 Perhatian' };
-      case 'risiko': return { color: 'bg-red-500', text: '🔴 Risiko' };
+      case 'aman': return { color: 'bg-green-500', text: '🟢 Status: Aman' };
+      case 'perhatian': return { color: 'bg-yellow-500', text: '🟡 Status: Perhatian' };
+      case 'risiko': return { color: 'bg-red-500', text: '🔴 Status: Risiko' };
       default: return { color: 'bg-slate-400', text: 'Status Normal' };
     }
   };
@@ -190,39 +192,21 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
             <Sparkles className="h-4 w-4 text-primary" /> Analisis ETHNO-AI
           </h3>
           {analysisResult && (
-            <Badge className={cn("px-3 py-0.5 rounded-full uppercase text-[9px] font-bold", getRiskStyles(analysisResult.riskLevel).color)}>
+            <Badge className={cn("px-3 py-0.5 rounded-full uppercase text-[9px] font-bold text-white", getRiskStyles(analysisResult.riskLevel).color)}>
               {getRiskStyles(analysisResult.riskLevel).text}
             </Badge>
           )}
         </div>
 
-        {/* Debug Panel Sementara */}
-        <Card className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-slate-500">
-            <Terminal className="h-4 w-4" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Data Input AI (Faktual)</span>
-          </div>
-          <div className="grid grid-cols-2 gap-y-2 text-[9px] font-mono text-slate-600">
-            <div>XP: <span className="font-bold text-primary">{aiContext?.poin}</span></div>
-            <div>LEVEL: <span className="font-bold text-primary">{aiContext?.level}</span></div>
-            <div className="col-span-2">
-              <p className="mb-1">MODUL SELESAI:</p>
-              <div className="flex flex-wrap gap-1">
-                {aiContext?.completedModules.length ? aiContext.completedModules.map((m, i) => (
-                  <span key={i} className="bg-green-100 text-green-700 px-1 rounded">{m}</span>
-                )) : <span className="italic text-slate-400">Nihil</span>}
-              </div>
-            </div>
-            <div className="col-span-2">
-              <p className="mb-1">BELUM SELESAI:</p>
-              <div className="flex flex-wrap gap-1">
-                {aiContext?.unfinishedModules.length ? aiContext.unfinishedModules.map((m, i) => (
-                  <span key={i} className="bg-orange-100 text-orange-700 px-1 rounded">{m}</span>
-                )) : <span className="italic text-slate-400">Semua Selesai</span>}
-              </div>
-            </div>
-          </div>
-        </Card>
+        {/* Debug Panel (Hanya muncul jika SHOW_AI_DEBUG = true) */}
+        {SHOW_AI_DEBUG && (
+          <Card className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 space-y-2">
+             <div className="grid grid-cols-2 text-[9px] font-mono">
+                <div>MODUL DONE: {aiContext?.completedModules.length}</div>
+                <div>MODUL LEFT: {aiContext?.unfinishedModules.length}</div>
+             </div>
+          </Card>
+        )}
 
         {!analysisResult && !isAnalyzing ? (
           <Card className="rounded-[2rem] border-none bg-gradient-to-br from-indigo-600 to-primary p-6 text-center space-y-4 shadow-lg relative overflow-hidden">
@@ -236,7 +220,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                 <p className="text-[10px] opacity-70 leading-relaxed px-4">AI akan menganalisis progres materi spesifik yang sedang dikerjakan siswa.</p>
               </div>
               <Button className="w-full h-12 bg-white text-primary font-bold rounded-2xl shadow-xl hover:bg-slate-50 mt-4 active:scale-95 transition-transform" onClick={handleGenerateAI}>
-                Analisis Progres Nyata
+                Analisis Progres Siswa
               </Button>
             </div>
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
@@ -248,8 +232,8 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
               <Sparkles className="h-4 w-4 text-accent absolute -top-1 -right-1 animate-pulse" />
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Memproses Fakta Firestore...</p>
-              <p className="text-[10px] text-muted-foreground italic">Menyusun narasi berbasis modul untuk {student.nama}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Memproses Data Modul...</p>
+              <p className="text-[10px] text-muted-foreground italic">Menyusun wawasan personal untuk {student.nama}</p>
             </div>
           </Card>
         ) : (
@@ -260,7 +244,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                 <LineChart className="h-4 w-4 text-primary" />
                 <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Ringkasan Kemampuan</span>
               </div>
-              <p className="text-sm text-slate-600 leading-relaxed font-medium italic">"{analysisResult?.summary}"</p>
+              <p className="text-sm text-slate-700 leading-relaxed font-medium italic">"{analysisResult?.summary}"</p>
             </Card>
 
             {/* Grid Kelebihan & Area Pengembangan */}
@@ -277,7 +261,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
               </Card>
               <Card className="rounded-3xl border-none p-5 bg-orange-50 space-y-3">
                 <p className="text-[10px] font-bold text-orange-600 uppercase flex items-center gap-1">
-                   <Target className="h-3 w-3" /> Pengembangan
+                   <Target className="h-3 w-3" /> Area Latih
                 </p>
                 <ul className="space-y-1.5">
                   {analysisResult?.improvementAreas.map((w, i) => (
@@ -287,33 +271,46 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
               </Card>
             </div>
 
-            {/* Instruksi & Prediksi */}
-            <Card className="rounded-3xl border-none p-6 bg-slate-900 text-white space-y-4 shadow-xl relative overflow-hidden">
-              <div className="relative z-10 space-y-4">
-                <div className="flex items-center gap-2">
-                  <BrainCircuit className="h-4 w-4 text-primary" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Instruksi Guru & Prediksi</span>
-                </div>
+            {/* Rekomendasi Guru & Siswa */}
+            <Card className="rounded-3xl border-none p-6 bg-slate-900 text-white space-y-6 shadow-xl relative overflow-hidden">
+              <div className="relative z-10 space-y-6">
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Saran Pengajaran:</p>
-                    <div className="space-y-1.5">
-                      {analysisResult?.teacherRecommendations.map((r, i) => (
-                        <div key={i} className="flex gap-2 items-start">
-                          <span className="text-primary font-bold text-xs">{i + 1}.</span>
-                          <p className="text-xs font-medium opacity-90 leading-tight">{r}</p>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <BrainCircuit className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Saran Strategis Guru</span>
                   </div>
-                  <div className="pt-3 border-t border-white/10">
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Prediksi Perkembangan:</p>
-                    <p className="text-xs font-bold text-primary italic leading-relaxed flex gap-2 items-start">
-                      <Lightbulb className="h-3 w-3 shrink-0" />
+                  <div className="space-y-2">
+                    {analysisResult?.teacherRecommendations.map((r, i) => (
+                      <div key={i} className="flex gap-2 items-start">
+                        <span className="text-primary font-bold text-xs">{i + 1}.</span>
+                        <p className="text-[11px] font-medium opacity-90 leading-tight">{r}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-white/10">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-accent" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Tips Untuk Siswa</span>
+                  </div>
+                  <div className="space-y-2">
+                    {analysisResult?.studentRecommendations.map((r, i) => (
+                      <div key={i} className="flex gap-2 items-center bg-white/5 p-2 rounded-xl border border-white/5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                        <p className="text-[10px] font-medium opacity-80 leading-tight">{r}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Prediksi Masa Depan:</p>
+                    <p className="text-[11px] font-bold text-primary italic leading-relaxed flex gap-2 items-start bg-primary/5 p-3 rounded-2xl border border-primary/10">
+                      <Lightbulb className="h-4 w-4 shrink-0" />
                       {analysisResult?.prediction}
                     </p>
                   </div>
-                </div>
               </div>
               <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
             </Card>
@@ -328,7 +325,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
       {/* Progress Modul */}
       <section className="space-y-4">
         <h3 className="font-headline font-bold text-sm px-1 flex items-center gap-2 text-slate-900">
-          <BookOpen className="h-4 w-4 text-primary" /> Progres Materi
+          <BookOpen className="h-4 w-4 text-primary" /> Progres Materi Nusantara
         </h3>
         <div className="space-y-3">
           {MODULE_LIST.map((mod) => {

@@ -12,17 +12,18 @@ const StudentDataSchema = z.object({
   level: z.number(),
   poin: z.number().describe('Total XP siswa'),
   badgeCount: z.number().describe('Jumlah lencana yang dimiliki'),
-  completedModules: z.array(z.string()).describe('Daftar nama modul yang SELESAI'),
-  unfinishedModules: z.array(z.string()).describe('Daftar nama modul yang BELUM selesai'),
+  completedModules: z.array(z.string()).describe('Daftar NAMA materi yang SELESAI'),
+  unfinishedModules: z.array(z.string()).describe('Daftar NAMA materi yang BELUM selesai'),
   activitySummary: z.string().optional().describe('Ringkasan aktivitas terakhir siswa'),
 });
 
 const AnalysisOutputSchema = z.object({
-  summary: z.string().describe('Ringkasan kemampuan numerasi dan budaya siswa.'),
-  strengths: z.array(z.string()).describe('3-4 Kelebihan utama siswa (sebutkan nama modul).'),
-  improvementAreas: z.array(z.string()).describe('3-4 Area yang perlu dikembangkan (sebutkan modul yang belum selesai).'),
-  teacherRecommendations: z.array(z.string()).describe('Saran konkret untuk Guru berdasarkan modul spesifik.'),
-  prediction: z.string().describe('Prediksi perkembangan belajar siswa.'),
+  summary: z.string().describe('Ringkasan kemampuan numerasi dan budaya siswa yang menyebutkan nama modul spesifik.'),
+  strengths: z.array(z.string()).describe('3-4 Kelebihan utama siswa berdasarkan materi yang dikuasai.'),
+  improvementAreas: z.array(z.string()).describe('3-4 Area yang perlu dikembangkan berdasarkan modul yang tertunda.'),
+  teacherRecommendations: z.array(z.string()).describe('Saran konkret untuk Guru membantu siswa.'),
+  studentRecommendations: z.array(z.string()).describe('Saran langsung untuk Siswa meningkatkan belajarnya.'),
+  prediction: z.string().describe('Prediksi perkembangan belajar jika materi spesifik dituntaskan.'),
   riskLevel: z.enum(['aman', 'perhatian', 'risiko']).describe('Tingkat risiko akademik.'),
 });
 
@@ -39,32 +40,34 @@ const prompt = ai.definePrompt({
   output: { schema: AnalysisOutputSchema },
   system: `Anda adalah Senior AI Education Consultant di platform ETHNO-ARITH.
   
-Tugas Anda adalah menganalisis data progres siswa secara FAKTUAL, JUJUR, dan DINAMIS.
-JANGAN gunakan template statis atau kalimat generik seperti "siswa aktif", "siswa berkembang", atau "memiliki semangat".
+Tugas Anda adalah menganalisis data progres siswa secara FAKTUAL, JUJUR, dan DINAMIS berdasarkan daftar modul.
 
-ATURAN WAJIB:
-1. SEBUTKAN NAMA MODUL secara spesifik dalam analisis Anda (misal: "Batik Nusantara", "Candi Nusantara", dll).
-2. Jika modul ada di daftar 'Modul Selesai', nyatakan sebagai penguasaan materi tersebut.
-3. Jika modul ada di daftar 'Modul Belum Selesai', nyatakan sebagai target belajar berikutnya.
-4. Jika XP = 0 dan belum ada modul selesai, analisis sebagai 'Fase Orientasi'.
-5. Hubungkan jumlah XP ({{{poin}}}) dan Lencana ({{{badgeCount}}}) dengan dedikasi nyata siswa pada materi tertentu.
+ATURAN WAJIB (STRICT RULES):
+1. SEBUTKAN NAMA MATERI secara spesifik dalam analisis Anda (misal: "Batik Nusantara", "Candi Nusantara", "Masjid Al Akbar", "Permainan Tradisional").
+2. JANGAN gunakan kalimat generik seperti "siswa aktif", "siswa berkembang", atau "memiliki semangat" jika ada modul yang selesai.
+3. JANGAN pernah katakan "data belum mencukupi" jika jumlah XP > 0 atau ada modul selesai.
+4. KASUS 0 MODUL SELESAI: Analisis sebagai fase orientasi awal.
+5. KASUS 1-2 MODUL SELESAI: Sebutkan nama modul tersebut sebagai bukti penguasaan awal.
+6. KASUS SEMUA MODUL SELESAI: Nyatakan jalur pembelajaran telah tuntas dan siswa siap untuk level pengayaan.
+7. Gunakan fakta XP ({{{poin}}}) dan Lencana ({{{badgeCount}}}) untuk menilai ketekunan siswa pada materi yang telah diselesaikan.
 
-HASILKAN DALAM BAHASA INDONESIA YANG EDUKATIF BERBASIS DATA NYATA.`,
+HASILKAN DALAM BAHASA INDONESIA YANG EDUKATIF DAN PERSONAL BERBASIS DATA NYATA.`,
   prompt: `Lakukan analisis mendalam untuk siswa berikut:
 Nama: {{{nama}}}
 Level: {{{level}}}
 Total XP: {{{poin}}}
 Jumlah Lencana: {{{badgeCount}}}
-Modul Selesai: {{#each completedModules}}{{{this}}}, {{/each}}
-Modul Belum Selesai: {{#each unfinishedModules}}{{{this}}}, {{/each}}
-Riwayat Aktivitas: {{{activitySummary}}}
+Materi SELESAI: {{#each completedModules}}{{{this}}}, {{/each}}
+Materi BELUM Selesai: {{#each unfinishedModules}}{{{this}}}, {{/each}}
+Aktivitas: {{{activitySummary}}}
 
 Instruksi Output:
-- summary: Narasi (2-3 kalimat) tentang profil belajar saat ini menggunakan fakta modul yang sudah/belum selesai.
-- strengths: Poin kelebihan numerasi pada materi yang sudah diselesaikan.
-- improvementAreas: Poin modul yang masih harus dituntaskan.
-- teacherRecommendations: Langkah teknis untuk guru membantu siswa menyelesaikan modul yang tertunda.
-- prediction: Ramalan kemajuan jika materi spesifik selanjutnya diselesaikan.`
+- summary: Narasi (2-3 kalimat) profil belajar. WAJIB sebutkan modul yang telah/belum selesai.
+- strengths: Poin kelebihan pada materi spesifik yang sudah diselesaikan.
+- improvementAreas: Poin materi spesifik yang harus segera dituntaskan.
+- teacherRecommendations: Langkah teknis guru untuk membantu siswa di materi yang belum selesai.
+- studentRecommendations: Tips belajar asik bagi siswa agar cepat naik level.
+- prediction: Ramalan kemajuan akademik berdasarkan sisa materi yang ada.`
 });
 
 const studentIndividualAnalysisFlow = ai.defineFlow(
@@ -81,11 +84,12 @@ const studentIndividualAnalysisFlow = ai.defineFlow(
     } catch (error) {
       console.error('AI Analysis Error:', error);
       return {
-        summary: "Data aktivitas siswa saat ini belum mencukupi untuk menghasilkan analisis mendalam.",
-        strengths: ["Memulai penggunaan platform"],
-        improvementAreas: ["Menyelesaikan modul pertama"],
-        teacherRecommendations: ["Bantu siswa melakukan pindaian QR pertama"],
-        prediction: "Siswa akan berkembang setelah mencoba materi Batik Nusantara.",
+        summary: "Siswa sedang dalam tahap awal eksplorasi ETHNO-ARITH. Belum ada progres modul yang tercatat secara signifikan untuk analisis mendalam.",
+        strengths: ["Memulai orientasi platform"],
+        improvementAreas: ["Menyelesaikan modul pertama", "Mencoba Smart Scan QR"],
+        teacherRecommendations: ["Berikan bimbingan untuk melakukan pindaian QR pertama pada materi Batik."],
+        studentRecommendations: ["Ayo coba buka modul Batik Nusantara untuk mendapatkan lencana pertamamu!"],
+        prediction: "Siswa akan menunjukkan minat tinggi setelah mencoba fitur Augmented Reality.",
         riskLevel: "perhatian"
       };
     }
