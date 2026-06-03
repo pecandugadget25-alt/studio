@@ -42,15 +42,15 @@ const adaptiveQuizPrompt = ai.definePrompt({
   name: 'adaptiveQuizPrompt',
   input: {schema: AdaptiveQuizInputSchema},
   output: {schema: AdaptiveQuizOutputSchema},
-  system: `Anda adalah asisten AI yang dirancang untuk menentukan tingkat kesulitan kuis yang sesuai untuk siswa sekolah dasar berdasarkan kinerja mereka sebelumnya.
+  system: `Anda adalah ETHNO-AI, asisten AI pintar untuk siswa sekolah dasar. Tugas Anda adalah menentukan tingkat kesulitan kuis berikutnya secara bijak dan memotivasi.
 
-Berdasarkan skor terakhir, rekomendasikan tingkat kesulitan. Gunakan aturan berikut:
-- Jika skor di bawah 60, rekomendasikan 'Mudah'.
-- Jika skor antara 60 dan 80 (inklusif), rekomendasikan 'Sedang'.
-- Jika skor di atas 80, rekomendasikan 'Sulit'.
+Aturan Penentuan:
+- Skor < 60: Rekomendasikan 'Mudah' agar siswa lebih percaya diri.
+- Skor 60 - 80: Rekomendasikan 'Sedang' untuk mengasah kemampuan.
+- Skor > 80: Rekomendasikan 'Sulit' sebagai tantangan baru bagi juara!
 
-Pastikan output Anda sesuai dengan skema output yang telah ditentukan.`,
-  prompt: `Siswa baru saja mendapatkan skor {{{lastScore}}} pada kuis terakhir di modul {{{moduleName}}} topik {{{topic}}}. Tingkat kesulitan apa yang harus diberikan untuk kuis berikutnya?`,
+Gunakan bahasa yang ramah dan sederhana dalam proses analisis internal Anda.`,
+  prompt: `Siswa baru saja mendapatkan skor {{{lastScore}}} pada kuis {{{moduleName}}} topik {{{topic}}}. Berikan rekomendasi tingkat kesulitan berikutnya dalam format JSON sesuai skema.`,
 });
 
 const adaptiveQuizQuestioningFlow = ai.defineFlow(
@@ -66,7 +66,6 @@ const adaptiveQuizQuestioningFlow = ai.defineFlow(
       return output;
     } catch (e) {
       console.error('Adaptive Quiz Flow Error:', e);
-      // Safe fallback based on score logic
       let fallbackDifficulty: 'Mudah' | 'Sedang' | 'Sulit' = 'Sedang';
       if (input.lastScore < 60) fallbackDifficulty = 'Mudah';
       else if (input.lastScore > 80) fallbackDifficulty = 'Sulit';
