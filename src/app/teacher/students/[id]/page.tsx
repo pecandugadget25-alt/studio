@@ -20,7 +20,8 @@ import {
   Target,
   LineChart,
   Lightbulb,
-  GraduationCap
+  GraduationCap,
+  Database
 } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useDoc, useCollection } from "@/firebase";
@@ -29,7 +30,7 @@ import { analyzeStudentIndividually, type StudentAnalysisOutput } from "@/ai/flo
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-const SHOW_AI_DEBUG = false; // Flag untuk menyembunyikan debug di produksi
+const SHOW_AI_DEBUG = true; // AKTIFKAN UNTUK AUDIT DATA SOURCE
 
 export default function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -77,13 +78,13 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
       .map(m => m.name);
 
     return {
-      nama: student.nama,
+      nama: student.nama || "Siswa",
       level: student.level || 1,
       poin: student.poin || 0,
       badgeCount: student.badges?.length || 0,
       completedModules: completed,
       unfinishedModules: unfinished,
-      activitySummary: recentActivities?.map(a => `${a.title}: ${a.description}`).join(". ") || "Siswa baru mendaftar."
+      activitySummary: recentActivities?.map(a => `${a.title}: ${a.description}`).join(". ") || "Siswa baru bergabung."
     };
   }, [student, recentActivities]);
 
@@ -145,6 +146,41 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
+      {/* Developer Audit Panel */}
+      {SHOW_AI_DEBUG && (
+        <Card className="rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-2 overflow-hidden animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center justify-between border-b border-primary/10 pb-2 mb-2">
+            <div className="flex items-center gap-2">
+              <Database className="h-3 w-3 text-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Audit Source AI</span>
+            </div>
+            <Badge variant="outline" className="text-[8px] h-4 border-primary/20 text-primary">DEV ONLY</Badge>
+          </div>
+          <div className="grid grid-cols-1 gap-1 text-[9px] font-mono text-slate-600">
+            <div className="flex justify-between border-b border-slate-100 py-0.5">
+              <span className="font-bold">ID:</span>
+              <span className="truncate ml-2">{id}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 py-0.5">
+              <span className="font-bold">XP / Badges:</span>
+              <span>{student.poin || 0} / {student.badges?.length || 0}</span>
+            </div>
+            <div className="py-0.5">
+              <span className="font-bold">Completed ({student.completedModules?.length || 0}):</span>
+              <div className="bg-emerald-50 text-emerald-700 p-1 rounded mt-0.5">
+                {aiContext?.completedModules.join(", ") || "None"}
+              </div>
+            </div>
+            <div className="py-0.5">
+              <span className="font-bold">Unfinished ({aiContext?.unfinishedModules.length || 0}):</span>
+              <div className="bg-orange-50 text-orange-700 p-1 rounded mt-0.5">
+                {aiContext?.unfinishedModules.join(", ") || "None"}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Profile Card */}
       <Card className="rounded-[2.5rem] border-none p-6 bg-white shadow-sm space-y-6">
         <div className="flex flex-col items-center text-center space-y-3">
@@ -197,16 +233,6 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
             </Badge>
           )}
         </div>
-
-        {/* Debug Panel (Hanya muncul jika SHOW_AI_DEBUG = true) */}
-        {SHOW_AI_DEBUG && (
-          <Card className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 space-y-2">
-             <div className="grid grid-cols-2 text-[9px] font-mono">
-                <div>MODUL DONE: {aiContext?.completedModules.length}</div>
-                <div>MODUL LEFT: {aiContext?.unfinishedModules.length}</div>
-             </div>
-          </Card>
-        )}
 
         {!analysisResult && !isAnalyzing ? (
           <Card className="rounded-[2rem] border-none bg-gradient-to-br from-indigo-600 to-primary p-6 text-center space-y-4 shadow-lg relative overflow-hidden">

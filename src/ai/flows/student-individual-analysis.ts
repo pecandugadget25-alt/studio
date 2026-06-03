@@ -40,34 +40,32 @@ const prompt = ai.definePrompt({
   output: { schema: AnalysisOutputSchema },
   system: `Anda adalah Senior AI Education Consultant di platform ETHNO-ARITH.
   
-Tugas Anda adalah menganalisis data progres siswa secara FAKTUAL, JUJUR, dan DINAMIS berdasarkan daftar modul.
+Tugas Anda adalah menganalisis data progres siswa secara FAKTUAL, JUJUR, dan DINAMIS berdasarkan daftar modul dan status XP.
+
+DATA KONTEKS:
+- Nama: {{{nama}}}
+- XP: {{{poin}}}
+- Lencana: {{{badgeCount}}}
+- Modul Selesai: {{#each completedModules}}{{{this}}}, {{/each}}
+- Modul Belum: {{#each unfinishedModules}}{{{this}}}, {{/each}}
 
 ATURAN WAJIB (STRICT RULES):
-1. SEBUTKAN NAMA MATERI secara spesifik dalam analisis Anda (misal: "Batik Nusantara", "Candi Nusantara", "Masjid Al Akbar", "Permainan Tradisional").
-2. JANGAN gunakan kalimat generik seperti "siswa aktif", "siswa berkembang", atau "memiliki semangat" jika ada modul yang selesai.
-3. JANGAN pernah katakan "data belum mencukupi" jika jumlah XP > 0 atau ada modul selesai.
-4. KASUS 0 MODUL SELESAI: Analisis sebagai fase orientasi awal.
-5. KASUS 1-2 MODUL SELESAI: Sebutkan nama modul tersebut sebagai bukti penguasaan awal.
-6. KASUS SEMUA MODUL SELESAI: Nyatakan jalur pembelajaran telah tuntas dan siswa siap untuk level pengayaan.
-7. Gunakan fakta XP ({{{poin}}}) dan Lencana ({{{badgeCount}}}) untuk menilai ketekunan siswa pada materi yang telah diselesaikan.
+1. SEBUTKAN NAMA MATERI secara spesifik dalam analisis Anda. 
+2. JANGAN PERNAH katakan "Belum ada progres signifikan" jika XP > 0 atau ada modul yang selesai. Jika siswa punya 5 XP sekalipun, hargai itu sebagai bukti interaksi awal.
+3. Jika modul selesai ada 1-2, sebutkan modul tersebut di bagian SUMMARY.
+4. Jika modul selesai > 2, nyatakan siswa memiliki minat tinggi pada Etnomatematika.
+5. Jika XP = 0 dan modul selesai = 0, analisis sebagai fase orientasi (AMAN).
+6. Berikan rekomendasi yang BERBEDA untuk Guru dan Siswa.
+7. SESUAIKAN TINGKAT RISIKO: 
+   - 'aman': XP bertambah dalam log aktivitas atau modul selesai > 0.
+   - 'perhatian': XP > 0 tapi modul belum ada yang selesai dalam waktu lama.
+   - 'risiko': XP = 0 dan belum ada aktivitas di modul manapun setelah mendaftar.
 
-HASILKAN DALAM BAHASA INDONESIA YANG EDUKATIF DAN PERSONAL BERBASIS DATA NYATA.`,
-  prompt: `Lakukan analisis mendalam untuk siswa berikut:
-Nama: {{{nama}}}
-Level: {{{level}}}
-Total XP: {{{poin}}}
-Jumlah Lencana: {{{badgeCount}}}
-Materi SELESAI: {{#each completedModules}}{{{this}}}, {{/each}}
-Materi BELUM Selesai: {{#each unfinishedModules}}{{{this}}}, {{/each}}
-Aktivitas: {{{activitySummary}}}
-
-Instruksi Output:
-- summary: Narasi (2-3 kalimat) profil belajar. WAJIB sebutkan modul yang telah/belum selesai.
-- strengths: Poin kelebihan pada materi spesifik yang sudah diselesaikan.
-- improvementAreas: Poin materi spesifik yang harus segera dituntaskan.
-- teacherRecommendations: Langkah teknis guru untuk membantu siswa di materi yang belum selesai.
-- studentRecommendations: Tips belajar asik bagi siswa agar cepat naik level.
-- prediction: Ramalan kemajuan akademik berdasarkan sisa materi yang ada.`
+HASILKAN DALAM BAHASA INDONESIA YANG EDUKATIF BERBASIS DATA NYATA.`,
+  prompt: `Lakukan analisis mendalam untuk siswa: {{{nama}}}. 
+Gunakan fakta bahwa dia memiliki {{{poin}}} XP dan telah menyelesaikan modul: {{#each completedModules}}{{{this}}}, {{/each}}. 
+Modul yang tersisa adalah: {{#each unfinishedModules}}{{{this}}}, {{/each}}.
+Ringkasan aktivitas: {{{activitySummary}}}`
 });
 
 const studentIndividualAnalysisFlow = ai.defineFlow(
@@ -83,14 +81,18 @@ const studentIndividualAnalysisFlow = ai.defineFlow(
       return output;
     } catch (error) {
       console.error('AI Analysis Error:', error);
+      // Fallback yang lebih cerdas jika AI gagal
+      const hasProgress = input.poin > 0 || input.completedModules.length > 0;
       return {
-        summary: "Siswa sedang dalam tahap awal eksplorasi ETHNO-ARITH. Belum ada progres modul yang tercatat secara signifikan untuk analisis mendalam.",
-        strengths: ["Memulai orientasi platform"],
-        improvementAreas: ["Menyelesaikan modul pertama", "Mencoba Smart Scan QR"],
-        teacherRecommendations: ["Berikan bimbingan untuk melakukan pindaian QR pertama pada materi Batik."],
-        studentRecommendations: ["Ayo coba buka modul Batik Nusantara untuk mendapatkan lencana pertamamu!"],
-        prediction: "Siswa akan menunjukkan minat tinggi setelah mencoba fitur Augmented Reality.",
-        riskLevel: "perhatian"
+        summary: hasProgress 
+          ? `Siswa atas nama ${input.nama} telah menunjukkan interaksi dengan platform ETHNO-ARITH (XP: ${input.poin}). Fokus saat ini adalah menuntaskan materi ${input.unfinishedModules[0] || 'Nusantara'}.`
+          : "Siswa sedang dalam tahap awal eksplorasi platform.",
+        strengths: hasProgress ? ["Memiliki kemauan mencoba modul", "Interaksi awal berhasil"] : ["Memulai pendaftaran"],
+        improvementAreas: [input.unfinishedModules[0] || "Menyelesaikan modul pertama"],
+        teacherRecommendations: ["Berikan dorongan untuk memindai QR pada modul fisik."],
+        studentRecommendations: ["Ayo selesaikan modul pertamamu untuk dapat lencana!"],
+        prediction: "Siswa akan berkembang setelah memahami konsep dasar numerasi.",
+        riskLevel: hasProgress ? "aman" : "perhatian"
       };
     }
   }
