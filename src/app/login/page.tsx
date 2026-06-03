@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { ShieldCheck, Loader2, Box } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useFirebase } from "@/firebase/provider";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +35,17 @@ export default function LoginPage() {
       
       if (userDoc.exists()) {
         const profile = userDoc.data();
+        
+        // Log Activity: Login
+        await addDoc(collection(db, "activities"), {
+          userId: userCredential.user.uid,
+          activityType: "login",
+          title: "Masuk Akun",
+          description: "Berhasil masuk ke aplikasi",
+          xp: 0,
+          timestamp: serverTimestamp()
+        }).catch(console.warn);
+
         toast({
           title: "Berhasil Masuk",
           description: `Selamat datang kembali, ${profile.nama}!`,

@@ -9,10 +9,8 @@ import { Trophy, ArrowLeft, Loader2, Star, CheckCircle2, XCircle, MapPin } from 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser, useFirestore } from "@/firebase";
-import { doc, updateDoc, arrayUnion, increment } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, increment, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 const QUESTIONS = [
   {
@@ -80,23 +78,28 @@ export default function BatikQuizPage() {
       badges: arrayUnion("Ahli Geometri Batik")
     };
 
-    updateDoc(userRef, updateData)
-      .then(() => {
-        toast({
-          title: "Pencapaian Baru!",
-          description: `Selamat! Kamu mendapatkan lencana "Ahli Geometri Batik" dan ${xpGained} XP.`,
-        });
-        router.push("/dashboard/student");
-      })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: userRef.path,
-          operation: 'update',
-          requestResourceData: updateData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        setIsSubmitting(false);
+    try {
+      await updateDoc(userRef, updateData);
+      
+      // Log Activity: Quiz Completed
+      await addDoc(collection(db, "activities"), {
+        userId: user.uid,
+        activityType: "quiz",
+        title: "Kuis Selesai: Batik Nusantara",
+        description: `Mendapatkan skor ${score}/${QUESTIONS.length}`,
+        xp: xpGained,
+        timestamp: serverTimestamp()
       });
+
+      toast({
+        title: "Pencapaian Baru!",
+        description: `Selamat! Kamu mendapatkan lencana "Ahli Geometri Batik" dan ${xpGained} XP.`,
+      });
+      router.push("/activity");
+    } catch (error) {
+      console.error(error);
+      setIsSubmitting(false);
+    }
   };
 
   if (showResult) {

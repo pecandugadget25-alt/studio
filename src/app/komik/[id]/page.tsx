@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser, useFirestore } from "@/firebase";
-import { doc, updateDoc, arrayUnion, increment } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, increment, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -91,11 +91,22 @@ export default function ComicReaderPage({ params }: { params: Promise<{ id: stri
 
     try {
       await updateDoc(userRef, updateData);
+      
+      // Log Activity: Comic Read
+      await addDoc(collection(db, "activities"), {
+        userId: user.uid,
+        activityType: "comic",
+        title: "Komik Selesai",
+        description: `Selesai membaca: ${comic.title}`,
+        xp: 5,
+        timestamp: serverTimestamp()
+      });
+
       toast({
         title: "Keren! Kamu Selesai Membaca 🎉",
         description: "Kamu mendapatkan +5 XP. Ayo baca komik lainnya!",
       });
-      router.push("/komik");
+      router.push("/activity");
     } catch (error) {
       console.error("Gagal menyimpan progress komik", error);
       setIsFinishing(false);

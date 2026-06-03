@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,8 @@ import {
   LayoutDashboard,
   Users,
   Search,
-  QrCode
+  QrCode,
+  ArrowRight
 } from "lucide-react";
 import { useUser, useFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -158,9 +160,18 @@ export default function ProfilePage() {
         )}
 
         {isStudent && (
-          <Button variant="outline" className="w-full justify-start h-14 rounded-3xl gap-4 border-slate-100 bg-white text-sm font-bold">
-            <History className="h-5 w-5 text-slate-400" /> Riwayat Pembelajaran
-          </Button>
+          <Link href="/activity" className="block w-full">
+            <Button variant="outline" className="w-full justify-start h-16 rounded-3xl gap-4 border-slate-100 bg-white text-sm font-bold shadow-sm relative group">
+              <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
+                 <History className="h-5 w-5" />
+              </div>
+              <div className="flex-1 text-left">
+                 <p className="font-bold">Riwayat Aktivitas</p>
+                 <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Lihat pencapaian belajarmu</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-slate-300 mr-2" />
+            </Button>
+          </Link>
         )}
 
         <Button 

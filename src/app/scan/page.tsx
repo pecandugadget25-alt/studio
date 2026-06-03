@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -191,9 +192,7 @@ export default function UniversalScannerPage() {
       return;
     }
 
-    // 1. Immediately stop scanning to focus on the result
     await stopCamera();
-
     const result = classifyQR(rawText);
 
     if (result.type === 'PAYMENT_BLOCKED') {
@@ -202,6 +201,7 @@ export default function UniversalScannerPage() {
       return;
     }
 
+    // Log for Scan Logs
     const logData = {
       userId: user.uid,
       studentName: profile.nama,
@@ -213,14 +213,17 @@ export default function UniversalScannerPage() {
       timestamp: serverTimestamp()
     };
 
-    addDoc(collection(db, "scan_logs"), logData)
-      .catch(async (e) => {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-          path: 'scan_logs',
-          operation: 'create',
-          requestResourceData: logData
-        }));
-      });
+    addDoc(collection(db, "scan_logs"), logData).catch(console.warn);
+
+    // Log for Activity Log
+    await addDoc(collection(db, "activities"), {
+      userId: user.uid,
+      activityType: "scan_qr",
+      title: `Pindai QR: ${result.title}`,
+      description: `Berhasil membuka konten edukasi via ${source}`,
+      xp: result.xp,
+      timestamp: serverTimestamp()
+    }).catch(console.warn);
 
     if (result.xp > 0) {
       const userRef = doc(db, "users", user.uid);
@@ -334,16 +337,13 @@ export default function UniversalScannerPage() {
       </header>
 
       <main className="flex-1 space-y-6">
-        {/* Camera Viewport Area */}
         <div className={cn(
           "relative bg-slate-900 overflow-hidden shadow-inner w-full transition-all duration-500 ease-in-out",
           scanResult ? "h-[350px] bg-slate-100" : "aspect-square max-h-[50vh]"
         )}>
-          {/* Main Scanner Instance */}
           <div id="reader" className={cn("w-full h-full", scanResult ? "hidden" : "block")}></div>
           <div id="reader-hidden" className="hidden"></div>
           
-          {/* Focus Mode: Scan Result View */}
           {scanResult && (
             <div className="absolute inset-0 flex items-center justify-center p-6 animate-in zoom-in-95 duration-500">
               <Card className={cn(
@@ -391,7 +391,6 @@ export default function UniversalScannerPage() {
             </div>
           )}
 
-          {/* Idle/Initial State */}
           {!isCameraActive && !isProcessing && !scanResult && (
             <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4 p-8 text-center animate-in fade-in duration-700">
               <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center border-2 border-dashed border-white/20">
@@ -406,7 +405,6 @@ export default function UniversalScannerPage() {
             </div>
           )}
 
-          {/* Processing State */}
           {isProcessing && (
             <div className="absolute inset-0 z-30 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin text-accent" />
@@ -415,7 +413,6 @@ export default function UniversalScannerPage() {
           )}
         </div>
 
-        {/* Action Controls */}
         <section className="px-6 grid grid-cols-2 gap-4">
           <Button 
             variant={isCameraActive ? 'default' : 'outline'}
@@ -439,15 +436,12 @@ export default function UniversalScannerPage() {
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
         </section>
 
-        {/* History Section */}
         <section className="px-6 space-y-4 pb-12">
           <div className="flex items-center justify-between px-1">
             <h3 className="font-headline font-bold text-sm text-slate-900 flex items-center gap-2">
               <History className="h-4 w-4 text-slate-400" /> Riwayat Baru
             </h3>
-            {recentScans && recentScans.length > 0 && (
-              <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Lihat Semua</span>
-            )}
+            <Link href="/activity" className="text-[10px] font-bold text-primary uppercase tracking-widest">Lihat Semua</Link>
           </div>
           
           <div className="space-y-3">
@@ -488,4 +482,3 @@ export default function UniversalScannerPage() {
     </div>
   );
 }
-

@@ -42,10 +42,7 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
   };
 
   useEffect(() => {
-    // 1. Decode URL from parameters
     const decodedUrl = decodeURIComponent(id);
-    
-    // 2. Extract Video ID from Youtube URL
     const extractId = (url: string) => {
       const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
       const match = url.match(regExp);
@@ -56,10 +53,22 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
     if (vId) {
       setVideoId(vId);
       setIsValid(true);
+      
+      // Log Activity: Open Video
+      if (user && db) {
+        addDoc(collection(db, "activities"), {
+          userId: user.uid,
+          activityType: "video",
+          title: "Buka Video",
+          description: `Mulai menonton: ${videoData.title}`,
+          xp: 0,
+          timestamp: serverTimestamp()
+        }).catch(console.warn);
+      }
     } else {
       setIsValid(false);
     }
-  }, [id]);
+  }, [id, user?.uid]);
 
   const isAlreadyFinished = videoId ? profile?.completedVideos?.includes(videoId) : false;
 
@@ -82,18 +91,18 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
     const activityRef = collection(db, "activities");
 
     try {
-      // 1. Update User Profile
       await updateDoc(userRef, {
         poin: increment(videoData.xpReward),
         completedVideos: arrayUnion(videoId)
       });
 
-      // 2. Log Activity for Teacher
+      // Log Activity: Video Completed
       await addDoc(activityRef, {
         userId: user.uid,
-        userName: profile.nama,
-        action: `menyelesaikan video: ${videoData.title}`,
-        type: 'video',
+        activityType: "video",
+        title: "Video Selesai",
+        description: `Berhasil menyelesaikan video: ${videoData.title}`,
+        xp: videoData.xpReward,
         timestamp: serverTimestamp()
       });
 
@@ -102,7 +111,7 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
         description: `Kamu telah menyelesaikan materi video. Terus semangat!`,
       });
 
-      router.push("/");
+      router.push("/activity");
     } catch (e) {
       console.error(e);
       setIsFinishing(false);
@@ -148,7 +157,6 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
       </header>
 
       <main className="flex-1 space-y-6 p-6 animate-in fade-in duration-700">
-        {/* Title & Metadata */}
         <div className="space-y-2">
           <h2 className="text-2xl font-headline font-bold text-slate-900 leading-tight">
             {videoData.title}
@@ -166,7 +174,6 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* Embedded Player */}
         <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-black">
           <iframe
             src={embedUrl}
@@ -177,7 +184,6 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
           ></iframe>
         </div>
 
-        {/* Progress Bar (Manual Simulation) */}
         <div className="space-y-2">
            <div className="flex justify-between items-center px-1">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Progres Menonton</span>
@@ -186,14 +192,12 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
            <Progress value={isAlreadyFinished ? 100 : progress} className="h-2 bg-slate-100" />
         </div>
 
-        {/* Description */}
         <div className="space-y-4">
           <p className="text-slate-600 text-sm leading-relaxed font-medium">
             {videoData.description}
           </p>
         </div>
 
-        {/* Reward Section */}
         <Card className="bg-slate-50 border-none p-6 rounded-[2rem] shadow-sm relative overflow-hidden">
            <div className="flex items-center justify-between relative z-10">
               <div className="flex items-center gap-4">
@@ -213,7 +217,6 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
            </div>
         </Card>
 
-        {/* Action Controls */}
         <div className="space-y-4 pt-4">
           {!isAlreadyFinished ? (
             <Button 

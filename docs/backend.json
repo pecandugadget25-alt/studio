@@ -38,13 +38,14 @@
     },
     "Activity": {
       "title": "User Activity Log",
-      "description": "Log aktivitas harian siswa untuk monitoring guru.",
+      "description": "Log aktivitas harian siswa untuk monitoring guru dan riwayat siswa.",
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "action": { "type": "string" },
-        "type": { "type": "string", "enum": ["quiz", "comic", "ar", "module", "scan", "video"] },
+        "activityType": { "type": "string", "enum": ["login", "scan_qr", "video", "comic", "quiz", "ar", "module"] },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "xp": { "type": "number" },
         "timestamp": { "type": "string", "format": "date-time" }
       }
     }
@@ -63,7 +64,7 @@
     },
     "/activities/{activityId}": {
       "schema": "Activity",
-      "description": "Log aktivitas siswa."
+      "description": "Log aktivitas siswa terpadu."
     }
   }
 }
