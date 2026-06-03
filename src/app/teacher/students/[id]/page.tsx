@@ -19,17 +19,16 @@ import {
   Target,
   LineChart,
   Lightbulb,
-  GraduationCap,
-  Database
+  GraduationCap
 } from "lucide-react";
 import Link from "next/link";
-import { useFirestore, useDoc, useCollection } from "@/firebase";
-import { doc, collection, query, where, orderBy, limit } from "firebase/firestore";
+import { useFirestore, useDoc } from "@/firebase";
+import { doc } from "firebase/firestore";
 import { analyzeStudentIndividually, type StudentAnalysisOutput } from "@/ai/flows/student-individual-analysis";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
-const SHOW_AI_DEBUG = true; 
+const SHOW_AI_DEBUG = false; 
 
 export default function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -45,18 +44,6 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   }, [db, id]);
 
   const { data: student, loading } = useDoc(studentRef);
-
-  const activityQuery = useMemo(() => {
-    if (!db || !id) return null;
-    return query(
-      collection(db, "activities"),
-      where("userId", "==", id),
-      orderBy("timestamp", "desc"),
-      limit(10)
-    );
-  }, [db, id]);
-
-  const { data: recentActivities } = useCollection(activityQuery);
 
   const MODULE_LIST = [
     { id: 'batik', name: 'Batik Nusantara' },
@@ -82,9 +69,8 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
       badgeCount: student.badges?.length || 0,
       completedModules: completed,
       unfinishedModules: unfinished,
-      activitySummary: recentActivities?.map(a => `${a.title}: ${a.description}`).join(". ") || "Siswa baru bergabung."
     };
-  }, [student, recentActivities]);
+  }, [student]);
 
   const handleGenerateAI = async () => {
     if (!aiContext) return;
@@ -93,21 +79,21 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
     try {
       const result = await analyzeStudentIndividually(aiContext);
       setAnalysisResult(result);
-      toast({ title: "Analisis Berhasil", description: "Laporan ETHNO-AI telah diperbarui." });
+      toast({ title: "Analisis Berhasil", description: "Laporan pedagogik telah diperbarui." });
     } catch (error) {
       console.error(error);
-      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan pada AI." });
+      toast({ variant: "destructive", title: "Gagal", description: "Terjadi kesalahan pada sistem AI." });
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const getRiskStyles = (level: string) => {
-    switch (level) {
-      case 'aman': return { color: 'bg-green-500', text: '🟢 Status: Aman' };
-      case 'perhatian': return { color: 'bg-yellow-500', text: '🟡 Status: Perhatian' };
-      case 'risiko': return { color: 'bg-red-500', text: '🔴 Status: Risiko' };
-      default: return { color: 'bg-slate-400', text: 'Status Normal' };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'UNGGUL': return 'bg-emerald-500';
+      case 'AKTIF': return 'bg-blue-500';
+      case 'BERKEMBANG': return 'bg-orange-500';
+      default: return 'bg-slate-500';
     }
   };
 
@@ -139,30 +125,9 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
               <ArrowLeft className="h-5 w-5 text-slate-600" />
             </Button>
           </Link>
-          <h1 className="font-headline font-bold text-lg text-primary tracking-tight uppercase">Detail Profil</h1>
+          <h1 className="font-headline font-bold text-lg text-primary tracking-tight uppercase">Detail Siswa</h1>
         </div>
       </div>
-
-      {SHOW_AI_DEBUG && (
-        <Card className="rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-2 overflow-hidden">
-          <div className="flex items-center justify-between border-b border-primary/10 pb-2 mb-2">
-            <div className="flex items-center gap-2">
-              <Database className="h-3 w-3 text-primary" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Audit Source AI</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-1 text-[9px] font-mono text-slate-600">
-            <div className="flex justify-between">
-              <span className="font-bold">XP / Lencana:</span>
-              <span>{student.poin || 0} / {student.badges?.length || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-bold">Selesai:</span>
-              <span>{student.completedModules?.length || 0}</span>
-            </div>
-          </div>
-        </Card>
-      )}
 
       <Card className="rounded-[2.5rem] border-none p-6 bg-white shadow-sm space-y-6">
         <div className="flex flex-col items-center text-center space-y-3">
@@ -209,8 +174,8 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
             <Sparkles className="h-4 w-4 text-primary" /> Analisis ETHNO-AI
           </h3>
           {analysisResult && (
-            <Badge className={cn("px-3 py-0.5 rounded-full uppercase text-[9px] font-bold text-white", getRiskStyles(analysisResult.riskLevel).color)}>
-              {getRiskStyles(analysisResult.riskLevel).text}
+            <Badge className={cn("px-3 py-0.5 rounded-full uppercase text-[9px] font-bold text-white", getStatusColor(analysisResult.status))}>
+              {analysisResult.status}
             </Badge>
           )}
         </div>
@@ -221,25 +186,26 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
               <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto backdrop-blur-md mb-4">
                 <BrainCircuit className="h-8 w-8 text-white" />
               </div>
-              <h4 className="font-headline font-bold text-lg text-white">Analisis Cerdas AI</h4>
+              <h4 className="font-headline font-bold text-lg text-white">Analisis Pedagogik AI</h4>
+              <p className="text-[10px] text-white/80 px-6">Klik untuk melihat interpretasi cerdas berdasarkan progres modul siswa.</p>
               <Button className="w-full h-12 bg-white text-primary font-bold rounded-2xl shadow-xl hover:bg-slate-50 mt-4" onClick={handleGenerateAI}>
-                Generate Analisis Sekarang
+                Hasilkan Laporan
               </Button>
             </div>
           </Card>
         ) : isAnalyzing ? (
           <Card className="rounded-[2rem] border-none bg-white p-12 text-center flex flex-col items-center justify-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-xs font-bold text-slate-400 uppercase">Menganalisis Progres...</p>
+            <p className="text-xs font-bold text-slate-400 uppercase">Menyusun Laporan Pedagogik...</p>
           </Card>
         ) : (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <Card className="rounded-[2.5rem] border-none bg-white p-6 shadow-sm space-y-4 border-l-8 border-primary">
               <div className="flex items-center gap-2">
                 <LineChart className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Ringkasan Kemampuan</span>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Interpretasi Kemampuan</span>
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed font-medium italic">"{analysisResult?.summary}"</p>
+              <p className="text-sm text-slate-700 leading-relaxed font-medium italic">"{analysisResult?.ringkasan}"</p>
             </Card>
 
             <div className="grid grid-cols-2 gap-4">
@@ -248,7 +214,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                    <Star className="h-3 w-3 fill-current" /> Kelebihan
                 </p>
                 <ul className="space-y-1.5">
-                  {analysisResult?.strengths.map((s, i) => (
+                  {analysisResult?.kelebihan.map((s, i) => (
                     <li key={i} className="text-[9px] font-bold text-emerald-900 flex gap-1">✓ {s}</li>
                   ))}
                 </ul>
@@ -258,7 +224,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                    <Target className="h-3 w-3" /> Area Latih
                 </p>
                 <ul className="space-y-1.5">
-                  {analysisResult?.improvementAreas.map((w, i) => (
+                  {analysisResult?.areaLatih.map((w, i) => (
                     <li key={i} className="text-[9px] font-bold text-orange-900 flex gap-1">• {w}</li>
                   ))}
                 </ul>
@@ -267,36 +233,28 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
 
             <Card className="rounded-3xl border-none p-6 bg-slate-900 text-white space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <BrainCircuit className="h-4 w-4 text-primary" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Saran Strategis Guru</span>
+                <div className="flex items-center gap-2 text-primary">
+                  <BrainCircuit className="h-4 w-4" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Rekomendasi Guru</span>
                 </div>
-                {analysisResult?.teacherRecommendations.map((r, i) => (
-                  <div key={i} className="flex gap-2 items-start">
-                    <span className="text-primary font-bold text-xs">{i + 1}.</span>
-                    <p className="text-[11px] font-medium opacity-90">{r}</p>
-                  </div>
-                ))}
+                <p className="text-[11px] font-medium opacity-90 leading-relaxed">{analysisResult?.saranGuru}</p>
               </div>
 
               <div className="space-y-4 pt-4 border-t border-white/10">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Tips Untuk Siswa</span>
+                <div className="flex items-center gap-2 text-accent">
+                  <GraduationCap className="h-4 w-4" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Tips Pembelajaran Siswa</span>
                 </div>
-                {analysisResult?.studentRecommendations.map((r, i) => (
-                  <div key={i} className="flex gap-2 items-center bg-white/5 p-2 rounded-xl">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                    <p className="text-[10px] font-medium opacity-80">{r}</p>
-                  </div>
-                ))}
+                <div className="bg-white/5 p-4 rounded-2xl">
+                  <p className="text-[10px] font-medium opacity-80 italic">"{analysisResult?.tipsSiswa}"</p>
+                </div>
               </div>
 
               <div className="pt-2">
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Prediksi Masa Depan:</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Prediksi Belajar:</p>
                 <p className="text-[11px] font-bold text-primary italic leading-relaxed flex gap-2">
                   <Lightbulb className="h-4 w-4 shrink-0" />
-                  {analysisResult?.prediction}
+                  {analysisResult?.prediksi}
                 </p>
               </div>
             </Card>
