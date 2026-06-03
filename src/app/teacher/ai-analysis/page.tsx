@@ -13,15 +13,13 @@ import {
   ChevronRight, 
   Loader2,
   BrainCircuit,
-  Zap,
   Star,
   Target,
   AlertTriangle,
-  History,
-  ShieldCheck,
   UserCheck,
   LineChart,
-  Database
+  Database,
+  Info
 } from "lucide-react";
 import Link from "next/link";
 import { useUser, useFirestore, useCollection } from "@/firebase";
@@ -29,6 +27,9 @@ import { collection, query, where, addDoc, serverTimestamp, orderBy, limit, getD
 import { analyzeStudentIndividually, type StudentAnalysisOutput } from "@/ai/flows/student-individual-analysis";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+
+// Memastikan halaman tidak di-cache dan selalu mengambil data terbaru dari Firestore
+export const dynamic = "force-dynamic";
 
 export default function TeacherAIAnalysisPage() {
   const { db } = useFirestore();
@@ -38,37 +39,30 @@ export default function TeacherAIAnalysisPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<StudentAnalysisOutput | null>(null);
 
-  // AUDIT: Menggunakan Query yang sama persis dengan halaman /teacher/students
-  const studentsQuery = useMemo(() => {
+  // AUDIT FIX: Menggunakan query dasar tanpa filter 'where' di Firestore
+  // untuk menjamin data terbaca 100% (filtering dilakukan di sisi client)
+  const usersQuery = useMemo(() => {
     if (!db) return null;
-    return query(collection(db, "users"), where("peran", "==", "siswa"));
+    return collection(db, "users");
   }, [db]);
 
-  const { data: allStudents, loading: studentsLoading } = useCollection(studentsQuery);
+  const { data: allUsers, loading: studentsLoading } = useCollection(usersQuery);
 
-  // Filtering cerdas: Menampilkan semua siswa jika kolom pencarian kosong
+  // Proses data di sisi klien: Filter peran siswa dan filter pencarian nama
   const filteredStudents = useMemo(() => {
-    if (!allStudents) return [];
-    if (!searchTerm.trim()) return allStudents; // Tampilkan SEMUA siswa yang ada di collection users peran siswa
+    if (!allUsers) return [];
     
-    return allStudents.filter(s => 
+    // 1. Filter hanya yang berperan siswa
+    const studentsOnly = allUsers.filter(u => u.peran === 'siswa');
+    
+    // 2. Filter berdasarkan pencarian nama/email
+    if (!searchTerm.trim()) return studentsOnly;
+    
+    return studentsOnly.filter(s => 
       s.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       s.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [allStudents, searchTerm]);
-
-  // Riwayat analisis terakhir untuk siswa yang dipilih
-  const historyQuery = useMemo(() => {
-    if (!db || !selectedStudent) return null;
-    return query(
-      collection(db, "student_ai_analysis"),
-      where("studentId", "==", selectedStudent.uid),
-      orderBy("generatedAt", "desc"),
-      limit(3)
-    );
-  }, [db, selectedStudent?.uid]);
-
-  const { data: analysisHistory } = useCollection(historyQuery);
+  }, [allUsers, searchTerm]);
 
   const handleGenerateAI = async () => {
     if (!selectedStudent || !db) return;
@@ -113,14 +107,14 @@ export default function TeacherAIAnalysisPage() {
 
       toast({
         title: "Analisis Selesai",
-        description: `Laporan edukasi untuk ${selectedStudent.nama} siap dibaca.`
+        description: `Laporan untuk ${selectedStudent.nama} telah siap.`
       });
     } catch (error) {
       console.error(error);
       toast({
         variant: "destructive",
         title: "AI Error",
-        description: "Gagal memproses analisis. Silakan coba lagi."
+        description: "Gagal memproses analisis."
       });
     } finally {
       setIsAnalyzing(false);
@@ -145,53 +139,53 @@ export default function TeacherAIAnalysisPage() {
               <ArrowLeft className="h-5 w-5 text-slate-600" />
             </Button>
           </Link>
-          <h1 className="font-headline font-bold text-lg text-primary">AI ANALISIS</h1>
+          <h1 className="font-headline font-bold text-lg text-primary uppercase">AI Analisis</h1>
         </div>
-        <div className="bg-primary/10 p-2 rounded-xl">
-           <BrainCircuit className="h-5 w-5 text-primary" />
-        </div>
+        <BrainCircuit className="h-6 w-6 text-primary/20" />
       </header>
 
       {!selectedStudent ? (
-        <section className="space-y-4">
+        <section className="space-y-4 animate-in fade-in duration-500">
           <div className="px-1">
-            <h2 className="text-2xl font-headline font-bold text-slate-900">Analisis Siswa 🕵️‍♂️</h2>
-            <p className="text-sm text-muted-foreground">Pilih siswa untuk mendapatkan wawasan belajar AI.</p>
+            <h2 className="text-2xl font-headline font-bold text-slate-900">Pilih Siswa 🕵️‍♂️</h2>
+            <p className="text-sm text-muted-foreground">Analisis progres belajar dengan kecerdasan AI.</p>
           </div>
 
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <Input 
-              placeholder="Cari nama siswa..." 
+              placeholder="Cari nama atau email..." 
               className="pl-12 h-14 bg-white rounded-2xl border-none shadow-sm focus-visible:ring-2 ring-primary/20 text-base"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* Debug Info Sementara */}
-          <div className="bg-blue-900/5 p-3 rounded-xl border border-blue-100 flex items-center justify-between">
-             <div className="flex items-center gap-2">
-                <Database className="h-3 w-3 text-blue-500" />
-                <span className="text-[10px] font-bold text-blue-700 uppercase">Audit Firestore</span>
+          {/* DEBUG INFO: Wajib Tampil Sesuai Permintaan Audit */}
+          <div className="bg-slate-900 text-white p-4 rounded-2xl space-y-1 shadow-lg">
+             <div className="flex items-center gap-2 mb-1">
+                <Database className="h-3 w-3 text-primary" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Firestore Audit</span>
              </div>
-             <div className="flex gap-3">
-                <span className="text-[9px] font-bold">Col: users</span>
-                <span className="text-[9px] font-bold">Found: {allStudents?.length || 0}</span>
-             </div>
+             <p className="text-[11px] font-mono">Collection Aktif: <span className="text-green-400">users</span></p>
+             <p className="text-[11px] font-mono">Jumlah Dokumen: <span className="text-green-400">{allUsers?.length || 0}</span></p>
+             <p className="text-[11px] font-mono">Siswa Terfilter: <span className="text-green-400">{filteredStudents.length}</span></p>
+             {filteredStudents.length > 0 && (
+               <p className="text-[11px] font-mono truncate">Siswa Pertama: <span className="text-yellow-400">{filteredStudents[0].nama}</span></p>
+             )}
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 pt-2">
             {studentsLoading ? (
               <div className="py-20 flex flex-col items-center gap-3">
                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                 <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Menghubungkan ke Database...</p>
+                 <p className="text-[10px] text-muted-foreground font-bold uppercase">Menghubungkan...</p>
               </div>
             ) : filteredStudents.length > 0 ? (
               filteredStudents.map((s) => (
                 <Card 
                   key={s.uid} 
-                  className="rounded-3xl border-none p-4 bg-white shadow-sm hover:ring-2 ring-primary/40 transition-all cursor-pointer group"
+                  className="rounded-3xl border-none p-4 bg-white shadow-sm hover:ring-2 ring-primary/40 transition-all cursor-pointer group active:scale-[0.98]"
                   onClick={() => setSelectedStudent(s)}
                 >
                   <div className="flex items-center gap-4">
@@ -205,32 +199,29 @@ export default function TeacherAIAnalysisPage() {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-sm text-slate-900 truncate">{s.nama}</h4>
                       <div className="flex items-center gap-3 mt-1">
-                        <Badge variant="secondary" className="bg-blue-50 text-primary text-[9px] font-bold px-2">Level {s.level || 1}</Badge>
+                        <Badge variant="secondary" className="bg-blue-50 text-primary text-[9px] font-bold px-2">LV. {s.level || 1}</Badge>
                         <div className="flex items-center gap-1">
                           <Star className="h-3 w-3 text-yellow-500 fill-current" />
                           <span className="text-[10px] font-bold text-slate-500">{s.poin || 0} XP</span>
                         </div>
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <ChevronRight className="h-4 w-4 text-slate-300" />
+                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                      <ChevronRight className="h-4 w-4" />
                     </div>
                   </div>
                 </Card>
               ))
             ) : (
-              <div className="py-20 text-center space-y-4">
+              <div className="py-20 text-center space-y-4 bg-white rounded-[2rem] border-2 border-dashed border-slate-100">
                 <AlertTriangle className="h-10 w-10 text-slate-200 mx-auto" />
-                <div className="space-y-1">
-                   <p className="text-sm font-bold text-slate-400 italic">Siswa tidak ditemukan.</p>
-                   <p className="text-[10px] text-muted-foreground px-10">Pastikan siswa sudah terdaftar dengan peran 'siswa' di koleksi users.</p>
-                </div>
+                <p className="text-sm font-bold text-slate-400">Siswa tidak ditemukan.</p>
               </div>
             )}
           </div>
         </section>
       ) : (
-        <section className="space-y-6">
+        <section className="space-y-6 animate-in slide-in-from-right duration-500">
           <div className="flex items-center justify-between px-1">
              <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-lg">
@@ -263,7 +254,7 @@ export default function TeacherAIAnalysisPage() {
                     <Sparkles className="h-10 w-10 text-primary" />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-xl font-headline font-bold text-slate-900">Siap Menganalisis?</h4>
+                    <h4 className="text-xl font-headline font-bold text-slate-900">Analisis ETHNO-AI</h4>
                     <p className="text-xs text-muted-foreground px-6 leading-relaxed">
                       AI akan meninjau level, poin, {selectedStudent.scanCount} pindaian QR, dan riwayat aktivitas untuk memberikan laporan mendalam.
                     </p>
@@ -288,7 +279,7 @@ export default function TeacherAIAnalysisPage() {
                </div>
             </Card>
           ) : (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-500 pb-10">
+            <div className="space-y-6 pb-10">
                {/* 1. Ringkasan & Engagement */}
                <Card className="rounded-[2.5rem] border-none bg-white p-6 shadow-sm space-y-4 border-l-8 border-primary">
                   <div className="flex items-center gap-2">
@@ -324,7 +315,7 @@ export default function TeacherAIAnalysisPage() {
                </div>
 
                {/* 3. Rekomendasi Guru */}
-               <Card className="rounded-3xl border-none p-6 bg-slate-900 text-white space-y-4">
+               <Card className="rounded-3xl border-none p-6 bg-slate-900 text-white space-y-4 shadow-xl">
                   <div className="flex items-center gap-2">
                     <BrainCircuit className="h-4 w-4 text-primary" />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Instruksi Untuk Guru</span>
@@ -355,9 +346,12 @@ export default function TeacherAIAnalysisPage() {
                <Button 
                 variant="outline" 
                 className="w-full h-14 rounded-2xl font-bold border-2 border-slate-200 text-slate-500 hover:bg-slate-50"
-                onClick={() => setAnalysisResult(null)}
+                onClick={() => {
+                  setAnalysisResult(null);
+                  setSelectedStudent(null);
+                }}
                >
-                 Analisis Ulang
+                 Tutup Laporan
                </Button>
             </div>
           )}
