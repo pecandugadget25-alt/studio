@@ -22,6 +22,10 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Bar, BarChart, XAxis, ResponsiveContainer } from "recharts";
 import { useRouter } from "next/navigation";
 import { analyzeClassPerformance, type ClassAnalysisOutput } from "@/ai/flows/class-performance-analysis";
+import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +33,12 @@ export default function TeacherReportsPage() {
   const router = useRouter();
   const db = useFirestore();
   const { profile, loading: authLoading } = useUser();
+  const { toast } = useToast();
   
   const [aiAnalysis, setAiAnalysis] = useState<ClassAnalysisOutput | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // Guard: Hanya Guru/Admin
   useEffect(() => {
@@ -89,6 +96,114 @@ export default function TeacherReportsPage() {
       fetchAnalysis();
     }
   }, [stats, aiAnalysis, aiLoading]);
+
+  const handleExportExcel = () => {
+    if (!students || students.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Ekspor Gagal",
+        description: "Belum ada data siswa untuk diekspor."
+      });
+      return;
+    }
+
+    setIsExportingExcel(true);
+    try {
+      const data = students.map((s: any) => ({
+        "Nama Siswa": s.nama,
+        "Email": s.email,
+        "Level": s.level || 1,
+        "Total XP": s.poin || 0,
+        "Total Scan": s.scanCount || 0,
+        "Modul Selesai": s.completedModules?.length || 0,
+        "Lencana": s.badges?.length || 0
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Performa");
+      
+      XLSX.writeFile(workbook, `Laporan_EthnoArith_${new Date().toISOString().split('T')[0]}.xlsx`);
+      
+      toast({
+        title: "Ekspor Berhasil",
+        description: "File Excel telah diunduh."
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Kesalahan",
+        description: "Terjadi kesalahan saat membuat file Excel."
+      });
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
+  const handleExportPdf = () => {
+    if (!students || students.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Ekspor Gagal",
+        description: "Belum ada data siswa untuk diekspor."
+      });
+      return;
+    }
+
+    setIsExportingPdf(true);
+    try {
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFontSize(18);
+      doc.text("Laporan Performa Pembelajaran ETHNO-ARITH", 14, 20);
+      
+      doc.setFontSize(11);
+      doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 30);
+      doc.text(`Guru: ${profile?.nama || "Admin"}`, 14, 37);
+
+      // Stats Summary
+      doc.setFontSize(14);
+      doc.text("Ringkasan Kelas", 14, 50);
+      doc.setFontSize(10);
+      doc.text(`Total Siswa: ${stats.total}`, 14, 58);
+      doc.text(`Total XP Kelas: ${stats.totalXP}`, 14, 65);
+      doc.text(`Rata-rata XP: ${stats.avgXP}`, 14, 72);
+      doc.text(`Interaksi AR Scan: ${stats.arScans}`, 14, 79);
+
+      // Student Table
+      const tableData = students.map((s: any) => [
+        s.nama,
+        s.level || 1,
+        s.poin || 0,
+        s.scanCount || 0,
+        s.completedModules?.length || 0
+      ]);
+
+      autoTable(doc, {
+        startY: 90,
+        head: [['Nama Siswa', 'Level', 'XP', 'Scan', 'Modul']],
+        body: tableData,
+      });
+
+      doc.save(`Laporan_EthnoArith_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      toast({
+        title: "Ekspor Berhasil",
+        description: "File PDF telah diunduh."
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Kesalahan",
+        description: "Terjadi kesalahan saat membuat file PDF."
+      });
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   const chartData = [
     { name: 'Siswa', value: stats.total },
@@ -190,17 +305,32 @@ export default function TeacherReportsPage() {
       <section className="space-y-4 pb-4">
         <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Ekspor Data</h3>
         <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm">
-            <Download className="h-5 w-5 text-primary" />
+          <Button 
+            variant="outline" 
+            className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm"
+            onClick={handleExportExcel}
+            disabled={isExportingExcel || loading}
+          >
+            {isExportingExcel ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5 text-primary" />}
             <span className="text-[10px] uppercase">Excel (XLSX)</span>
           </Button>
-          <Button variant="outline" className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm">
-            <Printer className="h-5 w-5 text-accent" />
+          <Button 
+            variant="outline" 
+            className="h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm"
+            onClick={handleExportPdf}
+            disabled={isExportingPdf || loading}
+          >
+            {isExportingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <Printer className="h-5 w-5 text-accent" />}
             <span className="text-[10px] uppercase">Cetak PDF</span>
           </Button>
         </div>
-        <Button className="w-full h-14 rounded-3xl font-bold gap-2 bg-slate-900 text-white shadow-lg">
-          <FileText className="h-5 w-5" /> Download Laporan Performa
+        <Button 
+          className="w-full h-14 rounded-3xl font-bold gap-2 bg-slate-900 text-white shadow-lg"
+          onClick={handleExportPdf}
+          disabled={isExportingPdf || loading}
+        >
+          {isExportingPdf ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />}
+          Download Laporan Performa
         </Button>
       </section>
     </div>
