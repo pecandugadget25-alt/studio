@@ -12,11 +12,18 @@ service cloud.firestore {
 
     // Aturan untuk Koleksi Users
     match /users/{userId} {
-      // Izinkan semua pengguna yang login membaca profil (untuk leaderboard dan monitoring)
       allow read: if isSignedIn();
-      // Hanya pemilik akun yang bisa membuat atau memperbarui profil mereka
       allow create: if isSignedIn();
       allow update: if isOwner(userId);
+    }
+
+    // Koleksi logs dan activities harus bisa ditulis oleh user yang login
+    match /scan_logs/{logId} {
+      allow read, create: if isSignedIn();
+    }
+    
+    match /activities/{activityId} {
+      allow read, create: if isSignedIn();
     }
 
     // Aturan default untuk koleksi lainnya agar pengembangan berjalan lancar

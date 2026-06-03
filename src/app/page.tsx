@@ -22,7 +22,8 @@ import {
   Zap,
   Trophy,
   BookOpen,
-  Sparkles
+  Sparkles,
+  QrCode
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -65,7 +66,7 @@ export default function MobileDashboard() {
             level: profile?.level || 1,
             completedModules: profile?.completedModules || [],
             availableModules: MODULES.map(m => m.name),
-            availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi"]
+            availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi", "Explorer QR"]
           });
           setRecommendations(result);
         } catch (error) {
@@ -122,7 +123,7 @@ export default function MobileDashboard() {
 
       {/* Kartu Progress & Stats */}
       <section className="grid grid-cols-1 gap-4">
-        <Card className="rounded-[2rem] border-none bg-gradient-to-br from-primary to-blue-700 text-white p-6 card-shadow relative overflow-hidden">
+        <Card className="rounded-[2.5rem] border-none bg-gradient-to-br from-primary to-blue-700 text-white p-6 card-shadow relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex justify-between items-center mb-6">
               <div className="space-y-1">
@@ -130,7 +131,7 @@ export default function MobileDashboard() {
                 <h3 className="text-3xl font-headline font-bold">Level {currentLevel}</h3>
               </div>
               <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                < Star className="h-8 w-8 text-yellow-300 fill-current" />
+                <Star className="h-8 w-8 text-yellow-300 fill-current" />
               </div>
             </div>
             
@@ -145,8 +146,8 @@ export default function MobileDashboard() {
             <div className="grid grid-cols-3 gap-2 mt-6 pt-6 border-t border-white/10">
               <div className="flex flex-col items-center gap-1">
                 <Flame className="h-5 w-5 text-orange-400 fill-current" />
-                <span className="text-xs font-bold">Aktif</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold">Status</span>
+                <span className="text-xs font-bold">{profile.scanCount || 0}</span>
+                <span className="text-[9px] opacity-60 uppercase font-bold">QR Pindai</span>
               </div>
               <div className="flex flex-col items-center gap-1">
                 <Award className="h-5 w-5 text-yellow-400" />
@@ -163,6 +164,20 @@ export default function MobileDashboard() {
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-accent/20 rounded-full blur-2xl" />
         </Card>
+      </section>
+
+      {/* Quick Access QR Section */}
+      <section className="px-1">
+        <Link href="/scan">
+          <Button className="w-full h-16 rounded-3xl bg-accent hover:bg-accent/90 text-white font-bold gap-3 shadow-lg shadow-accent/20 transition-all active:scale-95">
+             <QrCode className="h-6 w-6" />
+             <div className="text-left">
+                <p className="text-sm font-bold uppercase leading-none">Smart QR Scanner</p>
+                <p className="text-[10px] font-medium opacity-80">Scan buku, modul, atau video</p>
+             </div>
+             <ChevronRight className="h-5 w-5 ml-auto opacity-50" />
+          </Button>
+        </Link>
       </section>
 
       {/* AI Recommendation Section */}
@@ -198,9 +213,9 @@ export default function MobileDashboard() {
       {/* Menu Cepat */}
       <section className="grid grid-cols-4 gap-4 px-1">
         {[
-          { icon: Camera, label: "Scan AR", color: "bg-accent", href: "/ar-scan" },
+          { icon: Camera, label: "Scan AR", color: "bg-accent", href: "/scan" },
           { icon: BookOpen, label: "Modul", color: "bg-blue-500", href: "/modules" },
-          { icon: Zap, label: "Tantangan", color: "bg-orange-500", href: "/challenges" },
+          { icon: Zap, label: "Misi", color: "bg-orange-500", href: "/challenges" },
           { icon: Trophy, label: "Peringkat", color: "bg-yellow-500", href: "/leaderboard" },
         ].map((item, i) => {
           const Icon = item.icon;

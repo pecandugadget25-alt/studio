@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +15,8 @@ import {
   Trophy,
   LayoutDashboard,
   Users,
-  Search
+  Search,
+  QrCode
 } from "lucide-react";
 import { useUser, useFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -28,6 +28,10 @@ const BADGE_CONFIG: Record<string, { icon: any, color: string }> = {
   "Penjelajah Candi Nusantara": { icon: ShieldCheck, color: "bg-blue-100 text-blue-600" },
   "Ahli Matematika Masjid": { icon: Award, color: "bg-emerald-100 text-emerald-600" },
   "Juara Numerasi": { icon: Trophy, color: "bg-red-100 text-red-600" },
+  "Explorer QR": { icon: QrCode, color: "bg-purple-100 text-purple-600" },
+  "Pemburu Pengetahuan": { icon: Search, color: "bg-blue-100 text-blue-600" },
+  "Master Eksplorasi": { icon: Trophy, color: "bg-yellow-100 text-yellow-600" },
+  "Legenda ETHNO": { icon: Award, color: "bg-primary/20 text-primary" },
 };
 
 export default function ProfilePage() {
@@ -54,7 +58,7 @@ export default function ProfilePage() {
   const isTeacherOrAdmin = profile.peran === 'guru' || profile.peran === 'admin' || profile.peran === 'peneliti';
 
   return (
-    <div className="pt-20 pb-24 px-4 space-y-6 max-w-[500px] mx-auto min-h-screen bg-slate-50/50">
+    <div className="pt-20 pb-32 px-4 space-y-6 max-w-[500px] mx-auto min-h-screen bg-slate-50/50">
       {/* Profile Header */}
       <div className="flex flex-col items-center space-y-3 py-4">
         <div className="relative">
@@ -88,10 +92,10 @@ export default function ProfilePage() {
             </div>
           </Card>
           <Card className="border-none rounded-2xl bg-white shadow-sm p-4 text-center space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Modul Selesai</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Pindaian QR</p>
             <div className="flex items-center justify-center gap-2">
-              <Award className="h-5 w-5 text-primary" />
-              <span className="text-xl font-bold">{profile.completedModules?.length || 0}</span>
+              <QrCode className="h-5 w-5 text-accent" />
+              <span className="text-xl font-bold">{profile.scanCount || 0}</span>
             </div>
           </Card>
         </div>
@@ -127,7 +131,7 @@ export default function ProfilePage() {
             </div>
             {(!profile.badges || profile.badges.length === 0) && (
               <p className="text-[10px] text-center text-muted-foreground italic py-4">
-                Belum ada lencana. Selesaikan kuis untuk mendapatkannya!
+                Belum ada lencana. Selesaikan kuis atau pindai QR untuk mendapatkannya!
               </p>
             )}
           </CardContent>
@@ -135,7 +139,7 @@ export default function ProfilePage() {
       )}
 
       {/* Menu Actions */}
-      <div className="space-y-3">
+      <div className="space-y-3 pb-10">
         {isTeacherOrAdmin && (
           <Link href="/teacher" className="block w-full">
             <Button className="w-full justify-start h-16 rounded-3xl gap-4 bg-primary hover:bg-primary/90 text-sm font-bold shadow-lg shadow-primary/20">

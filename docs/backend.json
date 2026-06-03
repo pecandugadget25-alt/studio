@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -12,6 +11,7 @@
         "peran": { "type": "string", "enum": ["siswa", "guru", "admin", "peneliti"] },
         "level": { "type": "number" },
         "poin": { "type": "number" },
+        "scanCount": { "type": "number", "description": "Total pemindaian QR yang berhasil." },
         "completedModules": { "type": "array", "items": { "type": "string" } },
         "completedComics": { "type": "array", "items": { "type": "string" } },
         "badges": { "type": "array", "items": { "type": "string" } },
@@ -19,24 +19,17 @@
       },
       "required": ["uid", "nama", "email", "peran"]
     },
-    "StudentProgress": {
-      "title": "Student Progress",
-      "description": "Detail progress belajar siswa per modul.",
+    "ScanLog": {
+      "title": "Smart QR Scan Log",
+      "description": "Log setiap kali siswa melakukan pemindaian QR Code.",
       "type": "object",
       "properties": {
-        "studentId": { "type": "string" },
-        "moduleId": { "type": "string" },
-        "status": { "type": "string" },
-        "lastAccessed": { "type": "string", "format": "date-time" }
-      }
-    },
-    "ScanHistory": {
-      "title": "AR Scan History",
-      "description": "Riwayat penggunaan AR Scanner oleh siswa.",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string" },
-        "markerId": { "type": "string" },
+        "uid": { "type": "string" },
+        "studentName": { "type": "string" },
+        "qrType": { "type": "string", "enum": ["video", "module", "comic", "quiz", "ar", "unknown"] },
+        "qrValue": { "type": "string" },
+        "source": { "type": "string", "enum": ["camera", "gallery"] },
+        "xpEarned": { "type": "number" },
         "timestamp": { "type": "string", "format": "date-time" }
       }
     },
@@ -48,18 +41,7 @@
         "userId": { "type": "string" },
         "userName": { "type": "string" },
         "action": { "type": "string" },
-        "type": { "type": "string", "enum": ["quiz", "comic", "ar", "module"] },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
-    },
-    "QuizResult": {
-      "title": "Quiz Result",
-      "description": "Hasil pengerjaan kuis siswa.",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string" },
-        "moduleId": { "type": "string" },
-        "score": { "type": "number" },
+        "type": { "type": "string", "enum": ["quiz", "comic", "ar", "module", "scan"] },
         "timestamp": { "type": "string", "format": "date-time" }
       }
     }
@@ -72,21 +54,13 @@
       "schema": "User",
       "description": "Koleksi profil pengguna."
     },
-    "/student_progress/{progressId}": {
-      "schema": "StudentProgress",
-      "description": "Progres belajar siswa."
-    },
-    "/scan_history/{historyId}": {
-      "schema": "ScanHistory",
-      "description": "Riwayat scan AR."
+    "/scan_logs/{logId}": {
+      "schema": "ScanLog",
+      "description": "Riwayat pemindaian QR Smart."
     },
     "/activities/{activityId}": {
       "schema": "Activity",
       "description": "Log aktivitas siswa."
-    },
-    "/quiz_results/{resultId}": {
-      "schema": "QuizResult",
-      "description": "Hasil kuis siswa."
     }
   }
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -13,6 +12,7 @@ export interface UserProfile {
   peran: 'siswa' | 'guru' | 'admin';
   level: number;
   poin: number;
+  scanCount?: number;
   completedModules?: string[];
   completedComics?: string[];
   badges?: string[];

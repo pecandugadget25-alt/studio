@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Camera, Trophy, User } from "lucide-react";
+import { Home, BookOpen, Camera, Trophy, User, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/firebase";
 
@@ -18,7 +18,7 @@ export function BottomNav() {
   const navItems = [
     { label: "Beranda", icon: Home, href: "/" },
     { label: "Modul", icon: BookOpen, href: "/modules" },
-    { label: "Scan AR", icon: Camera, href: "/ar-scan", isAction: true },
+    { label: "Scan QR", icon: QrCode, href: "/scan", isAction: true },
     { label: "Komik", icon: BookOpen, href: "/komik" },
     { label: "Peringkat", icon: Trophy, href: "/leaderboard" },
   ];
