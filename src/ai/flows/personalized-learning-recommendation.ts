@@ -20,25 +20,22 @@ const PersonalizedLearningRecommendationInputSchema = z.object({
         difficulty: z.enum(['mudah', 'sedang', 'sulit']).describe('Tingkat kesulitan kuis.'),
       })
     )
-    .describe('Hasil kuis terbaru siswa, termasuk nama modul, skor, dan tingkat kesulitan.'),
-  completedModules: z.array(z.string()).describe('Daftar modul pembelajaran yang sudah diselesaikan siswa.'),
-  availableModules: z.array(z.string()).describe('Daftar semua modul pembelajaran yang tersedia dalam aplikasi.'),
-  availableBadges: z.array(z.string()).describe('Daftar semua badge prestasi yang tersedia dalam aplikasi.'),
+    .optional()
+    .describe('Hasil kuis terbaru siswa.'),
+  completedModules: z.array(z.string()).optional().describe('Daftar modul yang sudah selesai.'),
+  points: z.number().optional().describe('Total XP siswa.'),
+  level: z.number().optional().describe('Level siswa.'),
+  availableModules: z.array(z.string()).describe('Daftar semua modul yang tersedia.'),
+  availableBadges: z.array(z.string()).describe('Daftar semua badge yang tersedia.'),
 });
 export type PersonalizedLearningRecommendationInput = z.infer<typeof PersonalizedLearningRecommendationInputSchema>;
 
 const PersonalizedLearningRecommendationOutputSchema = z.object({
-  recommendations: z
-    .array(z.string())
-    .describe('Rekomendasi modul atau topik pembelajaran yang relevan untuk siswa.'),
-  areasForImprovement: z
-    .array(z.string())
-    .describe('Area spesifik yang perlu ditingkatkan siswa berdasarkan hasil kuis.'),
-  nextChallenge: z
-    .string()
-    .describe('Saran tantangan selanjutnya untuk siswa.'),
-  suggestedBadge: z.string().describe('Nama badge yang dapat menjadi target siswa.'),
-  motivationMessage: z.string().describe('Pesan motivasi yang personal untuk siswa.'),
+  nextChallenge: z.string().describe('Saran tantangan selanjutnya (Maks 1 kalimat).'),
+  motivationMessage: z.string().describe('Pesan motivasi singkat (Maks 1 kalimat).'),
+  recommendations: z.array(z.string()).optional(),
+  areasForImprovement: z.array(z.string()).optional(),
+  suggestedBadge: z.string().optional(),
 });
 export type PersonalizedLearningRecommendationOutput = z.infer<
   typeof PersonalizedLearningRecommendationOutputSchema
@@ -54,37 +51,26 @@ const prompt = ai.definePrompt({
   name: 'personalizedLearningRecommendationPrompt',
   input: {schema: PersonalizedLearningRecommendationInputSchema},
   output: {schema: PersonalizedLearningRecommendationOutputSchema},
-  system: `Anda adalah ETHNO-AI, Asisten Belajar Pintar pada platform ETHNO-ARITH (Ethnomathematics AR Learning Ecosystem).
+  system: `Anda adalah ETHNO-AI, Asisten Belajar Pintar untuk siswa SD di platform ETHNO-ARITH.
 
-TUJUAN UTAMA:
-Membantu siswa TK dan SD memahami matematika dasar, numerasi, geometri, pola, simetri, dan etnomatematika Indonesia melalui pendekatan yang menyenangkan, sederhana, dan memotivasi.
+TUGAS UTAMA: Berikan rekomendasi belajar yang sangat singkat, sederhana, dan memotivasi.
+ATURAN KERAS: 
+- Total jawaban (Next Challenge + Motivation) maksimal 2 kalimat pendek.
+- Gunakan bahasa Indonesia yang ramah anak, ceria, dan mudah dipahami anak SD.
+- Hanya bahas matematika, numerasi, dan budaya Indonesia (batik, candi, masjid, permainan) yang ada di ETHNO-ARITH.
+- Jika data menunjukkan nilai rendah, beri semangat untuk mencoba lagi.
+- Jika data menunjukkan nilai tinggi, beri tantangan lebih seru.
+- Jangan membahas topik di luar pembelajaran.`,
+  prompt: `Halo ETHNO-AI! Tolong berikan saran belajar untuk:
+Nama: {{{studentName}}}
+XP: {{#if points}}{{{points}}}{{else}}0{{/if}}
+Level: {{#if level}}{{{level}}}{{else}}1{{/if}}
+Modul Selesai: {{#if completedModules}}{{#each completedModules}}{{{this}}}, {{/each}}{{else}}Belum ada.{{/if}}
+Hasil Kuis Terakhir: {{#if recentQuizResults}}{{#each recentQuizResults}}Modul {{{moduleName}}} (Skor: {{{score}}}); {{/each}}{{else}}Belum ada kuis.{{/if}}
 
-ATURAN WAJIB:
-- Gunakan bahasa Indonesia yang sederhana dan mudah dipahami anak TK dan SD.
-- Berikan jawaban singkat, jelas, dan edukatif.
-- Gunakan contoh yang dekat dengan kehidupan sehari-hari anak.
-- Hubungkan penjelasan dengan budaya Indonesia dan motif batik jika memungkinkan.
-- Selalu bersikap ramah, positif, dan memotivasi.
-- Jangan menggunakan istilah teknis yang sulit dipahami anak.
+Modul yang Tersedia: {{#each availableModules}}{{{this}}}, {{/each}}
 
-BATASAN:
-- Hanya bahas matematika, numerasi, geometri, simetri, pola, etnomatematika, batik, dan budaya matematika Indonesia.
-- Jangan membahas politik, agama, kekerasan, atau topik dewasa.
-- Jika ada hal di luar topik, sampaikan bahwa Anda hanya membantu materi ETHNO-ARITH.`,
-  prompt: `Halo ETHNO-AI! Tolong berikan rekomendasi belajar untuk siswa bernama {{{studentName}}}.
-
-Data Siswa:
-- Hasil Kuis Terbaru: {{#if recentQuizResults}}{{#each recentQuizResults}}Modul {{{moduleName}}} (Skor: {{{score}}}, Kesulitan: {{{difficulty}}}); {{/each}}{{else}}Belum ada kuis.{{/if}}
-- Modul Selesai: {{#if completedModules}}{{#each completedModules}}{{{this}}}, {{/each}}{{else}}Belum ada modul selesai.{{/if}}
-- Modul Tersedia: {{#each availableModules}}{{{this}}}, {{/each}}
-- Lencana Tersedia: {{#each availableBadges}}{{{this}}}, {{/each}}
-
-Berdasarkan data ini, berikan:
-1. Rekomendasi modul selanjutnya.
-2. Area yang perlu ditingkatkan (pilih yang paling penting).
-3. Tantangan seru berikutnya.
-4. Target lencana (badge) selanjutnya.
-5. Pesan motivasi yang hangat dan menyemangati ala guru pendamping digital.`
+Tentukan 1 tantangan seru berikutnya dan 1 kalimat penyemangat yang hangat!`
 });
 
 const personalizedLearningRecommendationFlow = ai.defineFlow(
@@ -100,12 +86,10 @@ const personalizedLearningRecommendationFlow = ai.defineFlow(
       return output;
     } catch (error) {
       console.error('Gemini API Error (Handled):', error);
+      // Fallback sederhana yang ramah anak
       return {
-        recommendations: ["Batik Nusantara", "Candi Nusantara"],
-        areasForImprovement: ["Latih lagi konsep simetri pada modul Batik"],
-        nextChallenge: "Selesaikan 1 kuis di modul Batik Nusantara untuk membuka tantangan baru!",
-        suggestedBadge: "Ahli Geometri Batik",
-        motivationMessage: `Halo ${input.studentName}, teruslah belajar! Setiap tantangan yang kamu selesaikan akan membawamu lebih dekat ke puncak klasemen.`
+        nextChallenge: "Ayo coba jelajahi Modul Batik Nusantara hari ini!",
+        motivationMessage: `Semangat terus belajarnya ya, ${input.studentName}, kamu pasti bisa jadi juara!`
       };
     }
   }

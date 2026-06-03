@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from "react";
@@ -50,7 +49,6 @@ export default function MobileDashboard() {
       if (!user) {
         router.push("/login");
       } else if (profile && profile.peran !== 'siswa') {
-        // Jika Guru/Admin nyasar ke home siswa, lempar ke dashboard guru
         router.push("/teacher");
       }
     }
@@ -62,21 +60,19 @@ export default function MobileDashboard() {
         setAiLoading(true);
         try {
           const result = await personalizedLearningRecommendation({
-            studentName: profile?.nama || "Siswa",
-            recentQuizResults: [{ moduleName: "Batik Simetri", score: 80, difficulty: "sedang" }],
+            studentName: profile?.nama || "Teman",
+            points: profile?.poin || 0,
+            level: profile?.level || 1,
             completedModules: profile?.completedModules || [],
             availableModules: MODULES.map(m => m.name),
-            availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi", "Penjaga Budaya Nusantara"]
+            availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi"]
           });
           setRecommendations(result);
         } catch (error) {
           console.error("Dashboard AI invocation failed:", error);
           setRecommendations({
-            nextChallenge: "Lanjutkan Modul Batik Nusantara",
-            motivationMessage: "Setiap langkah kecil membawamu lebih dekat ke puncak prestasi. Semangat!",
-            recommendations: [],
-            areasForImprovement: [],
-            suggestedBadge: "Juara Numerasi"
+            nextChallenge: "Ayo lanjut belajar Modul Batik!",
+            motivationMessage: "Terus semangat ya, setiap langkahmu sangat berharga!"
           });
         } finally {
           setAiLoading(false);
@@ -175,7 +171,7 @@ export default function MobileDashboard() {
           <Sparkles className="h-4 w-4 text-accent" />
           <h3 className="font-headline font-bold text-sm">Tantangan Pintar AI</h3>
         </div>
-        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden min-h-[140px] flex flex-col justify-center">
+        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden min-h-[140px] flex flex-col justify-center transition-all">
           {aiLoading ? (
             <div className="p-6 flex justify-center">
               <Loader2 className="animate-spin h-5 w-5 text-accent" />
@@ -184,16 +180,16 @@ export default function MobileDashboard() {
             <div className="p-5 space-y-3">
               <p className="text-xs font-bold text-accent uppercase tracking-widest">Saran Untukmu</p>
               <h4 className="font-bold text-sm leading-snug">{recommendations.nextChallenge}</h4>
-              <p className="text-xs text-muted-foreground italic">"{recommendations.motivationMessage}"</p>
-              <Link href="/modules">
-                <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl mt-2 h-10">
+              <p className="text-xs text-muted-foreground italic font-medium">"{recommendations.motivationMessage}"</p>
+              <Link href="/modules" className="block">
+                <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl mt-2 h-10 shadow-md">
                   Terima Tantangan
                 </Button>
               </Link>
             </div>
           ) : (
             <div className="p-5 text-center">
-              <p className="text-xs text-muted-foreground italic">Mulai belajar untuk melihat rekomendasi personal.</p>
+              <p className="text-xs text-muted-foreground italic">Mulai belajar untuk melihat rekomendasi personal dari ETHNO-AI!</p>
             </div>
           )}
         </Card>

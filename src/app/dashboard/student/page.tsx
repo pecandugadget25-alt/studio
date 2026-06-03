@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from "react";
@@ -14,8 +13,6 @@ import {
   Dices,
   Landmark,
   ChevronRight,
-  TrendingUp,
-  Camera,
   Sparkles
 } from "lucide-react";
 import Link from "next/link";
@@ -49,21 +46,19 @@ export default function StudentDashboard() {
         setAiLoading(true);
         try {
           const result = await personalizedLearningRecommendation({
-            studentName: profile?.nama || "Siswa",
-            recentQuizResults: [{ moduleName: "Batik Simetri", score: 80, difficulty: "sedang" }],
+            studentName: profile?.nama || "Teman",
+            points: profile?.poin || 0,
+            level: profile?.level || 1,
             completedModules: profile?.completedModules || [],
             availableModules: MODULES.map(m => m.name),
-            availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi", "Penjaga Budaya Nusantara"]
+            availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi"]
           });
           setRecommendations(result);
         } catch (error) {
           console.error("AI Flow failed:", error);
           setRecommendations({
-            nextChallenge: "Teruslah bereksplorasi!",
-            motivationMessage: "Ayo selesaikan tantangan berikutnya dan raih lebih banyak lencana.",
-            recommendations: [],
-            areasForImprovement: [],
-            suggestedBadge: "Ahli Geometri Batik"
+            nextChallenge: "Ayo mulai petualangan di modul Batik Nusantara!",
+            motivationMessage: "Teruslah bereksplorasi, setiap tantangan akan membuatmu makin pintar!",
           });
         } finally {
           setAiLoading(false);
@@ -97,7 +92,7 @@ export default function StudentDashboard() {
             <p className="text-xs opacity-80">Lanjutkan belajarmu!</p>
           </div>
           <div className="bg-white/20 p-2 rounded-xl">
-            <Star className="h-6 w-6 fill-current" />
+            <Star className="h-6 w-6 fill-current text-yellow-300" />
           </div>
         </div>
         <div className="space-y-2">
@@ -113,18 +108,18 @@ export default function StudentDashboard() {
       <section className="space-y-4">
         <div className="flex items-center gap-2 px-1">
           <Sparkles className="h-4 w-4 text-accent" />
-          <h3 className="font-headline font-bold text-sm">Rekomendasi Pintar AI</h3>
+          <h3 className="font-headline font-bold text-sm text-slate-900">Rekomendasi Pintar AI</h3>
         </div>
-        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden min-h-[140px] flex flex-col justify-center">
+        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden min-h-[140px] flex flex-col justify-center transition-all">
           {aiLoading ? (
             <div className="p-6 flex justify-center">
               <Loader2 className="animate-spin h-5 w-5 text-accent" />
             </div>
           ) : recommendations ? (
             <div className="p-5 space-y-3">
-              <p className="text-xs font-bold text-accent uppercase tracking-widest">Saran Untukmu</p>
+              <p className="text-xs font-bold text-accent uppercase tracking-widest">Saran ETHNO-AI</p>
               <h4 className="font-bold text-sm leading-snug">{recommendations.nextChallenge}</h4>
-              <p className="text-xs text-muted-foreground italic">"{recommendations.motivationMessage}"</p>
+              <p className="text-xs text-muted-foreground italic font-medium">"{recommendations.motivationMessage}"</p>
               <Link href="/modules" className="block mt-2">
                 <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl h-10 shadow-sm">
                   Lanjutkan Petualangan
@@ -133,7 +128,7 @@ export default function StudentDashboard() {
             </div>
           ) : (
              <div className="p-5 text-center text-xs text-muted-foreground italic">
-               Rekomendasi akan muncul setelah kamu menyelesaikan kuis pertama.
+               Rekomendasi akan muncul setelah kamu mulai belajar.
              </div>
           )}
         </Card>
