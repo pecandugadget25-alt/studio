@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from "react";
@@ -13,7 +12,6 @@ import {
   Filter, 
   ChevronRight, 
   ArrowLeft,
-  Bell,
   Star,
   Loader2
 } from "lucide-react";
@@ -22,9 +20,11 @@ import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default function TeacherStudentsPage() {
   const router = useRouter();
-  const { db } = useFirestore();
+  const db = useFirestore();
   const { profile, loading: authLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -37,18 +37,10 @@ export default function TeacherStudentsPage() {
 
   const studentsQuery = useMemo(() => {
     if (!db) return null;
-    // Menggunakan filter 'peran' == 'siswa'
     return query(collection(db, "users"), where("peran", "==", "siswa"));
   }, [db]);
 
   const { data: students, loading: studentsLoading } = useCollection(studentsQuery);
-
-  // Debug log
-  useEffect(() => {
-    if (!studentsLoading && students) {
-      console.log("DEBUG: Teacher Students Page - Data fetched:", students.length);
-    }
-  }, [students, studentsLoading]);
 
   const filteredStudents = useMemo(() => {
     if (!students) return [];

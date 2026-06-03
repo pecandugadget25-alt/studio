@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useEffect, useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -23,9 +22,11 @@ import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { cn } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default function TeacherMobileDashboard() {
   const router = useRouter();
-  const { db } = useFirestore();
+  const db = useFirestore();
   const { user, profile, loading: authLoading } = useUser();
 
   // Guard: Hanya izinkan Guru/Admin/Peneliti
@@ -41,19 +42,10 @@ export default function TeacherMobileDashboard() {
 
   const studentsQuery = useMemo(() => {
     if (!db) return null;
-    // Pastikan filter menggunakan 'peran' dan 'siswa'
     return query(collection(db, "users"), where("peran", "==", "siswa"));
   }, [db]);
 
   const { data: students, loading: studentsLoading } = useCollection(studentsQuery);
-
-  // Debug log untuk memantau data di console
-  useEffect(() => {
-    if (!studentsLoading && students) {
-      console.log("DEBUG: Teacher Dashboard - Total Siswa ditemukan:", students.length);
-      if (students.length > 0) console.log("DEBUG: Sampel Siswa:", students[0]);
-    }
-  }, [students, studentsLoading]);
 
   const stats = useMemo(() => {
     if (!students || students.length === 0) return { total: 0, activeToday: 0, avgXP: 0, comicReads: 0, arScans: 0 };
@@ -62,7 +54,6 @@ export default function TeacherMobileDashboard() {
     const totalXP = students.reduce((acc, s) => acc + (Number(s.poin) || 0), 0);
     const avgXP = total > 0 ? Math.round(totalXP / total) : 0;
     
-    // Estimasi aktivitas berdasarkan modul selesai
     const arScans = students.reduce((acc, s) => acc + (s.completedModules?.length || 0) * 3, 0); 
     const comicReads = students.reduce((acc, s) => acc + (s.completedComics?.length || 0), 0);
     const activeToday = Math.max(1, Math.round(total * 0.7)); 

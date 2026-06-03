@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useEffect } from "react";
@@ -21,9 +20,11 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Bar, BarChart, XAxis, ResponsiveContainer } from "recharts";
 import { useRouter } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default function TeacherReportsPage() {
   const router = useRouter();
-  const { db } = useFirestore();
+  const db = useFirestore();
   const { profile, loading: authLoading } = useUser();
 
   // Guard: Hanya Guru/Admin
@@ -39,13 +40,6 @@ export default function TeacherReportsPage() {
   }, [db]);
 
   const { data: students, loading } = useCollection(studentsQuery);
-
-  // Debug log
-  useEffect(() => {
-    if (!loading && students) {
-      console.log("DEBUG: Teacher Reports - Data fetched:", students.length);
-    }
-  }, [students, loading]);
 
   const stats = useMemo(() => {
     if (!students || students.length === 0) return { total: 0, totalXP: 0, avgXP: 0, modules: 0, arScans: 0 };
