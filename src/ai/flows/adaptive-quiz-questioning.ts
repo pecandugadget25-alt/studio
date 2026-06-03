@@ -1,10 +1,6 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for determining adaptive quiz difficulty.
- *
- * - getAdaptiveQuizDifficulty - A function that handles determining the next quiz difficulty.
- * - AdaptiveQuizInput - The input type for the getAdaptiveQuizDifficulty function.
- * - AdaptiveQuizOutput - The return type for the getAdaptiveQuizDifficulty function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -42,15 +38,18 @@ const adaptiveQuizPrompt = ai.definePrompt({
   name: 'adaptiveQuizPrompt',
   input: {schema: AdaptiveQuizInputSchema},
   output: {schema: AdaptiveQuizOutputSchema},
-  system: `Anda adalah ETHNO-AI, asisten AI pintar untuk siswa sekolah dasar. Tugas Anda adalah menentukan tingkat kesulitan kuis berikutnya secara bijak dan memotivasi.
+  system: `Anda adalah ETHNO-AI, asisten AI pintar untuk siswa SD di platform ETHNO-ARITH. 
+Tugas Anda adalah menentukan tingkat kesulitan kuis berikutnya secara bijak dan memotivasi.
 
-Aturan Penentuan:
-- Skor < 60: Rekomendasikan 'Mudah' agar siswa lebih percaya diri.
-- Skor 60 - 80: Rekomendasikan 'Sedang' untuk mengasah kemampuan.
-- Skor > 80: Rekomendasikan 'Sulit' sebagai tantangan baru bagi juara!
+BATASAN MATERI:
+- Anda hanya boleh menjawab hal berkaitan dengan: Matematika SD, Numerasi, Geometri, Simetri, Pola, Batik Nusantara, Etnomatematika, dan materi aplikasi ETHNO-ARITH.
+- Jika input tidak berkaitan dengan topik di atas, Anda harus menjawab persis: "Maaf, saya hanya dapat membantu materi pembelajaran yang tersedia di ETHNO-ARITH."
 
-Gunakan bahasa yang ramah dan sederhana dalam proses analisis internal Anda.`,
-  prompt: `Siswa baru saja mendapatkan skor {{{lastScore}}} pada kuis {{{moduleName}}} topik {{{topic}}}. Berikan rekomendasi tingkat kesulitan berikutnya dalam format JSON sesuai skema.`,
+Aturan Penentuan Kesulitan:
+- Skor < 60: Rekomendasikan 'Mudah'.
+- Skor 60 - 80: Rekomendasikan 'Sedang'.
+- Skor > 80: Rekomendasikan 'Sulit'.`,
+  prompt: `Siswa baru saja mendapatkan skor {{{lastScore}}} pada kuis {{{moduleName}}} topik {{{topic}}}. Berikan rekomendasi tingkat kesulitan berikutnya dalam format JSON.`,
 });
 
 const adaptiveQuizQuestioningFlow = ai.defineFlow(
@@ -69,7 +68,6 @@ const adaptiveQuizQuestioningFlow = ai.defineFlow(
       let fallbackDifficulty: 'Mudah' | 'Sedang' | 'Sulit' = 'Sedang';
       if (input.lastScore < 60) fallbackDifficulty = 'Mudah';
       else if (input.lastScore > 80) fallbackDifficulty = 'Sulit';
-      
       return { difficulty: fallbackDifficulty };
     }
   }

@@ -26,20 +26,28 @@ const prompt = ai.definePrompt({
   name: 'explainMaterialPrompt',
   input: {schema: ExplainMaterialInputSchema},
   output: {schema: ExplainMaterialOutputSchema},
-  system: `Anda adalah Pak Guru AI, guru matematika SD yang sangat ramah dan ceria. 
-Tugas Anda adalah menjelaskan materi matematika kepada siswa kecil dengan cara yang sangat sederhana.
+  system: `Anda adalah Pak Guru AI di platform ETHNO-ARITH.
 
-ATURAN:
-- Gunakan bahasa Indonesia yang sangat mudah dipahami anak SD.
+BATASAN MATERI:
+Anda hanya boleh menjelaskan hal berkaitan dengan:
+- Matematika SD
+- Numerasi
+- Geometri
+- Simetri
+- Pola
+- Batik Nusantara
+- Etnomatematika
+- Materi aplikasi ETHNO-ARITH
+
+JIKA MATERI DI LUAR TOPIK:
+Balas persis: "Maaf, saya hanya dapat membantu materi pembelajaran yang tersedia di ETHNO-ARITH."
+
+ATURAN PENJELASAN:
+- Bahasa Indonesia sangat mudah dipahami anak SD.
 - Maksimal 100 kata.
-- Harus menyertakan 1 contoh sederhana yang nyata.
-- Hubungkan dengan budaya Indonesia (batik, candi, permainan) jika relevan.
-- Selalu beri semangat di akhir penjelasan!`,
-  prompt: `Halo Pak Guru! Saya kurang paham dengan materi ini: 
-  
-  "{{{materialText}}}"
-  
-  Tolong jelaskan dengan cara yang seru ya!`
+- Sertakan 1 contoh nyata dan hubungkan dengan budaya Indonesia jika relevan.
+- Selalu beri semangat!`,
+  prompt: `Halo Pak Guru! Tolong jelaskan materi ini dengan seru: "{{{materialText}}}"`
 });
 
 const explainMaterialFlow = ai.defineFlow(
@@ -51,12 +59,12 @@ const explainMaterialFlow = ai.defineFlow(
   async input => {
     try {
       const {output} = await prompt(input);
-      if (!output) throw new Error('AI gagal menjelaskan');
+      if (!output) throw new Error('AI explanation failed');
       return output;
     } catch (error) {
       console.error('Explain Material AI Error:', error);
       return {
-        explanation: "Wah, sepertinya Pak Guru sedang sibuk sedikit. Tapi intinya, materi ini mengajakmu melihat betapa hebatnya matematika di sekitar kita! Coba baca pelan-pelan lagi ya, kamu pasti bisa!"
+        explanation: "Wah, Pak Guru sedang menyiapkan contoh seru lainnya. Intinya, materi ini mengajakmu melihat matematika di sekitar kita! Kamu pasti bisa!"
       };
     }
   }

@@ -1,9 +1,6 @@
 'use server';
 /**
  * @fileOverview Generator tantangan belajar cerdas ETHNO-ARITH.
- * 
- * Flow ini menghasilkan tantangan numerasi berbasis budaya yang dipersonalisasi
- * berdasarkan data statistik siswa.
  */
 
 import {ai} from '@/ai/genkit';
@@ -34,21 +31,19 @@ const challengePrompt = ai.definePrompt({
   name: 'learningChallengePrompt',
   input: {schema: LearningChallengeInputSchema},
   output: {schema: LearningChallengeOutputSchema},
-  system: `Anda adalah ETHNO-AI, Generator Tantangan Pintar untuk siswa SD.
-Tugas Anda adalah membuat 1 tantangan belajar numerasi yang seru dan berkaitan dengan budaya Indonesia (batik, candi, masjid, permainan).
+  system: `Anda adalah Generator Tantangan Belajar ETHNO-ARITH untuk siswa SD.
 
-ATURAN:
+BATASAN TOPIK:
+Hanya buat tantangan terkait: Matematika SD, Numerasi, Geometri, Simetri, Pola, Batik Nusantara, dan Etnomatematika Indonesia.
+
+JIKA DI LUAR TOPIK:
+Balas: "Maaf, saya hanya dapat membantu materi pembelajaran yang tersedia di ETHNO-ARITH."
+
+ATURAN TANTANGAN:
 - Bahasa Indonesia yang ceria dan sangat mudah dipahami anak SD.
-- Tantangan harus konkret (misal: hitung simetri di kain batik, cari balok di candi).
-- Sesuaikan tingkat kesulitan dengan Level siswa.
-- Reward XP berkisar antara 10 sampai 50 XP.`,
-  prompt: `Halo ETHNO-AI! Buatlah satu tantangan spesial untuk siswa dengan data berikut:
-Level: {{{level}}}
-XP: {{{xp}}}
-Modul Selesai: {{#each completedModules}}{{{this}}}, {{/each}}
-Skor Terakhir: {{{quizScore}}}
-
-Buat tantangan yang unik dan memotivasi!`
+- Tantangan harus konkret dan berbasis budaya Indonesia.
+- Reward XP: 10 - 50 XP.`,
+  prompt: `Buat 1 tantangan spesial untuk siswa Level {{{level}}} dengan XP {{{xp}}}. Modul selesai: {{#each completedModules}}{{{this}}}, {{/each}}.`
 });
 
 const learningChallengeFlow = ai.defineFlow(
@@ -60,14 +55,13 @@ const learningChallengeFlow = ai.defineFlow(
   async input => {
     try {
       const {output} = await challengePrompt(input);
-      if (!output) throw new Error('AI gagal membuat tantangan');
+      if (!output) throw new Error('AI failed to generate challenge');
       return output;
     } catch (error) {
       console.error('Learning Challenge AI Error:', error);
-      // Fallback tantangan default yang aman
       return {
         title: "Penjelajah Motif Batik",
-        description: "Temukan 3 garis simetri pada motif batik di sekitarmu atau di modul Batik Nusantara!",
+        description: "Temukan garis simetri pada motif batik di sekitarmu!",
         rewardXP: 25
       };
     }
