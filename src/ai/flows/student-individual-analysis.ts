@@ -1,7 +1,7 @@
-
 'use server';
 /**
  * @fileOverview Genkit flow untuk melakukan analisis mendalam individu siswa.
+ * Menghasilkan laporan terperinci sesuai spesifikasi kurikulum ETHNO-ARITH.
  */
 
 import { ai } from '@/ai/genkit';
@@ -18,17 +18,19 @@ const StudentDataSchema = z.object({
   recentActivities: z.array(z.object({
     title: z.string(),
     type: z.string(),
+    description: z.string().optional(),
     timestamp: z.string().optional()
-  }))
+  })).describe('Log aktivitas terbaru siswa dari Firestore.')
 });
 
 const AnalysisOutputSchema = z.object({
-  learningProfile: z.string().describe('Tipe profil belajar siswa (contoh: Visual Explorer, Logic Master).'),
-  strengths: z.array(z.string()).describe('3-4 poin kekuatan utama siswa.'),
-  weaknesses: z.array(z.string()).describe('2-3 poin kelemahan atau area yang butuh peningkatan.'),
-  narrative: z.string().describe('Analisis naratif lengkap tentang progres siswa dalam bahasa Indonesia formal.'),
-  recommendations: z.array(z.string()).describe('3 saran konkret untuk langkah belajar berikutnya.'),
-  riskLevel: z.enum(['aman', 'perhatian', 'risiko']).describe('Status risiko keteringgalan siswa.')
+  summary: z.string().describe('Ringkasan kemampuan numerasi dan budaya siswa.'),
+  strengths: z.array(z.string()).describe('Kelebihan utama siswa dalam pembelajaran.'),
+  weaknesses: z.array(z.string()).describe('Kekurangan atau area yang butuh perbaikan.'),
+  engagementLevel: z.string().describe('Tingkat keaktifan siswa (contoh: Sangat Aktif, Pasif, Konsisten).'),
+  riskLevel: z.enum(['aman', 'perhatian', 'risiko']).describe('Tingkat risiko kesulitan belajar.'),
+  teacherRecommendations: z.array(z.string()).describe('3-4 saran konkret untuk Guru dalam membimbing siswa ini.'),
+  studentRecommendations: z.array(z.string()).describe('3-4 saran konkret untuk Siswa agar progresnya meningkat.')
 });
 
 export type StudentAnalysisInput = z.infer<typeof StudentDataSchema>;
@@ -42,31 +44,33 @@ const prompt = ai.definePrompt({
   name: 'studentIndividualAnalysisPrompt',
   input: { schema: StudentDataSchema },
   output: { schema: AnalysisOutputSchema },
-  system: `Anda adalah Ahli Analitik Pembelajaran Digital di platform ETHNO-ARITH.
+  system: `Anda adalah Senior AI Education Consultant di platform ETHNO-ARITH.
   
-Tugas Anda adalah menganalisis data siswa secara objektif namun suportif untuk membantu GURU memahami kondisi siswa.
+Tugas Anda adalah menganalisis data progres siswa SD dalam mempelajari etnomatematika (matematika berbasis budaya).
 
-KRITERIA STATUS RISIKO:
-- 'aman': Siswa aktif (level > 2), sering scan QR, dan modul hampir selesai.
-- 'perhatian': Siswa memiliki beberapa aktivitas tapi jarang login dalam 3 hari terakhir atau modul macet di tengah.
-- 'risiko': XP rendah, jarang scan QR, atau belum ada modul yang selesai sama sekali.
+KATEGORI LAPORAN:
+1. Ringkasan Kemampuan: Narasi singkat tentang sejauh mana siswa memahami materi.
+2. Kelebihan & Kekurangan: Fokus pada numerasi, logika, dan literasi budaya.
+3. Tingkat Keaktifan: Analisis berdasarkan scanCount dan variasi aktivitas.
+4. Risiko: Tentukan apakah siswa 'aman', perlu 'perhatian', atau 'risiko' (jarang aktivitas).
+5. Rekomendasi Terpisah: Berikan instruksi teknis untuk GURU dan motivasi belajar untuk SISWA.
 
-Gunakan bahasa Indonesia yang profesional dan mendalam. Hubungkan dengan konsep etnomatematika jika relevan.`,
-  prompt: `Analisis data siswa berikut:
+Gunakan bahasa Indonesia yang edukatif, suportif, dan objektif.`,
+  prompt: `Lakukan analisis mendalam untuk siswa berikut:
 Nama: {{{nama}}}
 Level: {{{level}}}
 XP: {{{poin}}}
 Total Scan QR: {{{scanCount}}}
 Modul Selesai: {{#each completedModules}}{{{this}}}, {{/each}}
-Komik Dibaca: {{#each completedComics}}{{{this}}}, {{/each}}
-Video Ditonton: {{#each completedVideos}}{{{this}}}, {{/each}}
+Komik: {{#each completedComics}}{{{this}}}, {{/each}}
+Video: {{#each completedVideos}}{{{this}}}, {{/each}}
 
 Riwayat Aktivitas Terakhir:
 {{#each recentActivities}}
-- {{{title}}} ({{{type}}})
+- {{{title}}} (Tipe: {{{type}}}) : {{{description}}}
 {{/each}}
 
-Berikan analisis personal yang mendalam.`
+Jika data aktivitas sangat minim (XP < 10 atau Scan < 1), nyatakan bahwa data belum cukup.`
 });
 
 const studentIndividualAnalysisFlow = ai.defineFlow(
@@ -83,12 +87,13 @@ const studentIndividualAnalysisFlow = ai.defineFlow(
     } catch (error) {
       console.error('AI Analysis Error:', error);
       return {
-        learningProfile: "Siswa Pemula",
-        strengths: ["Punya semangat belajar"],
-        weaknesses: ["Masih perlu adaptasi platform"],
-        narrative: "Siswa menunjukkan progres awal yang cukup baik namun perlu bimbingan lebih lanjut.",
-        recommendations: ["Selesaikan modul batik", "Tonton video numerasi"],
-        riskLevel: "perhatian"
+        summary: "Siswa baru dalam tahap pengenalan platform.",
+        strengths: ["Semangat memulai"],
+        weaknesses: ["Data belum cukup"],
+        engagementLevel: "Pemula",
+        riskLevel: "perhatian",
+        teacherRecommendations: ["Berikan bimbingan cara menggunakan scanner", "Ajak siswa mencoba modul batik"],
+        studentRecommendations: ["Ayo mulai petualanganmu dengan scan QR pertama!", "Baca komik Misteri Batik ya!"]
       };
     }
   }
