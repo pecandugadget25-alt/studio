@@ -1,16 +1,13 @@
-
 'use client';
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
   Users, 
   Search, 
-  Filter, 
   ChevronRight, 
   ArrowLeft,
   Star,
@@ -30,7 +27,6 @@ export default function TeacherStudentsPage() {
   const { profile, loading: authLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // QUERY UTAMA: Identik dengan yang akan digunakan AI Analysis
   const studentsQuery = useMemo(() => {
     if (!db) return null;
     return query(collection(db, "users"), where("peran", "==", "siswa"));
@@ -64,17 +60,6 @@ export default function TeacherStudentsPage() {
           </Link>
           <h1 className="font-headline font-bold text-lg text-primary tracking-tight">DATA SISWA</h1>
         </div>
-      </div>
-
-      {/* PANEL AUDIT: Membuktikan sumber data */}
-      <div className="bg-slate-900 text-[10px] font-mono text-green-400 p-3 rounded-xl space-y-1 shadow-inner">
-        <div className="flex items-center gap-2 text-primary border-b border-slate-800 pb-1 mb-1">
-           <Database className="h-3 w-3" />
-           <span className="font-bold uppercase">Firestore Audit Source</span>
-        </div>
-        <p>Path: <span className="text-white">/users</span></p>
-        <p>Query: <span className="text-white">peran == 'siswa'</span></p>
-        <p>Found: <span className="text-yellow-400 font-bold">{students.length} Documents</span></p>
       </div>
 
       <section className="px-1 flex items-center justify-between">
