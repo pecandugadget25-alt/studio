@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -20,15 +21,14 @@
       "required": ["uid", "nama", "email", "peran"]
     },
     "ScanLog": {
-      "title": "Smart QR Scan Log",
-      "description": "Log setiap kali siswa melakukan pemindaian QR Code.",
+      "title": "Universal Scan Log",
+      "description": "Log pindaian QR edukatif universal.",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "studentName": { "type": "string" },
-        "qrType": { "type": "string", "enum": ["video", "module", "comic", "quiz", "ar", "unknown"] },
-        "qrValue": { "type": "string" },
-        "source": { "type": "string", "enum": ["camera", "gallery"] },
+        "userId": { "type": "string" },
+        "qrType": { "type": "string" },
+        "title": { "type": "string" },
+        "url": { "type": "string" },
         "xpEarned": { "type": "number" },
         "timestamp": { "type": "string", "format": "date-time" }
       }
@@ -56,7 +56,7 @@
     },
     "/scan_logs/{logId}": {
       "schema": "ScanLog",
-      "description": "Riwayat pemindaian QR Smart."
+      "description": "Riwayat pemindaian QR universal."
     },
     "/activities/{activityId}": {
       "schema": "Activity",
