@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from "next/link";
@@ -6,10 +5,8 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
   Users, 
-  Activity, 
   FileText, 
   UserCircle,
-  BrainCircuit
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +16,6 @@ export function TeacherBottomNav() {
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/teacher" },
     { label: "Siswa", icon: Users, href: "/teacher/students" },
-    { label: "AI Analisis", icon: BrainCircuit, href: "/teacher/ai-analysis" },
     { label: "Laporan", icon: FileText, href: "/teacher/reports" },
     { label: "Profil", icon: UserCircle, href: "/profile" },
   ];
@@ -27,7 +23,7 @@ export function TeacherBottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white border-t android-shadow flex items-center justify-around px-1 max-w-[500px] mx-auto pb-2">
       {navItems.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive = pathname === item.href || (item.href !== '/teacher' && pathname.startsWith(item.href));
         const Icon = item.icon;
 
         return (
@@ -40,7 +36,7 @@ export function TeacherBottomNav() {
             )}
           >
             <Icon className={cn("h-5 w-5 transition-all", isActive && "scale-110")} />
-            <span className={cn("text-[8px] font-bold uppercase tracking-wider text-center")}>
+            <span className={cn("text-[10px] font-bold uppercase tracking-wider text-center")}>
               {item.label}
             </span>
           </Link>

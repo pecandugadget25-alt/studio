@@ -11,26 +11,17 @@ const StudentDataSchema = z.object({
   nama: z.string(),
   level: z.number(),
   poin: z.number(),
-  scanCount: z.number(),
-  completedModules: z.array(z.string()),
-  completedComics: z.array(z.string()),
-  completedVideos: z.array(z.string()),
-  recentActivities: z.array(z.object({
-    title: z.string(),
-    type: z.string(),
-    description: z.string().optional(),
-    timestamp: z.string().optional()
-  })).describe('Log aktivitas terbaru siswa dari Firestore.')
+  badges: z.array(z.string()).optional(),
+  completedModules: z.array(z.string()).optional(),
 });
 
 const AnalysisOutputSchema = z.object({
   summary: z.string().describe('Ringkasan kemampuan numerasi dan budaya siswa.'),
-  strengths: z.array(z.string()).describe('Kelebihan utama siswa dalam pembelajaran.'),
-  weaknesses: z.array(z.string()).describe('Kekurangan atau area yang butuh perbaikan.'),
-  engagementLevel: z.string().describe('Tingkat keaktifan siswa (contoh: Sangat Aktif, Pasif, Konsisten).'),
-  riskLevel: z.enum(['aman', 'perhatian', 'risiko']).describe('Tingkat risiko kesulitan belajar.'),
+  strengths: z.array(z.string()).describe('3-4 Kelebihan utama siswa dalam pembelajaran.'),
+  weaknesses: z.array(z.string()).describe('3-4 Kekurangan atau area yang butuh perbaikan.'),
   teacherRecommendations: z.array(z.string()).describe('3-4 saran konkret untuk Guru dalam membimbing siswa ini.'),
-  studentRecommendations: z.array(z.string()).describe('3-4 saran konkret untuk Siswa agar progresnya meningkat.')
+  prediction: z.string().describe('Prediksi perkembangan belajar siswa di masa depan.'),
+  riskLevel: z.enum(['aman', 'perhatian', 'risiko']).describe('Tingkat risiko kesulitan belajar.'),
 });
 
 export type StudentAnalysisInput = z.infer<typeof StudentDataSchema>;
@@ -46,31 +37,23 @@ const prompt = ai.definePrompt({
   output: { schema: AnalysisOutputSchema },
   system: `Anda adalah Senior AI Education Consultant di platform ETHNO-ARITH.
   
-Tugas Anda adalah menganalisis data progres siswa SD dalam mempelajari etnomatematika (matematika berbasis budaya).
+Tugas Anda adalah menganalisis data progres siswa SD dalam mempelajari etnomatematika.
 
 KATEGORI LAPORAN:
-1. Ringkasan Kemampuan: Narasi singkat tentang sejauh mana siswa memahami materi.
-2. Kelebihan & Kekurangan: Fokus pada numerasi, logika, dan literasi budaya.
-3. Tingkat Keaktifan: Analisis berdasarkan scanCount dan variasi aktivitas.
-4. Risiko: Tentukan apakah siswa 'aman', perlu 'perhatian', atau 'risiko' (jarang aktivitas).
-5. Rekomendasi Terpisah: Berikan instruksi teknis untuk GURU dan motivasi belajar untuk SISWA.
+1. Ringkasan Kemampuan: Narasi singkat tentang pemahaman materi.
+2. Kelebihan & Kekurangan: Fokus pada numerasi dan literasi budaya.
+3. Rekomendasi Guru: Instruksi teknis untuk pengajaran di kelas.
+4. Prediksi Perkembangan: Ramalan kemajuan belajar berdasarkan poin dan modul.
 
 Gunakan bahasa Indonesia yang edukatif, suportif, dan objektif.`,
-  prompt: `Lakukan analisis mendalam untuk siswa berikut:
+  prompt: `Lakukan analisis untuk siswa:
 Nama: {{{nama}}}
 Level: {{{level}}}
 XP: {{{poin}}}
-Total Scan QR: {{{scanCount}}}
+Lencana: {{#each badges}}{{{this}}}, {{/each}}
 Modul Selesai: {{#each completedModules}}{{{this}}}, {{/each}}
-Komik: {{#each completedComics}}{{{this}}}, {{/each}}
-Video: {{#each completedVideos}}{{{this}}}, {{/each}}
 
-Riwayat Aktivitas Terakhir:
-{{#each recentActivities}}
-- {{{title}}} (Tipe: {{{type}}}) : {{{description}}}
-{{/each}}
-
-Jika data aktivitas sangat minim (XP < 10 atau Scan < 1), nyatakan bahwa data belum cukup.`
+Jika data XP < 10, nyatakan bahwa siswa masih dalam tahap orientasi awal.`
 });
 
 const studentIndividualAnalysisFlow = ai.defineFlow(
@@ -87,13 +70,12 @@ const studentIndividualAnalysisFlow = ai.defineFlow(
     } catch (error) {
       console.error('AI Analysis Error:', error);
       return {
-        summary: "Siswa baru dalam tahap pengenalan platform.",
-        strengths: ["Semangat memulai"],
-        weaknesses: ["Data belum cukup"],
-        engagementLevel: "Pemula",
-        riskLevel: "perhatian",
-        teacherRecommendations: ["Berikan bimbingan cara menggunakan scanner", "Ajak siswa mencoba modul batik"],
-        studentRecommendations: ["Ayo mulai petualanganmu dengan scan QR pertama!", "Baca komik Misteri Batik ya!"]
+        summary: "Siswa sedang memulai petualangan belajarnya.",
+        strengths: ["Memiliki kemauan belajar"],
+        weaknesses: ["Data aktivitas terbatas"],
+        teacherRecommendations: ["Berikan motivasi untuk mencoba modul pertama"],
+        prediction: "Siswa akan berkembang pesat setelah menyelesaikan 1 modul.",
+        riskLevel: "perhatian"
       };
     }
   }
