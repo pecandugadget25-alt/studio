@@ -58,9 +58,26 @@ export default function SmartScannerPage() {
 
   const { data: recentScans } = useCollection(historyQuery);
 
+  // RIGOROUS CLEANUP ON UNMOUNT
   useEffect(() => {
+    const stopEverything = async () => {
+      if (scannerRef.current) {
+        if (scannerRef.current.isScanning) {
+          try {
+            await scannerRef.current.stop();
+          } catch (e) {
+            console.warn("Cleanup stop failed", e);
+          }
+        }
+        try {
+          scannerRef.current.clear();
+        } catch (e) {}
+        scannerRef.current = null;
+      }
+    };
+
     return () => {
-      stopScanner();
+      stopEverything();
     };
   }, []);
 
@@ -72,6 +89,8 @@ export default function SmartScannerPage() {
       } catch (err) {
         console.error("Failed to stop scanner", err);
       }
+    } else {
+      setIsCameraActive(false);
     }
   };
 
@@ -79,8 +98,15 @@ export default function SmartScannerPage() {
     try {
       setError(null);
       setScanResult(null);
+      
+      // Clear existing scanner instance if any
+      if (scannerRef.current) {
+        await stopScanner();
+      }
+
       const html5QrCode = new Html5Qrcode("reader", {
-        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+        verbose: false
       });
       scannerRef.current = html5QrCode;
 
@@ -88,12 +114,13 @@ export default function SmartScannerPage() {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         onScanSuccess,
-        () => {}
+        () => {} // Silent on scan failure (seeking)
       );
       setIsCameraActive(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Gagal mengakses kamera. Pastikan izin kamera telah diberikan.");
+      const msg = err?.message || "Gagal mengakses kamera.";
+      setError(msg.includes("Permission denied") ? "Izin kamera ditolak. Silakan aktifkan di pengaturan browser." : msg);
       setIsCameraActive(false);
     }
   };
@@ -101,13 +128,15 @@ export default function SmartScannerPage() {
   const onScanSuccess = async (decodedText: string) => {
     if (isProcessing) return;
     setIsProcessing(true);
+    
+    // Immediate stop to free camera
     await stopScanner();
     
-    // Play success sound simulation
+    // UI feedback
     try {
       const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-      audio.volume = 0.3;
-      audio.play();
+      audio.volume = 0.2;
+      audio.play().catch(() => {});
     } catch (e) {}
 
     await handleQRAction(decodedText, 'camera');
@@ -121,6 +150,7 @@ export default function SmartScannerPage() {
     setError(null);
     setScanResult(null);
     
+    // Temporary instance for file scanning
     const html5QrCode = new Html5Qrcode("reader-hidden");
     
     try {
@@ -131,21 +161,28 @@ export default function SmartScannerPage() {
       toast({
         variant: "destructive",
         title: "QR Tidak Ditemukan",
-        description: "Gambar tersebut tidak berisi QR Code yang valid.",
+        description: "Gambar tidak terbaca sebagai QR Code valid.",
       });
       setIsProcessing(false);
+    } finally {
+      html5QrCode.clear();
+      // Reset input so same file can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const handleQRAction = async (rawText: string, source: 'camera' | 'gallery') => {
-    if (!db || !user || !profile) return;
+    if (!db || !user || !profile) {
+      setIsProcessing(false);
+      return;
+    }
 
     let type: 'video' | 'module' | 'comic' | 'quiz' | 'ar' | 'unknown' = 'unknown';
     let value = rawText;
     let xp = 0;
     let targetUrl = "";
 
-    // Validation & Parsing
+    // Security & Parsing Logic
     if (rawText.includes('youtube.com') || rawText.includes('youtu.be') || rawText.startsWith('video:')) {
       type = 'video';
       xp = 5;
@@ -178,31 +215,31 @@ export default function SmartScannerPage() {
       toast({
         variant: "destructive",
         title: "QR Tidak Terdaftar",
-        description: "QR Code ini tidak terdaftar pada sistem ETHNO-ARITH.",
+        description: "Format QR Code tidak dikenal oleh ETHNO-ARITH.",
       });
       setIsProcessing(false);
       return;
     }
 
-    const logData = {
-      uid: user.uid,
-      studentName: profile.nama,
-      qrType: type,
-      qrValue: value,
-      source,
-      xpEarned: xp,
-      timestamp: serverTimestamp()
-    };
-
-    const activityData = {
-      userId: user.uid,
-      userName: profile.nama,
-      action: `berhasil memindai QR ${type}: ${value}`,
-      type: 'scan',
-      timestamp: serverTimestamp()
-    };
-
     try {
+      const logData = {
+        uid: user.uid,
+        studentName: profile.nama,
+        qrType: type,
+        qrValue: value,
+        source,
+        xpEarned: xp,
+        timestamp: serverTimestamp()
+      };
+
+      const activityData = {
+        userId: user.uid,
+        userName: profile.nama,
+        action: `memindai QR ${type}: ${value}`,
+        type: 'scan',
+        timestamp: serverTimestamp()
+      };
+
       await addDoc(collection(db, "scan_logs"), logData);
       await addDoc(collection(db, "activities"), activityData);
       
@@ -214,10 +251,11 @@ export default function SmartScannerPage() {
         scanCount: increment(1)
       };
 
+      // Achievement Logic
       if (newScanCount === 1) updatePayload.badges = arrayUnion("Explorer QR");
-      if (newScanCount === 10) updatePayload.badges = arrayUnion("Pemburu Pengetahuan");
-      if (newScanCount === 50) updatePayload.badges = arrayUnion("Master Eksplorasi");
-      if (newScanCount === 100) updatePayload.badges = arrayUnion("Legenda ETHNO");
+      else if (newScanCount === 10) updatePayload.badges = arrayUnion("Pemburu Pengetahuan");
+      else if (newScanCount === 50) updatePayload.badges = arrayUnion("Master Eksplorasi");
+      else if (newScanCount === 100) updatePayload.badges = arrayUnion("Legenda ETHNO");
 
       await updateDoc(userRef, updatePayload);
 
@@ -225,19 +263,23 @@ export default function SmartScannerPage() {
       setIsProcessing(false);
 
       toast({
-        title: "Scan Berhasil! 🎉",
-        description: `Kamu mendapatkan +${xp} XP.`,
+        title: "Pindaian Berhasil! 🎯",
+        description: `Mendapatkan +${xp} XP untuk ${type}.`,
       });
 
     } catch (err) {
-      console.error("Failed to process scan data", err);
+      console.error("Firestore sync error", err);
       setIsProcessing(false);
+      toast({
+        variant: "destructive",
+        title: "Gagal Menyimpan",
+        description: "Terjadi gangguan koneksi saat menyimpan data.",
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-32 flex flex-col max-w-[500px] mx-auto overflow-y-auto">
-      {/* App Bar Over */}
+    <div className="min-h-screen bg-slate-50 pb-32 flex flex-col max-w-[500px] mx-auto overflow-y-auto overflow-x-hidden">
       <header className="sticky top-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b flex items-center justify-between px-6">
         <Link href="/">
           <Button variant="ghost" size="icon" className="rounded-full">
@@ -252,8 +294,8 @@ export default function SmartScannerPage() {
       </header>
 
       <main className="flex-1 space-y-6">
-        {/* Camera/Reader Viewport */}
-        <div className="relative bg-slate-900 aspect-square overflow-hidden shadow-inner group">
+        {/* Scanner Viewport */}
+        <div className="relative bg-slate-900 aspect-square overflow-hidden shadow-inner w-full">
           <div id="reader" className="w-full h-full"></div>
           <div id="reader-hidden" className="hidden"></div>
           
@@ -262,7 +304,7 @@ export default function SmartScannerPage() {
               <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center border-2 border-dashed border-white/20">
                 <Camera className="h-10 w-10 text-white/40" />
               </div>
-              <p className="text-white/60 text-sm font-medium">Arahkan kamera ke QR Code atau pilih gambar dari galeri untuk memulai.</p>
+              <p className="text-white/60 text-sm font-medium">Aktifkan kamera untuk memindai materi ETHNO-ARITH.</p>
               <Button size="lg" className="bg-accent hover:bg-accent/90 font-bold px-8 h-14 rounded-2xl" onClick={startCamera}>
                 Mulai Kamera
               </Button>
@@ -281,10 +323,10 @@ export default function SmartScannerPage() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto bg-black/40 text-white border-white/20 rounded-full font-bold gap-2"
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto bg-black/60 text-white border-white/20 rounded-full font-bold gap-2 backdrop-blur-md"
                 onClick={stopScanner}
               >
-                <X className="h-4 w-4" /> Matikan Kamera
+                <X className="h-4 w-4" /> Berhenti
               </Button>
             </div>
           )}
@@ -297,19 +339,18 @@ export default function SmartScannerPage() {
           )}
 
           {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 space-y-4 bg-destructive/10">
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 space-y-4 bg-destructive/10 z-20">
               <AlertCircle className="h-12 w-12 text-destructive" />
-              <p className="text-center text-sm font-medium">{error}</p>
-              <Button variant="outline" onClick={startCamera}>Coba Lagi</Button>
+              <p className="text-center text-sm font-medium text-destructive-foreground px-4">{error}</p>
+              <Button variant="outline" className="bg-white" onClick={startCamera}>Coba Lagi</Button>
             </div>
           )}
         </div>
 
-        {/* Scan Result Card */}
+        {/* Scan Result */}
         {scanResult && (
           <section className="px-6 animate-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-none rounded-[2rem] bg-white shadow-xl shadow-accent/5 overflow-hidden">
-              <div className="h-2 bg-accent" />
+            <Card className="border-none rounded-[2rem] bg-white shadow-xl shadow-accent/5 overflow-hidden border-2 border-accent/20">
               <CardContent className="p-6 space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
@@ -321,48 +362,48 @@ export default function SmartScannerPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-1">Berhasil Memindai</p>
-                    <h3 className="font-bold text-lg text-slate-900 truncate">QR {scanResult.type} Ditemukan</h3>
+                    <h3 className="font-bold text-lg text-slate-900 truncate uppercase">Akses {scanResult.type}</h3>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                   <div className="flex items-center gap-2">
                     <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                    <span className="text-sm font-bold text-slate-700">Bonus XP</span>
+                    <span className="text-sm font-bold text-slate-700">Hadiah</span>
                   </div>
                   <span className="text-xl font-bold text-accent">+{scanResult.xp} XP</span>
                 </div>
 
                 <Button className="w-full h-14 rounded-2xl font-bold text-lg gap-2 shadow-lg shadow-primary/20" onClick={() => router.push(scanResult.targetUrl)}>
-                  Buka Konten <ChevronRight className="h-5 w-5" />
+                  Buka Sekarang <ChevronRight className="h-5 w-5" />
                 </Button>
               </CardContent>
             </Card>
           </section>
         )}
 
-        {/* Control Panel */}
+        {/* Controls */}
         <section className="px-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Button 
               variant={isCameraActive ? 'default' : 'outline'}
               className={cn(
-                "h-20 rounded-3xl flex-col gap-1 font-bold border-2 transition-all",
-                isCameraActive ? "bg-primary border-primary text-white scale-105" : "bg-white border-slate-100 text-slate-600"
+                "h-24 rounded-3xl flex-col gap-2 font-bold border-2 transition-all",
+                isCameraActive ? "bg-primary border-primary text-white scale-105" : "bg-white border-slate-100 text-slate-600 shadow-sm"
               )}
               onClick={startCamera}
             >
-              <Camera className="h-6 w-6" />
-              <span className="text-[10px] uppercase">Pindai Kamera</span>
+              <Camera className="h-7 w-7" />
+              <span className="text-[10px] uppercase tracking-wide">Kamera</span>
             </Button>
 
             <Button 
               variant="outline"
-              className="h-20 rounded-3xl bg-white border-slate-100 border-2 flex-col gap-1 font-bold text-slate-600 active:scale-95 transition-all"
+              className="h-24 rounded-3xl bg-white border-slate-100 border-2 flex-col gap-2 font-bold text-slate-600 shadow-sm active:scale-95 transition-all"
               onClick={() => fileInputRef.current?.click()}
             >
-              <ImageIcon className="h-6 w-6" />
-              <span className="text-[10px] uppercase">Dari Galeri</span>
+              <ImageIcon className="h-7 w-7" />
+              <span className="text-[10px] uppercase tracking-wide">Galeri</span>
             </Button>
           </div>
 
@@ -379,29 +420,29 @@ export default function SmartScannerPage() {
               <ShieldCheck className="h-5 w-5 text-primary" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-xs font-bold text-primary uppercase">Pemindai Terpercaya</h4>
-              <p className="text-[10px] text-slate-500 leading-relaxed">Pindai QR Code resmi dari modul atau buku ETHNO-ARITH untuk membuka konten eksklusif.</p>
+              <h4 className="text-xs font-bold text-primary uppercase">Misi Eksplorasi</h4>
+              <p className="text-[10px] text-slate-500 leading-relaxed">Gunakan scanner untuk menemukan rahasia matematika di sekitarmu!</p>
             </div>
           </div>
         </section>
 
-        {/* Recent History Widget */}
-        <section className="px-6 space-y-4">
+        {/* History */}
+        <section className="px-6 space-y-4 pb-10">
           <div className="flex items-center justify-between px-1">
             <h3 className="font-headline font-bold text-sm text-slate-900 flex items-center gap-2">
-              <History className="h-4 w-4 text-slate-400" /> Riwayat Terakhir
+              <History className="h-4 w-4 text-slate-400" /> Riwayat
             </h3>
           </div>
           <div className="space-y-3">
             {recentScans && recentScans.length > 0 ? (
               recentScans.map((log: any) => (
-                <Card key={log.id} className="rounded-2xl border-none p-4 bg-white shadow-sm hover:bg-slate-50 transition-colors">
+                <Card key={log.id} className="rounded-2xl border-none p-4 bg-white shadow-sm hover:bg-slate-50 transition-colors border border-slate-50">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
                       <QrCode className="h-5 w-5 text-slate-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-900 capitalize">Pindaian {log.qrType}</p>
+                      <p className="text-xs font-bold text-slate-900 capitalize">{log.qrType}</p>
                       <p className="text-[10px] text-muted-foreground truncate">{log.qrValue}</p>
                     </div>
                     <div className="text-right">
@@ -411,7 +452,7 @@ export default function SmartScannerPage() {
                 </Card>
               ))
             ) : (
-              <p className="text-xs text-center text-muted-foreground py-6 italic">Belum ada riwayat pindaian.</p>
+              <p className="text-xs text-center text-muted-foreground py-6 italic">Belum ada pindaian terbaru.</p>
             )}
           </div>
         </section>
