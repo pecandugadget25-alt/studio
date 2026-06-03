@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -11,7 +11,9 @@ import {
   Camera,
   Star,
   FileText,
-  Loader2
+  Loader2,
+  Sparkles,
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useFirestore, useCollection, useUser } from "@/firebase";
@@ -19,6 +21,7 @@ import { collection, query, where } from "firebase/firestore";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, ResponsiveContainer } from "recharts";
 import { useRouter } from "next/navigation";
+import { analyzeClassPerformance, type ClassAnalysisOutput } from "@/ai/flows/class-performance-analysis";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +29,9 @@ export default function TeacherReportsPage() {
   const router = useRouter();
   const db = useFirestore();
   const { profile, loading: authLoading } = useUser();
+  
+  const [aiAnalysis, setAiAnalysis] = useState<ClassAnalysisOutput | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Guard: Hanya Guru/Admin
   useEffect(() => {
@@ -42,16 +48,48 @@ export default function TeacherReportsPage() {
   const { data: students, loading } = useCollection(studentsQuery);
 
   const stats = useMemo(() => {
-    if (!students || students.length === 0) return { total: 0, totalXP: 0, avgXP: 0, modules: 0, arScans: 0 };
+    if (!students || students.length === 0) return { total: 0, totalXP: 0, avgXP: 0, modules: 0, arScans: 0, popular: "Batik", difficult: "Candi" };
     
     const total = students.length;
     const totalXP = students.reduce((acc, s) => acc + (Number(s.poin) || 0), 0);
     const avgXP = Math.round(totalXP / total);
+    
+    const allCompleted = students.flatMap(s => s.completedModules || []);
+    const counts: Record<string, number> = {};
+    allCompleted.forEach(m => counts[m] = (counts[m] || 0) + 1);
+    
+    const popular = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, "Batik Nusantara");
+    const difficult = "Candi (Geometri)"; // Simulasi modul sulit
+
     const modules = students.reduce((acc, s) => acc + (s.completedModules?.length || 0), 0);
     const arScans = modules * 3; 
 
-    return { total, totalXP, avgXP, modules, arScans };
+    return { total, totalXP, avgXP, modules, arScans, popular, difficult };
   }, [students]);
+
+  // Panggil AI Analysis saat stats siap
+  useEffect(() => {
+    if (stats.total > 0 && !aiAnalysis && !aiLoading) {
+      async function fetchAnalysis() {
+        setAiLoading(true);
+        try {
+          const result = await analyzeClassPerformance({
+            totalStudents: stats.total,
+            averageXP: stats.avgXP,
+            averageQuiz: 78, // Simulasi rerata kuis
+            popularModule: stats.popular,
+            difficultModule: stats.difficult
+          });
+          setAiAnalysis(result);
+        } catch (error) {
+          console.error("AI Analysis failed:", error);
+        } finally {
+          setAiLoading(false);
+        }
+      }
+      fetchAnalysis();
+    }
+  }, [stats, aiAnalysis, aiLoading]);
 
   const chartData = [
     { name: 'Total Siswa', value: stats.total, fill: 'hsl(var(--primary))' },
@@ -85,15 +123,31 @@ export default function TeacherReportsPage() {
         </div>
       </div>
 
-      <section className="px-1 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-headline font-bold text-slate-900">Statistik Kelas</h2>
-          <p className="text-sm text-muted-foreground">Update Real-time dari Database</p>
-        </div>
-        <div className="bg-blue-100 p-3 rounded-2xl">
-          <BarChart3 className="h-6 w-6 text-primary" />
-        </div>
+      <section className="px-1">
+        <h2 className="text-2xl font-headline font-bold text-slate-900">Statistik Kelas</h2>
+        <p className="text-sm text-muted-foreground">Update Real-time dari Database</p>
       </section>
+
+      {/* AI Analysis Section */}
+      <Card className="rounded-[2rem] border-none bg-primary text-white p-6 shadow-lg relative overflow-hidden">
+        <div className="relative z-10 space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-yellow-300" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">Wawasan Analitik AI</span>
+          </div>
+          {aiLoading ? (
+            <div className="flex items-center gap-3 py-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <p className="text-xs font-medium italic">Menganalisis performa kelas...</p>
+            </div>
+          ) : (
+            <p className="text-xs leading-relaxed font-medium">
+              {aiAnalysis?.summary || "Data belum cukup untuk analisis AI. Dorong siswa untuk menyelesaikan lebih banyak kuis!"}
+            </p>
+          )}
+        </div>
+        <div className="absolute -right-8 -bottom-8 bg-white/10 w-32 h-32 rounded-full blur-3xl" />
+      </Card>
 
       {/* Grid Ringkasan */}
       <section className="grid grid-cols-2 gap-4">
