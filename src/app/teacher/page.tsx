@@ -29,6 +29,7 @@ import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { analyzeClassPerformance, type ClassAnalysisOutput } from "@/ai/flows/class-performance-analysis";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
