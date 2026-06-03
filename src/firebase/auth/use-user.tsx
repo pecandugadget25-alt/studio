@@ -9,13 +9,14 @@ export interface UserProfile {
   uid: string;
   nama: string;
   email: string;
-  peran: 'siswa' | 'guru' | 'admin';
+  peran: 'siswa' | 'guru' | 'admin' | 'peneliti';
   level: number;
   poin: number;
   scanCount?: number;
   completedModules?: string[];
   completedComics?: string[];
   badges?: string[];
+  tanggalDaftar?: any;
 }
 
 export function useUser() {
@@ -30,13 +31,19 @@ export function useUser() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        const docRef = doc(db, 'users', firebaseUser.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data() as UserProfile;
-          // Calculate level based on XP: 100 XP per level
-          const calculatedLevel = Math.floor((data.poin || 0) / 100) + 1;
-          setProfile({ ...data, level: calculatedLevel });
+        try {
+          const docRef = doc(db, 'users', firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data() as UserProfile;
+            const calculatedLevel = Math.floor((data.poin || 0) / 100) + 1;
+            setProfile({ ...data, level: calculatedLevel });
+          } else {
+            setProfile(null);
+          }
+        } catch (e) {
+          console.error("Error fetching user profile:", e);
+          setProfile(null);
         }
       } else {
         setProfile(null);

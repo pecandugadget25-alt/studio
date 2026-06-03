@@ -44,7 +44,6 @@ export default function MobileDashboard() {
   const [recommendations, setRecommendations] = useState<PersonalizedLearningRecommendationOutput | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  // Guard: Redirect jika belum login atau jika peran bukan siswa
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
@@ -102,7 +101,6 @@ export default function MobileDashboard() {
 
   return (
     <div className="pt-20 pb-32 px-4 space-y-6 bg-slate-50/50 min-h-screen overflow-y-auto">
-      {/* Header Sapaan */}
       <section className="px-2">
         <div className="flex items-center justify-between">
           <div>
@@ -110,9 +108,6 @@ export default function MobileDashboard() {
             <p className="text-sm text-muted-foreground font-medium">Semangat belajar hari ini.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full bg-white shadow-sm">
-              <Search className="h-5 w-5 text-slate-400" />
-            </Button>
             <Button variant="ghost" size="icon" className="rounded-full bg-white shadow-sm relative">
               <Bell className="h-5 w-5 text-slate-400" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
@@ -121,7 +116,6 @@ export default function MobileDashboard() {
         </div>
       </section>
 
-      {/* Kartu Progress & Stats */}
       <section className="grid grid-cols-1 gap-4">
         <Card className="rounded-[2.5rem] border-none bg-gradient-to-br from-primary to-blue-700 text-white p-6 card-shadow relative overflow-hidden">
           <div className="relative z-10">
@@ -147,29 +141,27 @@ export default function MobileDashboard() {
               <div className="flex flex-col items-center gap-1">
                 <Flame className="h-5 w-5 text-orange-400 fill-current" />
                 <span className="text-xs font-bold">{profile.scanCount || 0}</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold">QR Pindai</span>
+                <span className="text-[9px] opacity-60 uppercase font-bold text-center leading-tight">Smart Scan</span>
               </div>
               <div className="flex flex-col items-center gap-1">
                 <Award className="h-5 w-5 text-yellow-400" />
                 <span className="text-xs font-bold">{profile?.badges?.length || 0}</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold">Lencana</span>
+                <span className="text-[9px] opacity-60 uppercase font-bold text-center leading-tight">Lencana</span>
               </div>
               <div className="flex flex-col items-center gap-1">
                 <TrendingUp className="h-5 w-5 text-emerald-400" />
                 <span className="text-xs font-bold">{profile?.poin || 0}</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold">Total XP</span>
+                <span className="text-[9px] opacity-60 uppercase font-bold text-center leading-tight">Total XP</span>
               </div>
             </div>
           </div>
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-accent/20 rounded-full blur-2xl" />
         </Card>
       </section>
 
-      {/* Quick Access QR Section */}
       <section className="px-1">
         <Link href="/scan">
-          <Button className="w-full h-16 rounded-3xl bg-accent hover:bg-accent/90 text-white font-bold gap-3 shadow-lg shadow-accent/20 transition-all active:scale-95">
+          <Button className="w-full h-16 rounded-3xl bg-accent hover:bg-accent/90 text-white font-bold gap-3 shadow-lg transition-all active:scale-95">
              <QrCode className="h-6 w-6" />
              <div className="text-left">
                 <p className="text-sm font-bold uppercase leading-none">Smart QR Scanner</p>
@@ -180,11 +172,10 @@ export default function MobileDashboard() {
         </Link>
       </section>
 
-      {/* AI Recommendation Section */}
       <section className="space-y-4">
         <div className="flex items-center gap-2 px-1">
           <Sparkles className="h-4 w-4 text-accent" />
-          <h3 className="font-headline font-bold text-sm">Tantangan Pintar AI</h3>
+          <h3 className="font-headline font-bold text-sm uppercase tracking-wider">Tantangan Pintar AI</h3>
         </div>
         <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden min-h-[140px] flex flex-col justify-center transition-all">
           {aiLoading ? (
@@ -197,7 +188,7 @@ export default function MobileDashboard() {
               <h4 className="font-bold text-sm leading-snug">{recommendations.nextChallenge}</h4>
               <p className="text-xs text-muted-foreground italic font-medium">"{recommendations.motivationMessage}"</p>
               <Link href="/modules" className="block">
-                <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl mt-2 h-10 shadow-md">
+                <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl mt-2 h-10">
                   Terima Tantangan
                 </Button>
               </Link>
@@ -210,7 +201,6 @@ export default function MobileDashboard() {
         </Card>
       </section>
 
-      {/* Menu Cepat */}
       <section className="grid grid-cols-4 gap-4 px-1">
         {[
           { icon: Camera, label: "Scan AR", color: "bg-accent", href: "/scan" },
@@ -224,13 +214,12 @@ export default function MobileDashboard() {
               <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform active:scale-90", item.color)}>
                 <Icon className="h-6 w-6" />
               </div>
-              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{item.label}</span>
+              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide text-center">{item.label}</span>
             </Link>
           )
         })}
       </section>
 
-      {/* Lanjutkan Belajar */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h3 className="font-headline font-bold text-lg text-slate-900">Materi Eksplorasi</h3>
@@ -276,33 +265,6 @@ export default function MobileDashboard() {
             );
           })}
         </div>
-      </section>
-
-      {/* Komik Digital Section */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            <h3 className="font-headline font-bold text-lg text-slate-900">📚 Komik Digital</h3>
-          </div>
-          <Link href="/komik" className="text-xs font-bold text-primary">Lihat Semua</Link>
-        </div>
-        <Link href="/komik">
-          <Card className="rounded-3xl border-none bg-blue-50 p-6 card-shadow flex items-center justify-between group active:scale-[0.98] transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center shadow-inner">
-                <BookOpen className="h-7 w-7 text-primary" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-bold text-slate-900">Petualangan Literasi</h4>
-                <p className="text-xs text-slate-500 font-medium">Baca komik seru & dapatkan XP!</p>
-              </div>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
-              <ChevronRight className="h-5 w-5" />
-            </div>
-          </Card>
-        </Link>
       </section>
     </div>
   );

@@ -45,7 +45,6 @@ export default function SmartScannerPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch recent history
   const historyQuery = useMemo(() => {
     if (!db || !user) return null;
     return query(
@@ -58,25 +57,23 @@ export default function SmartScannerPage() {
 
   const { data: recentScans } = useCollection(historyQuery);
 
-  // RIGOROUS CLEANUP ON UNMOUNT
   useEffect(() => {
-    const stopEverything = async () => {
-      if (scannerRef.current) {
-        if (scannerRef.current.isScanning) {
-          try {
-            await scannerRef.current.stop();
-          } catch (e) {
-            console.warn("Cleanup stop failed", e);
-          }
-        }
-        try {
-          scannerRef.current.clear();
-        } catch (e) {}
-        scannerRef.current = null;
-      }
-    };
-
     return () => {
+      const stopEverything = async () => {
+        if (scannerRef.current) {
+          if (scannerRef.current.isScanning) {
+            try {
+              await scannerRef.current.stop();
+            } catch (e) {
+              console.warn("Cleanup stop failed", e);
+            }
+          }
+          try {
+            scannerRef.current.clear();
+          } catch (e) {}
+          scannerRef.current = null;
+        }
+      };
       stopEverything();
     };
   }, []);
@@ -99,7 +96,6 @@ export default function SmartScannerPage() {
       setError(null);
       setScanResult(null);
       
-      // Clear existing scanner instance if any
       if (scannerRef.current) {
         await stopScanner();
       }
@@ -114,7 +110,7 @@ export default function SmartScannerPage() {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         onScanSuccess,
-        () => {} // Silent on scan failure (seeking)
+        () => {} 
       );
       setIsCameraActive(true);
     } catch (err: any) {
@@ -128,17 +124,7 @@ export default function SmartScannerPage() {
   const onScanSuccess = async (decodedText: string) => {
     if (isProcessing) return;
     setIsProcessing(true);
-    
-    // Immediate stop to free camera
     await stopScanner();
-    
-    // UI feedback
-    try {
-      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-      audio.volume = 0.2;
-      audio.play().catch(() => {});
-    } catch (e) {}
-
     await handleQRAction(decodedText, 'camera');
   };
 
@@ -150,7 +136,6 @@ export default function SmartScannerPage() {
     setError(null);
     setScanResult(null);
     
-    // Temporary instance for file scanning
     const html5QrCode = new Html5Qrcode("reader-hidden");
     
     try {
@@ -166,7 +151,6 @@ export default function SmartScannerPage() {
       setIsProcessing(false);
     } finally {
       html5QrCode.clear();
-      // Reset input so same file can be selected again
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -182,7 +166,6 @@ export default function SmartScannerPage() {
     let xp = 0;
     let targetUrl = "";
 
-    // Security & Parsing Logic
     if (rawText.includes('youtube.com') || rawText.includes('youtu.be') || rawText.startsWith('video:')) {
       type = 'video';
       xp = 5;
@@ -232,16 +215,7 @@ export default function SmartScannerPage() {
         timestamp: serverTimestamp()
       };
 
-      const activityData = {
-        userId: user.uid,
-        userName: profile.nama,
-        action: `memindai QR ${type}: ${value}`,
-        type: 'scan',
-        timestamp: serverTimestamp()
-      };
-
       await addDoc(collection(db, "scan_logs"), logData);
-      await addDoc(collection(db, "activities"), activityData);
       
       const userRef = doc(db, "users", user.uid);
       const newScanCount = (profile.scanCount || 0) + 1;
@@ -251,7 +225,6 @@ export default function SmartScannerPage() {
         scanCount: increment(1)
       };
 
-      // Achievement Logic
       if (newScanCount === 1) updatePayload.badges = arrayUnion("Explorer QR");
       else if (newScanCount === 10) updatePayload.badges = arrayUnion("Pemburu Pengetahuan");
       else if (newScanCount === 50) updatePayload.badges = arrayUnion("Master Eksplorasi");
@@ -270,16 +243,11 @@ export default function SmartScannerPage() {
     } catch (err) {
       console.error("Firestore sync error", err);
       setIsProcessing(false);
-      toast({
-        variant: "destructive",
-        title: "Gagal Menyimpan",
-        description: "Terjadi gangguan koneksi saat menyimpan data.",
-      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-32 flex flex-col max-w-[500px] mx-auto overflow-y-auto overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 pb-32 flex flex-col max-w-[500px] mx-auto overflow-y-auto">
       <header className="sticky top-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b flex items-center justify-between px-6">
         <Link href="/">
           <Button variant="ghost" size="icon" className="rounded-full">
@@ -294,8 +262,7 @@ export default function SmartScannerPage() {
       </header>
 
       <main className="flex-1 space-y-6">
-        {/* Scanner Viewport */}
-        <div className="relative bg-slate-900 aspect-square overflow-hidden shadow-inner w-full">
+        <div className="relative bg-slate-900 aspect-square overflow-hidden shadow-inner w-full max-h-[60vh]">
           <div id="reader" className="w-full h-full"></div>
           <div id="reader-hidden" className="hidden"></div>
           
@@ -337,44 +304,22 @@ export default function SmartScannerPage() {
               <p className="text-white font-bold tracking-tight">Memproses pindaian...</p>
             </div>
           )}
-
-          {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 space-y-4 bg-destructive/10 z-20">
-              <AlertCircle className="h-12 w-12 text-destructive" />
-              <p className="text-center text-sm font-medium text-destructive-foreground px-4">{error}</p>
-              <Button variant="outline" className="bg-white" onClick={startCamera}>Coba Lagi</Button>
-            </div>
-          )}
         </div>
 
-        {/* Scan Result */}
         {scanResult && (
           <section className="px-6 animate-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-none rounded-[2rem] bg-white shadow-xl shadow-accent/5 overflow-hidden border-2 border-accent/20">
+            <Card className="border-none rounded-[2rem] bg-white shadow-xl border-2 border-accent/20">
               <CardContent className="p-6 space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center text-accent">
-                    {scanResult.type === 'video' && <PlayCircle className="h-7 w-7" />}
-                    {scanResult.type === 'module' && <BookOpen className="h-7 w-7" />}
-                    {scanResult.type === 'quiz' && <CheckCircle2 className="h-7 w-7" />}
-                    {scanResult.type === 'ar' && <Box className="h-7 w-7" />}
-                    {scanResult.type === 'comic' && <ImageIcon className="h-7 w-7" />}
+                    {scanResult.type === 'video' ? <PlayCircle className="h-7 w-7" /> : <BookOpen className="h-7 w-7" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-bold text-accent uppercase tracking-widest leading-none mb-1">Berhasil Memindai</p>
+                    <p className="text-[10px] font-bold text-accent uppercase mb-1">Berhasil Memindai</p>
                     <h3 className="font-bold text-lg text-slate-900 truncate uppercase">Akses {scanResult.type}</h3>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <Star className="h-5 w-5 text-yellow-500 fill-current" />
-                    <span className="text-sm font-bold text-slate-700">Hadiah</span>
-                  </div>
-                  <span className="text-xl font-bold text-accent">+{scanResult.xp} XP</span>
-                </div>
-
-                <Button className="w-full h-14 rounded-2xl font-bold text-lg gap-2 shadow-lg shadow-primary/20" onClick={() => router.push(scanResult.targetUrl)}>
+                <Button className="w-full h-14 rounded-2xl font-bold text-lg gap-2" onClick={() => router.push(scanResult.targetUrl)}>
                   Buka Sekarang <ChevronRight className="h-5 w-5" />
                 </Button>
               </CardContent>
@@ -382,78 +327,47 @@ export default function SmartScannerPage() {
           </section>
         )}
 
-        {/* Controls */}
         <section className="px-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Button 
               variant={isCameraActive ? 'default' : 'outline'}
-              className={cn(
-                "h-24 rounded-3xl flex-col gap-2 font-bold border-2 transition-all",
-                isCameraActive ? "bg-primary border-primary text-white scale-105" : "bg-white border-slate-100 text-slate-600 shadow-sm"
-              )}
+              className={cn("h-24 rounded-3xl flex-col gap-2 font-bold border-2 transition-all", isCameraActive ? "bg-primary border-primary text-white" : "bg-white border-slate-100 text-slate-600")}
               onClick={startCamera}
             >
               <Camera className="h-7 w-7" />
-              <span className="text-[10px] uppercase tracking-wide">Kamera</span>
+              <span className="text-[10px] uppercase">Kamera</span>
             </Button>
-
             <Button 
               variant="outline"
-              className="h-24 rounded-3xl bg-white border-slate-100 border-2 flex-col gap-2 font-bold text-slate-600 shadow-sm active:scale-95 transition-all"
+              className="h-24 rounded-3xl bg-white border-slate-100 border-2 flex-col gap-2 font-bold text-slate-600"
               onClick={() => fileInputRef.current?.click()}
             >
               <ImageIcon className="h-7 w-7" />
-              <span className="text-[10px] uppercase tracking-wide">Galeri</span>
+              <span className="text-[10px] uppercase">Galeri</span>
             </Button>
           </div>
-
-          <input 
-            type="file" 
-            accept="image/*" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            className="hidden" 
-          />
-
-          <div className="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 flex items-start gap-4">
-            <div className="p-2 bg-blue-100 rounded-xl">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-            </div>
-            <div className="space-y-1">
-              <h4 className="text-xs font-bold text-primary uppercase">Misi Eksplorasi</h4>
-              <p className="text-[10px] text-slate-500 leading-relaxed">Gunakan scanner untuk menemukan rahasia matematika di sekitarmu!</p>
-            </div>
-          </div>
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
         </section>
 
-        {/* History */}
         <section className="px-6 space-y-4 pb-10">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="font-headline font-bold text-sm text-slate-900 flex items-center gap-2">
-              <History className="h-4 w-4 text-slate-400" /> Riwayat
-            </h3>
-          </div>
+          <h3 className="font-headline font-bold text-sm text-slate-900 flex items-center gap-2">
+            <History className="h-4 w-4 text-slate-400" /> Riwayat Baru
+          </h3>
           <div className="space-y-3">
-            {recentScans && recentScans.length > 0 ? (
-              recentScans.map((log: any) => (
-                <Card key={log.id} className="rounded-2xl border-none p-4 bg-white shadow-sm hover:bg-slate-50 transition-colors border border-slate-50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                      <QrCode className="h-5 w-5 text-slate-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-900 capitalize">{log.qrType}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{log.qrValue}</p>
-                    </div>
-                    <div className="text-right">
-                       <p className="text-[10px] font-bold text-accent">+{log.xpEarned} XP</p>
-                    </div>
+            {recentScans?.map((log: any) => (
+              <Card key={log.id} className="rounded-2xl border-none p-4 bg-white shadow-sm border border-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                    <QrCode className="h-5 w-5 text-slate-400" />
                   </div>
-                </Card>
-              ))
-            ) : (
-              <p className="text-xs text-center text-muted-foreground py-6 italic">Belum ada pindaian terbaru.</p>
-            )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-900 capitalize">{log.qrType}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{log.qrValue}</p>
+                  </div>
+                  <p className="text-[10px] font-bold text-accent">+{log.xpEarned} XP</p>
+                </div>
+              </Card>
+            ))}
           </div>
         </section>
       </main>
