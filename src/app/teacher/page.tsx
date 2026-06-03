@@ -5,22 +5,17 @@ import { useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
   Users, 
-  TrendingUp, 
   Loader2,
-  CheckCircle2,
   BookOpen,
   Camera,
-  Download,
-  Printer,
-  ChevronRight,
   Search,
   Bell,
   Star,
   Activity,
-  Trophy
+  Trophy,
+  ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,7 +34,6 @@ export default function TeacherMobileDashboard() {
       if (!user) {
         router.push("/login");
       } else if (profile && profile.peran === 'siswa') {
-        // Siswa dilarang masuk panel guru, redirect ke home siswa
         router.push("/");
       }
     }
@@ -47,21 +41,31 @@ export default function TeacherMobileDashboard() {
 
   const studentsQuery = useMemo(() => {
     if (!db) return null;
+    // Pastikan filter menggunakan 'peran' dan 'siswa'
     return query(collection(db, "users"), where("peran", "==", "siswa"));
   }, [db]);
 
   const { data: students, loading: studentsLoading } = useCollection(studentsQuery);
 
+  // Debug log untuk memantau data di console
+  useEffect(() => {
+    if (!studentsLoading && students) {
+      console.log("DEBUG: Teacher Dashboard - Total Siswa ditemukan:", students.length);
+      if (students.length > 0) console.log("DEBUG: Sampel Siswa:", students[0]);
+    }
+  }, [students, studentsLoading]);
+
   const stats = useMemo(() => {
-    if (!students) return { total: 0, activeToday: 0, avgXP: 0, comicReads: 0, arScans: 0 };
+    if (!students || students.length === 0) return { total: 0, activeToday: 0, avgXP: 0, comicReads: 0, arScans: 0 };
     
     const total = students.length;
-    const totalXP = students.reduce((acc, s) => acc + (s.poin || 0), 0);
+    const totalXP = students.reduce((acc, s) => acc + (Number(s.poin) || 0), 0);
     const avgXP = total > 0 ? Math.round(totalXP / total) : 0;
     
-    const activeToday = Math.round(total * 0.7); 
+    // Estimasi aktivitas berdasarkan modul selesai
     const arScans = students.reduce((acc, s) => acc + (s.completedModules?.length || 0) * 3, 0); 
     const comicReads = students.reduce((acc, s) => acc + (s.completedComics?.length || 0), 0);
+    const activeToday = Math.max(1, Math.round(total * 0.7)); 
 
     return { total, activeToday, avgXP, arScans, comicReads };
   }, [students]);
@@ -74,11 +78,10 @@ export default function TeacherMobileDashboard() {
     );
   }
 
-  // Jika state guard belum meredirect tapi render jalan
   if (profile.peran === 'siswa') return null;
 
   return (
-    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto">
+    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
       {/* App Bar Guru */}
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 android-shadow max-w-[500px] mx-auto">
         <div className="flex items-center gap-3">
@@ -99,10 +102,10 @@ export default function TeacherMobileDashboard() {
       {/* Welcome Header */}
       <section className="px-1">
         <h2 className="text-2xl font-headline font-bold text-slate-900">Halo, {profile.nama.split(' ')[0]}!</h2>
-        <p className="text-sm text-muted-foreground font-medium">Monitoring performa kelas ETHNO-ARITH.</p>
+        <p className="text-sm text-muted-foreground font-medium">Ringkasan performa siswa ETHNO-ARITH.</p>
       </section>
 
-      {/* Ringkasan Statistik Siswa */}
+      {/* Grid Statistik */}
       <section className="grid grid-cols-2 gap-4">
         <Card className="rounded-3xl border-none p-4 bg-white shadow-sm flex flex-col gap-2">
           <div className="p-2 bg-blue-50 w-fit rounded-lg text-primary">
@@ -121,7 +124,7 @@ export default function TeacherMobileDashboard() {
           <div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Aktivitas AR</p>
             <h3 className="text-2xl font-bold">{stats.arScans}</h3>
-            <p className="text-[9px] text-accent font-bold">Total Interaksi 3D</p>
+            <p className="text-[9px] text-accent font-bold">Total Scan 3D</p>
           </div>
         </Card>
         <Card className="rounded-3xl border-none p-4 bg-white shadow-sm flex flex-col gap-2">
@@ -131,7 +134,7 @@ export default function TeacherMobileDashboard() {
           <div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Literasi Komik</p>
             <h3 className="text-2xl font-bold">{stats.comicReads}</h3>
-            <p className="text-[9px] text-emerald-600 font-bold">Total Selesai Dibaca</p>
+            <p className="text-[9px] text-emerald-600 font-bold">Total Komik Selesai</p>
           </div>
         </Card>
         <Card className="rounded-3xl border-none p-4 bg-white shadow-sm flex flex-col gap-2">
@@ -141,42 +144,46 @@ export default function TeacherMobileDashboard() {
           <div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Avg. XP Siswa</p>
             <h3 className="text-2xl font-bold">{stats.avgXP}</h3>
-            <p className="text-[9px] text-purple-600 font-bold">Rerata XP per Siswa</p>
+            <p className="text-[9px] text-purple-600 font-bold">Rerata XP Kelas</p>
           </div>
         </Card>
       </section>
 
-      {/* Performa Kelas Quick Access */}
+      {/* Performa Tertinggi */}
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="font-headline font-bold text-lg text-slate-900">Performa Tertinggi</h3>
+          <h3 className="font-headline font-bold text-lg text-slate-900">Siswa Berprestasi</h3>
           <Link href="/teacher/students">
             <Button variant="link" className="text-xs font-bold text-primary p-0 h-auto">Lihat Semua</Button>
           </Link>
         </div>
         <div className="space-y-3">
-          {[...students || []].sort((a, b) => (b.poin || 0) - (a.poin || 0)).slice(0, 3).map((student, idx) => (
-            <Card key={student.uid} className="rounded-3xl border-none p-5 bg-white shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs">
-                  {student.nama.charAt(0)}
+          {students && students.length > 0 ? (
+            [...students].sort((a, b) => (Number(b.poin) || 0) - (Number(a.poin) || 0)).slice(0, 3).map((student, idx) => (
+              <Card key={student.uid} className="rounded-3xl border-none p-4 bg-white shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs">
+                    {student.nama?.charAt(0) || 'S'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm truncate">{student.nama}</h4>
+                    <p className="text-[10px] text-muted-foreground">Level {Math.floor((Number(student.poin) || 0) / 100) + 1} • {student.poin || 0} XP</p>
+                  </div>
+                  <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 text-[9px] uppercase font-bold border border-yellow-100 flex gap-1">
+                    <Trophy className="h-3 w-3" /> Juara {idx + 1}
+                  </Badge>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-sm truncate">{student.nama}</h4>
-                  <p className="text-[10px] text-muted-foreground">Level {Math.floor((student.poin || 0) / 100) + 1} • {student.poin} XP</p>
-                </div>
-                <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 text-[9px] uppercase font-bold border border-yellow-100 flex gap-1">
-                  <Trophy className="h-3 w-3" /> Peringkat {idx + 1}
-                </Badge>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))
+          ) : (
+            <p className="text-xs text-center text-muted-foreground py-4 italic">Belum ada data siswa.</p>
+          )}
         </div>
       </section>
 
-      {/* Laporan & Export */}
+      {/* Aksi Cepat */}
       <section className="space-y-4 pb-4">
-        <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Aksi Cepat</h3>
+        <h3 className="font-headline font-bold text-lg text-slate-900 px-1">Menu Laporan</h3>
         <div className="grid grid-cols-2 gap-4">
           <Link href="/teacher/reports" className="block">
             <Button variant="outline" className="w-full h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm">
@@ -187,7 +194,7 @@ export default function TeacherMobileDashboard() {
           <Link href="/teacher/students" className="block">
             <Button variant="outline" className="w-full h-20 rounded-3xl border-slate-200 bg-white flex flex-col gap-1 font-bold shadow-sm">
               <Users className="h-5 w-5 text-accent" />
-              <span className="text-[10px] uppercase">Siswa</span>
+              <span className="text-[10px] uppercase">Data Siswa</span>
             </Button>
           </Link>
         </div>
