@@ -60,10 +60,18 @@ const adaptiveQuizQuestioningFlow = ai.defineFlow(
     outputSchema: AdaptiveQuizOutputSchema,
   },
   async input => {
-    const {output} = await adaptiveQuizPrompt(input);
-    if (!output) {
-      throw new Error('Failed to determine adaptive quiz difficulty.');
+    try {
+      const {output} = await adaptiveQuizPrompt(input);
+      if (!output) throw new Error('No output from prompt');
+      return output;
+    } catch (e) {
+      console.error('Adaptive Quiz Flow Error:', e);
+      // Safe fallback based on score logic
+      let fallbackDifficulty: 'Mudah' | 'Sedang' | 'Sulit' = 'Sedang';
+      if (input.lastScore < 60) fallbackDifficulty = 'Mudah';
+      else if (input.lastScore > 80) fallbackDifficulty = 'Sulit';
+      
+      return { difficulty: fallbackDifficulty };
     }
-    return output;
   }
 );

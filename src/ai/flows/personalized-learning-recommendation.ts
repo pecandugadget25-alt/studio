@@ -64,7 +64,20 @@ const personalizedLearningRecommendationFlow = ai.defineFlow(
     outputSchema: PersonalizedLearningRecommendationOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    try {
+      const {output} = await prompt(input);
+      if (!output) throw new Error('AI generated empty output');
+      return output;
+    } catch (error) {
+      console.error('Gemini API Quota or Connection Error:', error);
+      // Fallback response for resilience
+      return {
+        recommendations: ["Batik Nusantara", "Candi Nusantara"],
+        areasForImprovement: ["Selesaikan modul dasar yang tersedia"],
+        nextChallenge: "Tuntaskan modul Batik hari ini untuk membuka tantangan baru!",
+        suggestedBadge: "Juara Numerasi",
+        motivationMessage: "Langkah kecil hari ini adalah awal kesuksesan besar di masa depan. Semangat belajar!"
+      };
+    }
   }
 );
