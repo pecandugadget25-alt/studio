@@ -58,6 +58,51 @@ const COMIC_DATA: Record<string, {
     image: "https://picsum.photos/seed/comic-games/800/600",
     moduleName: "Permainan Nusantara",
     color: "bg-red-500"
+  },
+  "komik-4": {
+    title: "Candi Jawi",
+    description: "Mengenal sejarah dan keunikan Candi Jawi sebagai peninggalan Kerajaan Singhasari.",
+    driveId: "1iB4SNjtTg-_cQZhVghHZIAWEM5kswHgp",
+    moduleLink: "/modules/candi",
+    image: "https://picsum.photos/seed/comic-candi-jawi/800/600",
+    moduleName: "Candi Nusantara",
+    color: "bg-green-500"
+  },
+  "komik-5": {
+    title: "Candi Penataran",
+    description: "Menjelajahi sejarah Candi Penataran sebagai kompleks candi terbesar di Jawa Timur.",
+    driveId: "1oJtFiK4KCVGa3K1xyNViQeQZmIiqVQFw",
+    moduleLink: "/modules/candi",
+    image: "https://picsum.photos/seed/comic-candi-penataran/800/600",
+    moduleName: "Candi Nusantara",
+    color: "bg-green-500"
+  },
+  "komik-6": {
+    title: "Jembatan Merah",
+    description: "Mempelajari sejarah Jembatan Merah Surabaya dan perannya dalam perjuangan kemerdekaan.",
+    driveId: "1d-bYVYB8-l0nPJHyOpfRcm3ttkPoMjpM",
+    moduleLink: "/modules/bangunan-bersejarah",
+    image: "https://picsum.photos/seed/comic-jembatan-merah/800/600",
+    moduleName: "Bangunan Bersejarah",
+    color: "bg-blue-500"
+  },
+  "komik-7": {
+    title: "Keraton Sumenep",
+    description: "Mengenal Keraton Sumenep sebagai pusat pemerintahan dan budaya Madura.",
+    driveId: "108PGaLZ0ecb3-CrcRQIYU5x0jsCVOwBL",
+    moduleLink: "/modules/bangunan-bersejarah",
+    image: "https://picsum.photos/seed/comic-keraton-sumenep/800/600",
+    moduleName: "Bangunan Bersejarah",
+    color: "bg-blue-500"
+  },
+  "komik-8": {
+    title: "Rumah Gajah Mungkur",
+    description: "Menelusuri sejarah Rumah Gajah Mungkur sebagai bangunan bersejarah di Gresik.",
+    driveId: "1P34DfJo97Y1uXOSnI62ONxFlnie50Oir",
+    moduleLink: "/modules/bangunan-bersejarah",
+    image: "https://picsum.photos/seed/comic-gajah-mungkur/800/600",
+    moduleName: "Bangunan Bersejarah",
+    color: "bg-blue-500"
   }
 };
 

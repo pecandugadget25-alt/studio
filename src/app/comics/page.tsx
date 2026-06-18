@@ -36,6 +36,51 @@ const COMICS = [
     color: "bg-red-500",
     image: "https://picsum.photos/seed/comic-games/400/600",
     hint: "traditional games comic"
+  },
+  {
+    id: "komik-4",
+    title: "Candi Jawi",
+    description: "Mengenal sejarah dan keunikan Candi Jawi sebagai peninggalan Kerajaan Singhasari.",
+    module: "Candi Nusantara",
+    color: "bg-green-500",
+    image: "https://picsum.photos/seed/comic-candi-jawi/400/600",
+    hint: "candi jawi comic"
+  },
+  {
+    id: "komik-5",
+    title: "Candi Penataran",
+    description: "Menjelajahi sejarah Candi Penataran sebagai kompleks candi terbesar di Jawa Timur.",
+    module: "Candi Nusantara",
+    color: "bg-green-500",
+    image: "https://picsum.photos/seed/comic-candi-penataran/400/600",
+    hint: "candi penataran comic"
+  },
+  {
+    id: "komik-6",
+    title: "Jembatan Merah",
+    description: "Mempelajari sejarah Jembatan Merah Surabaya dan perannya dalam perjuangan kemerdekaan.",
+    module: "Bangunan Bersejarah",
+    color: "bg-blue-500",
+    image: "https://picsum.photos/seed/comic-jembatan-merah/400/600",
+    hint: "jembatan merah comic"
+  },
+  {
+    id: "komik-7",
+    title: "Keraton Sumenep",
+    description: "Mengenal Keraton Sumenep sebagai pusat pemerintahan dan budaya Madura.",
+    module: "Bangunan Bersejarah",
+    color: "bg-blue-500",
+    image: "https://picsum.photos/seed/comic-keraton-sumenep/400/600",
+    hint: "keraton sumenep comic"
+  },
+  {
+    id: "komik-8",
+    title: "Rumah Gajah Mungkur",
+    description: "Menelusuri sejarah Rumah Gajah Mungkur sebagai bangunan bersejarah di Gresik.",
+    module: "Bangunan Bersejarah",
+    color: "bg-blue-500",
+    image: "https://picsum.photos/seed/comic-gajah-mungkur/400/600",
+    hint: "gajah mungkur comic"
   }
 ];
 
