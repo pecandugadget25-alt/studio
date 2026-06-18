@@ -6,10 +6,10 @@
  * Menggunakan kredensial dari project aktif studio-5511803829-2c9df
  */
 export const firebaseConfig = {
-  apiKey: "AIzaSyD7mqTrr-tMzjoeCEG4BCBxotHi0oLONgs",
-  authDomain: "studio-5511803829-2c9df.firebaseapp.com",
-  projectId: "studio-5511803829-2c9df",
-  storageBucket: "studio-5511803829-2c9df.firebasestorage.app",
-  messagingSenderId: "195317714915",
-  appId: "1:195317714915:web:adac772b2933ddf2175ad6"
+  apiKey: "AIzaSyB1UPAxL8nvwt_UhtYIRYHHiJccfRod1wo",
+  authDomain: "studio-2322330880-5ec5b.firebaseapp.com",
+  projectId: "studio-2322330880-5ec5b",
+  storageBucket: "studio-2322330880-5ec5b.firebasestorage.app",
+  messagingSenderId: "865911919037",
+  appId: "1:865911919037:web:a4c75d34ba609a01ef42d4"
 };
