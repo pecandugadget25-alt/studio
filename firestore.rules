@@ -1,34 +1,170 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Fungsi pembantu
+
+    // =====================================================================
+    // Helper Functions
+    // =====================================================================
+
+    // Memeriksa apakah pengguna sudah login
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
+    // Mendapatkan data pengguna yang melakukan request
+    function getRequestingUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Mendapatkan peran pengguna yang melakukan request
+    function getRequestingUserRole() {
+      return getRequestingUserData().peran;
+    }
+
+    // Memeriksa apakah pengguna adalah Admin
+    function isAdmin() {
+      return isSignedIn() && getRequestingUserRole() == 'admin';
+    }
+
+    // Memeriksa apakah pengguna adalah Teacher
+    function isTeacher() {
+      return isSignedIn() && getRequestingUserRole() == 'teacher';
+    }
+
+    // Memeriksa apakah pengguna adalah Student
+    function isStudent() {
+      return isSignedIn() && getRequestingUserRole() == 'student';
+    }
+
+    // Memeriksa apakah pengguna adalah pemilik dokumen
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Aturan untuk Koleksi Users
+    // =====================================================================
+    // Collection: users
+    // =====================================================================
     match /users/{userId} {
-      allow read: if isSignedIn();
+      // GET (Baca Dokumen Tunggal):
+      // - Admin/Teacher bisa membaca profil siapapun.
+      // - Student hanya bisa membaca profil miliknya sendiri.
+      allow get: if isAdmin() || isTeacher() || isOwner(userId);
+
+      // LIST (Query Kumpulan Dokumen):
+      // - Admin bisa melakukan query apapun.
+      // - Teacher hanya bisa melakukan query jika memfilter berdasarkan peran "siswa".
+      //   (Penting untuk dasbor guru dan mencegah akses data lain).
+      // - Student tidak bisa melakukan query sama sekali.
+      allow list: if isAdmin() || (isTeacher() && request.query.get("peran") == "siswa");
+
+      // CREATE (Membuat Dokumen Baru):
+      // - Siapapun yang login bisa membuat dokumen user (misalnya saat registrasi).
+      // - Aturan update akan mencegah mereka memberikan peran yang tidak semestinya.
       allow create: if isSignedIn();
-      allow update: if isOwner(userId);
+
+      // UPDATE (Memperbarui Dokumen):
+      // - Admin bisa memperbarui dokumen siapapun.
+      // - Pengguna lain hanya bisa memperbarui dokumen miliknya sendiri, DAN
+      //   TIDAK diizinkan mengubah bidang `peran` atau `email` untuk mencegah eskalasi hak akses.
+      allow update: if isAdmin() || (isOwner(userId)
+                    && !("peran" in request.resource.data)
+                    && !("email" in request.resource.data));
+
+      // DELETE (Menghapus Dokumen):
+      // - Hanya Admin yang bisa menghapus dokumen pengguna.
+      allow delete: if isAdmin();
     }
 
-    // Koleksi logs dan activities harus bisa ditulis oleh user yang login
-    match /scan_logs/{logId} {
-      allow read, create: if isSignedIn();
+    // =====================================================================
+    // Collections: modules, comics (Konten Pembelajaran)
+    // =====================================================================
+    match /modules/{moduleId} {
+      // Read: Semua pengguna yang login bisa membaca materi.
+      allow read: if isSignedIn();
+      // Write: Hanya Teacher dan Admin yang bisa membuat/mengubah/menghapus modul.
+      allow write: if isTeacher() || isAdmin();
     }
-    
+
+    match /comics/{comicId} {
+      // Read: Semua pengguna yang login bisa membaca materi.
+      allow read: if isSignedIn();
+      // Write: Hanya Teacher dan Admin yang bisa membuat/mengubah/menghapus komik.
+      allow write: if isTeacher() || isAdmin();
+    }
+
+    // =====================================================================
+    // Collection: qrcodes
+    // =====================================================================
+    match /qrcodes/{qrcodeId} {
+      // Read: Semua pengguna yang login bisa membaca (memvalidasi) QR code.
+      allow read: if isSignedIn();
+      // Write: Hanya Teacher dan Admin yang bisa membuat QR code.
+      allow write: if isTeacher() || isAdmin();
+    }
+
+    // =====================================================================
+    // Sub-collection: progress (Progress Belajar Siswa)
+    // Dibuat sebagai sub-koleksi di bawah /users/{userId}/progress/{progressId}
+    // =====================================================================
+    match /users/{userId}/progress/{progressId} {
+      // Read:
+      // - Pengguna bisa membaca progress miliknya sendiri.
+      // - Teacher dan Admin bisa membaca progress siswa manapun.
+      allow read: if isOwner(userId) || isTeacher() || isAdmin();
+
+      // Write (Create, Update, Delete):
+      // - Pengguna hanya bisa menulis progress untuk dirinya sendiri.
+      // - Admin memiliki hak tulis penuh.
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // =====================================================================
+    // Collections: activities, scan_logs (Log Aktivitas Pengguna)
+    // =====================================================================
     match /activities/{activityId} {
-      allow read, create: if isSignedIn();
+      // Read: Teacher/Admin bisa membaca semua log. Student hanya bisa query log miliknya.
+      allow read: if isAdmin() || isTeacher() || (isStudent() && request.query.get("userId") == request.auth.uid);
+      // Create: Pengguna hanya bisa membuat log untuk dirinya sendiri.
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Update/Delete: Log tidak boleh diubah setelah dibuat.
+      allow update, delete: if false;
     }
 
-    // Aturan default untuk koleksi lainnya agar pengembangan berjalan lancar
-    match /{document=**} {
-      allow read, write: if isSignedIn();
+    match /scan_logs/{logId} {
+      // Read: Teacher/Admin bisa membaca semua log. Student hanya bisa query log miliknya.
+      allow read: if isAdmin() || isTeacher() || (isStudent() && request.query.get("userId") == request.auth.uid);
+      // Create: Pengguna hanya bisa membuat log untuk dirinya sendiri.
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Update/Delete: Log tidak boleh diubah setelah dibuat.
+      allow update, delete: if false;
+    }
+
+    // =====================================================================
+    // Collection: reports (Laporan untuk Guru)
+    // =====================================================================
+    match /reports/{reportId} {
+      // Read: Hanya Teacher dan Admin yang bisa melihat laporan.
+      allow read: if isTeacher() || isAdmin();
+      // Write: Hanya Admin yang bisa membuat/mengubah laporan (diasumsikan dibuat oleh sistem backend).
+      allow write: if isAdmin();
+    }
+
+    // =====================================================================
+    // Collection: leaderboard (Papan Peringkat Publik)
+    // =====================================================================
+    match /leaderboard/{leaderboardId} {
+      // Read: Semua pengguna yang login bisa melihat papan peringkat.
+      // Koleksi ini seharusnya hanya berisi data non-sensitif.
+      allow read: if isSignedIn();
+      // Write: Hanya Admin (atau Cloud Function dengan hak Admin) yang boleh memperbarui data ini.
+      allow write: if isAdmin();
+    }
+
+    // Menolak semua akses lain yang tidak didefinisikan secara eksplisit
+    match /{path=**} {
+        allow read, write: if false;
     }
   }
 }
