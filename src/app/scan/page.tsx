@@ -170,7 +170,7 @@ export default function UniversalScannerPage() {
       if (url.toLowerCase().endsWith('.pdf')) {
         return { type: 'PDF', title: 'Modul Pembelajaran', url, xp: 0, icon: BookOpen, buttonText: 'Buka PDF' };
       }
-      if (url.includes('docs.google.com') || url.includes('drive.google.com')) {
+      if (url.includes('docs.google.com')) {
         return { type: 'DOKUMEN', title: 'Dokumen Belajar', url, xp: 0, icon: FileText, buttonText: 'Buka Dokumen' };
       }
       return { type: 'WEBSITE', title: 'Website Edukasi', url, xp: 0, icon: Globe, buttonText: 'Kunjungi Situs' };

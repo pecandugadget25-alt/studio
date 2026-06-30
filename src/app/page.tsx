@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -28,7 +28,34 @@ export default function MobileDashboard() {
     }
   }, [user, profile, authLoading, router]);
 
-  if (authLoading || (user && !profile)) {
+  const firstName = profile?.nama ? profile.nama.split(' ')[0] : 'Siswa';
+  const activeComicId = Object.keys(profile?.comicProgress ?? {}).filter((comicId) => comicId in COMIC_DATA)[0] ?? DEFAULT_COMIC_ID;
+  const activeComic = COMIC_DATA[activeComicId] ?? COMIC_DATA[DEFAULT_COMIC_ID];
+  const activeProgress = (profile?.comicProgress?.[activeComicId] as Partial<CinaraiSessionData> | undefined) ?? null;
+  const completedStages = (activeProgress?.completedStages ?? []) as CinaraiStageId[];
+  const currentStageId = getNextStageId(completedStages);
+  const currentStage = CINARAI_STAGES.find((stage) => stage.id === currentStageId) ?? CINARAI_STAGES[0];
+  const progressPercent = completedStages.length === 0 ? 0 : Math.round((completedStages.length / CINARAI_STAGES.length) * 100);
+  const recentHistory = Object.entries(profile?.comicProgress ?? {})
+    .filter(([, value]) => value && typeof value === 'object')
+    .map(([comicId, value]) => {
+      const session = value as Partial<CinaraiSessionData>;
+      return {
+        comicId,
+        title: COMIC_DATA[comicId]?.title ?? 'Komik EthnoArith',
+        updatedAt: session.updatedAt ?? '',
+        completedStages: session.completedStages ?? [],
+        xp: session.xp ?? 0,
+      };
+    })
+    .filter((entry) => entry.completedStages.length > 0)
+    .sort((left, right) => (right.updatedAt || '').localeCompare(left.updatedAt || ''))
+    .slice(0, 4);
+
+  const shouldShowLoader = authLoading || (Boolean(user) && !profile);
+  const shouldRenderStudentDashboard = Boolean(user && profile && profile.peran === 'siswa');
+
+  if (shouldShowLoader) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -36,40 +63,9 @@ export default function MobileDashboard() {
     );
   }
 
-  if (!user || !profile || profile.peran !== 'siswa') {
+  if (!shouldRenderStudentDashboard) {
     return null;
   }
-
-  const firstName = profile?.nama ? profile.nama.split(' ')[0] : 'Siswa';
-  const activeComicId = useMemo(() => {
-    const savedProgress = Object.keys(profile?.comicProgress ?? {}).filter((comicId) => comicId in COMIC_DATA);
-    return savedProgress[0] ?? DEFAULT_COMIC_ID;
-  }, [profile?.comicProgress]);
-
-  const activeComic = COMIC_DATA[activeComicId] ?? COMIC_DATA[DEFAULT_COMIC_ID];
-  const activeProgress = (profile?.comicProgress?.[activeComicId] as Partial<CinaraiSessionData> | undefined) ?? null;
-  const completedStages = (activeProgress?.completedStages ?? []) as CinaraiStageId[];
-  const currentStageId = useMemo(() => getNextStageId(completedStages), [completedStages]);
-  const currentStage = useMemo(() => CINARAI_STAGES.find((stage) => stage.id === currentStageId) ?? CINARAI_STAGES[0], [currentStageId]);
-  const progressPercent = completedStages.length === 0 ? 0 : Math.round((completedStages.length / CINARAI_STAGES.length) * 100);
-
-  const recentHistory = useMemo(() => {
-    return Object.entries(profile?.comicProgress ?? {})
-      .filter(([, value]) => value && typeof value === 'object')
-      .map(([comicId, value]) => {
-        const session = value as Partial<CinaraiSessionData>;
-        return {
-          comicId,
-          title: COMIC_DATA[comicId]?.title ?? 'Komik EthnoArith',
-          updatedAt: session.updatedAt ?? '',
-          completedStages: session.completedStages ?? [],
-          xp: session.xp ?? 0,
-        };
-      })
-      .filter((entry) => entry.completedStages.length > 0)
-      .sort((left, right) => (right.updatedAt || '').localeCompare(left.updatedAt || ''))
-      .slice(0, 4);
-  }, [profile?.comicProgress]);
 
   return (
     <div className="min-h-screen bg-slate-50/50 px-4 pb-32 pt-20">

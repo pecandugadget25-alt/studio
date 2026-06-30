@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, BookOpen, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,14 @@ import { calculateMasteryPercentage, calculateSessionXp, getNextStageId } from '
 import { CINARAI_STAGES, CinaraiSessionData, CinaraiStageId, CinaraiStagePayload } from '@/components/cinarai/types';
 import { cn } from '@/lib/utils';
 
+const PdfComicReader = dynamic(
+  () => import('@/components/comics/PdfComicReader').then((mod) => mod.PdfComicReader),
+  {
+    ssr: false,
+    loading: () => <div className="p-6 text-center">Loading comic...</div>,
+  }
+);
+
 interface CinaraiComicLearningProps {
   comicId: string;
 }
@@ -32,7 +41,7 @@ interface CinaraiComicLearningProps {
 export const COMIC_DATA: Record<string, {
   title: string;
   description: string;
-  driveId: string;
+  comicFolder: string;
   moduleLink: string;
   image: string;
   moduleName: string;
@@ -44,7 +53,7 @@ export const COMIC_DATA: Record<string, {
   'komik-1': {
     title: 'Misteri Simetri Batik',
     description: 'Ikuti petualangan Adi menemukan rahasia matematika di balik motif batik parang yang indah.',
-    driveId: '1ml4zlDAA-RS8CYnhG8BaUOdyL_nJffiw',
+    comicFolder: 'candi-jawi',
     moduleLink: '/modules/batik',
     image: 'https://picsum.photos/seed/comic-batik/800/600',
     moduleName: 'Batik Nusantara',
@@ -56,7 +65,7 @@ export const COMIC_DATA: Record<string, {
   'komik-2': {
     title: 'Petualangan di Candi Megah',
     description: 'Bantu Maya menghitung blok batu dan memahami bangun ruang di candi Borobudur.',
-    driveId: '1dworgjt9gqSqNG_AQtCWbge9WANQ_fP-',
+    comicFolder: 'candi-penataran',
     moduleLink: '/modules/candi',
     image: 'https://picsum.photos/seed/comic-candi/800/600',
     moduleName: 'Candi Nusantara',
@@ -68,7 +77,7 @@ export const COMIC_DATA: Record<string, {
   'komik-3': {
     title: 'Permainan Tradisional',
     description: 'Eksplorasi strategi berhitung lewat permainan Congklak dan Engklek bersama teman-teman.',
-    driveId: '1PP63HSHMdMMuSG6_rem9JhVg-aM2SaaS',
+    comicFolder: 'gajah-mungkur',
     moduleLink: '/modules/games',
     image: 'https://picsum.photos/seed/comic-games/800/600',
     moduleName: 'Permainan Nusantara',
@@ -80,7 +89,7 @@ export const COMIC_DATA: Record<string, {
   'komik-4': {
     title: 'Candi Jawi',
     description: 'Mengenal sejarah dan keunikan Candi Jawi sebagai peninggalan Kerajaan Singhasari.',
-    driveId: '1iB4SNjtTg-_cQZhVghHZIAWEM5kswHgp',
+    comicFolder: 'jembatan-merah',
     moduleLink: '/modules/candi',
     image: 'https://picsum.photos/seed/comic-candi-jawi/800/600',
     moduleName: 'Candi Nusantara',
@@ -92,7 +101,7 @@ export const COMIC_DATA: Record<string, {
   'komik-5': {
     title: 'Candi Penataran',
     description: 'Menjelajahi sejarah Candi Penataran sebagai kompleks candi terbesar di Jawa Timur.',
-    driveId: '1oJtFiK4KCVGa3K1xyNViQeQZmIiqVQFw',
+    comicFolder: 'candi-jawi',
     moduleLink: '/modules/candi',
     image: 'https://picsum.photos/seed/comic-candi-penataran/800/600',
     moduleName: 'Candi Nusantara',
@@ -104,7 +113,7 @@ export const COMIC_DATA: Record<string, {
   'komik-6': {
     title: 'Jembatan Merah',
     description: 'Mempelajari sejarah Jembatan Merah Surabaya dan perannya dalam perjuangan kemerdekaan.',
-    driveId: '1d-bYVYB8-l0nPJHyOpfRcm3ttkPoMjpM',
+    comicFolder: 'candi-penataran',
     moduleLink: '/modules/bangunan-bersejarah',
     image: 'https://picsum.photos/seed/comic-jembatan-merah/800/600',
     moduleName: 'Bangunan Bersejarah',
@@ -116,7 +125,7 @@ export const COMIC_DATA: Record<string, {
   'komik-7': {
     title: 'Keraton Sumenep',
     description: 'Mengenal Keraton Sumenep sebagai pusat pemerintahan dan budaya Madura.',
-    driveId: '108PGaLZ0ecb3-CrcRQIYU5x0jsCVOwBL',
+    comicFolder: 'gajah-mungkur',
     moduleLink: '/modules/bangunan-bersejarah',
     image: 'https://picsum.photos/seed/comic-keraton-sumenep/800/600',
     moduleName: 'Bangunan Bersejarah',
@@ -128,7 +137,7 @@ export const COMIC_DATA: Record<string, {
   'komik-8': {
     title: 'Rumah Gajah Mungkur',
     description: 'Menelusuri sejarah Rumah Gajah Mungkur sebagai bangunan bersejarah di Gresik.',
-    driveId: '1P34DfJo97Y1uXOSnI62ONxFlnie50Oir',
+    comicFolder: 'jembatan-merah',
     moduleLink: '/modules/bangunan-bersejarah',
     image: 'https://picsum.photos/seed/comic-gajah-mungkur/800/600',
     moduleName: 'Bangunan Bersejarah',
@@ -166,6 +175,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   const [clockTick, setClockTick] = useState(0);
   const activeProfile = user?.uid && profile?.uid === user.uid ? profile : null;
   const shouldRestart = searchParams.get('restart') === '1';
+  const comicPdfUrl = useMemo(() => `/comics/${comic.comicFolder}/comic.pdf`, [comic.comicFolder]);
 
   useEffect(() => {
     const interval = window.setInterval(() => setClockTick((value) => value + 1), 1000);
@@ -229,6 +239,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   }, [activeProfile, comicId, user?.uid]);
 
   const currentStageId = useMemo(() => getNextStageId(session.completedStages), [session.completedStages]);
+  const isComicReadingCompleted = Boolean(session.readingCompleted) || Boolean(session.stageData?.reading?.completed);
   const currentStage = useMemo(() => 
     CINARAI_STAGES.find((stage) => stage.id === currentStageId) ?? CINARAI_STAGES[0],
     [currentStageId]
@@ -340,6 +351,60 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
     return response.response;
   };
 
+  const persistReadingProgress = async (nextPage: number, totalPages: number, readingCompleted: boolean) => {
+    if (!db || !user) return;
+
+    const nextSession: CinaraiSessionData = {
+      ...session,
+      currentPage: nextPage,
+      totalPages,
+      readingCompleted,
+      updatedAt: new Date().toISOString(),
+      durationSeconds: elapsedSeconds,
+      masteryPercentage: calculateMasteryPercentage(session.completedStages),
+      xp: calculateSessionXp(session.completedStages),
+    };
+
+    setSession(nextSession);
+    await updateDoc(doc(db, 'users', user.uid), {
+      [`comicProgress.${comicId}`]: {
+        ...nextSession,
+        userId: user.uid,
+        updatedAt: new Date().toISOString(),
+        durationSeconds: elapsedSeconds,
+      },
+    });
+  };
+
+  const handleReadingComplete = async (nextPage: number, totalPages: number, readingCompleted: boolean) => {
+    const nextSession: CinaraiSessionData = {
+      ...session,
+      currentPage: nextPage,
+      totalPages,
+      readingCompleted,
+      updatedAt: new Date().toISOString(),
+      durationSeconds: elapsedSeconds,
+      masteryPercentage: calculateMasteryPercentage(session.completedStages),
+      xp: calculateSessionXp(session.completedStages),
+    };
+
+    setSession(nextSession);
+    await updateDoc(doc(db, 'users', user.uid), {
+      [`comicProgress.${comicId}`]: {
+        ...nextSession,
+        userId: user.uid,
+        updatedAt: new Date().toISOString(),
+        durationSeconds: elapsedSeconds,
+      },
+    });
+
+    await handleStageComplete('contextualization', {
+      readingCompleted,
+      currentPage: nextPage,
+      totalPages,
+    });
+  };
+
   const renderStage = () => {
     const isLocked = currentStageId !== 'cover' && !session.completedStages.includes(currentStageId);
     if (currentStageId === 'cover') {
@@ -355,6 +420,21 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
     }
 
     if (currentStageId === 'contextualization') {
+      if (!isComicReadingCompleted) {
+        return (
+          <PdfComicReader
+            pdfUrl={comicPdfUrl}
+            session={session}
+            onPageChange={(nextPage, totalPages, readingCompleted) => {
+              void persistReadingProgress(nextPage, totalPages, readingCompleted);
+            }}
+            onReadingComplete={(nextPage, totalPages, readingCompleted) => {
+              void handleReadingComplete(nextPage, totalPages, readingCompleted);
+            }}
+          />
+        );
+      }
+
       return (
         <ContextualizationStage
           onComplete={(payload) => handleStageComplete('contextualization', payload)}

@@ -37,6 +37,9 @@ export interface CinaraiSessionData {
   masteryPercentage: number;
   durationSeconds: number;
   reflection?: string;
+  currentPage?: number;
+  totalPages?: number;
+  readingCompleted?: boolean;
 }
 
 export const CINARAI_STAGES: CinaraiStageConfig[] = [
