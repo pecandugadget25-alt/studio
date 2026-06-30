@@ -15,6 +15,7 @@ export interface UserProfile {
   scanCount?: number;
   completedModules?: string[];
   completedComics?: string[];
+  completedVideos?: string[];
   badges?: string[];
   comicProgress?: Record<string, unknown>;
   tanggalDaftar?: any;

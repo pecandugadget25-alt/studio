@@ -377,6 +377,10 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   };
 
   const handleReadingComplete = async (nextPage: number, totalPages: number, readingCompleted: boolean) => {
+    if (!db || !user) {
+      return;
+    }
+
     const nextSession: CinaraiSessionData = {
       ...session,
       currentPage: nextPage,

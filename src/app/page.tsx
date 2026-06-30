@@ -130,7 +130,7 @@ export default function MobileDashboard() {
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">XP</p>
           <div className="mt-2 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-amber-500" />
-            <span className="text-xl font-bold text-slate-900">{profile.poin || 0}</span>
+            <span className="text-xl font-bold text-slate-900">{profile?.poin || 0}</span>
           </div>
         </Card>
         <Card className="rounded-[1.5rem] border-none bg-white p-4 shadow-sm">

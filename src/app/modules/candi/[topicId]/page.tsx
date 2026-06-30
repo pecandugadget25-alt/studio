@@ -85,10 +85,11 @@ export default function CandiTopicPage({ params }: { params: Promise<{ topicId: 
         }
       ]
     }
-  }[topicId as keyof typeof topicContent] || topicContent["bangun-ruang"];
+  } as const;
 
-  const currentStepData = topicContent.content[step];
-  const isLastStep = step === topicContent.content.length - 1;
+  const selectedTopic = topicContent[topicId as keyof typeof topicContent] ?? topicContent["bangun-ruang"];
+  const currentStepData = selectedTopic.content[step];
+  const isLastStep = step === selectedTopic.content.length - 1;
 
   const handleExplain = async () => {
     setIsExplaining(true);
@@ -111,11 +112,11 @@ export default function CandiTopicPage({ params }: { params: Promise<{ topicId: 
           </Button>
         </Link>
         <div className="flex items-center gap-3">
-          <Badge className="bg-primary">{topicContent.badge}</Badge>
+          <Badge className="bg-primary">{selectedTopic.badge}</Badge>
           <div className="h-2 w-24 sm:w-32 bg-slate-100 rounded-full overflow-hidden">
             <div 
               className="h-full bg-primary transition-all duration-500" 
-              style={{ width: `${((step + 1) / topicContent.content.length) * 100}%` }}
+              style={{ width: `${((step + 1) / selectedTopic.content.length) * 100}%` }}
             />
           </div>
         </div>
@@ -124,14 +125,14 @@ export default function CandiTopicPage({ params }: { params: Promise<{ topicId: 
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="space-y-8">
           <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl font-headline font-bold text-primary">{topicContent.title}</h1>
-            <p className="text-muted-foreground">Bagian {step + 1} dari {topicContent.content.length}</p>
+            <h1 className="text-3xl sm:text-4xl font-headline font-bold text-primary">{selectedTopic.title}</h1>
+            <p className="text-muted-foreground">Bagian {step + 1} dari {selectedTopic.content.length}</p>
           </div>
 
           <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl border-4 sm:border-8 border-slate-50">
             <Image 
               src={currentStepData.image} 
-              alt={topicContent.title} 
+              alt={selectedTopic.title} 
               fill 
               className="object-cover"
               data-ai-hint={currentStepData.hint}

@@ -13,12 +13,13 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 export default function ModuleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   
-  const moduleData = {
+  const moduleDefinitions: Record<string, { title: string; topic: string; desc: string }> = {
     batik: { title: "Batik Nusantara", topic: "Simetri & Pola", desc: "Pelajari konsep simetri lipat dan putar melalui keindahan motif batik tradisional Indonesia." },
     candi: { title: "Candi Nusantara", topic: "Geometri Bangun Ruang", desc: "Eksplorasi bangun ruang sisi datar dan lengkung yang membentuk kemegahan arsitektur candi." },
     masjid: { title: "Masjid Al Akbar", topic: "Geometri Masjid", desc: "Analisis geometris kubah dan menara masjid bersejarah di Indonesia." },
     games: { title: "Permainan Tradisional", topic: "Probabilitas & Strategi", desc: "Belajar peluang dan strategi matematika lewat permainan Congklak dan Engklek." }
-  }[id as keyof typeof moduleData] || { title: "Modul Pembelajaran", topic: "Etnomatematika", desc: "Modul eksplorasi matematika berbasis budaya Indonesia." };
+  };
+  const moduleData = moduleDefinitions[id] ?? { title: "Modul Pembelajaran", topic: "Etnomatematika", desc: "Modul eksplorasi matematika berbasis budaya Indonesia." };
 
   const placeholder = PlaceHolderImages.find(img => img.id.includes(id)) || PlaceHolderImages[0];
 

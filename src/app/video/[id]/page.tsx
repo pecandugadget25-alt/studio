@@ -70,7 +70,8 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
     }
   }, [id, user?.uid]);
 
-  const isAlreadyFinished = videoId ? profile?.completedVideos?.includes(videoId) : false;
+  const completedVideoIds = profile?.completedVideos ?? [];
+  const isAlreadyFinished = videoId ? completedVideoIds.includes(videoId) : false;
 
   const handleClaimXP = async () => {
     if (!db || !user || !profile || isFinishing) return;

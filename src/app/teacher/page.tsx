@@ -97,31 +97,49 @@ export default function TeacherMobileDashboard() {
     return { total, active, totalXP, totalBadges, avgXP, topStudents, moduleStats };
   }, [students]);
 
+  const safeStats = stats ?? {
+    total: 0,
+    active: 0,
+    totalXP: 0,
+    totalBadges: 0,
+    avgXP: 0,
+    topStudents: [],
+    moduleStats: {
+      'Batik Nusantara': 0,
+      'Candi Nusantara': 0,
+      'Masjid Al Akbar': 0,
+      'Permainan Tradisional': 0,
+    },
+  };
+
   // Invoke AI Analysis
   useEffect(() => {
-    if (stats && !aiInsight && !aiLoading) {
-      async function getInsight() {
-        setAiLoading(true);
-        try {
-          const result = await analyzeClassPerformance({
-            totalStudents: stats.total,
-            activeStudents: stats.active,
-            totalXP: stats.totalXP,
-            totalBadges: stats.totalBadges,
-            averageXP: stats.avgXP,
-            moduleStats: stats.moduleStats,
-            unfinishedCount: stats.total - stats.active
-          });
-          setAiInsight(result);
-        } catch (e) {
-          console.error(e);
-        } finally {
-          setAiLoading(false);
-        }
-      }
-      getInsight();
+    if (!stats || aiInsight || aiLoading) {
+      return;
     }
-  }, [stats, aiInsight, aiLoading]);
+
+    async function getInsight() {
+      setAiLoading(true);
+      try {
+        const result = await analyzeClassPerformance({
+          totalStudents: safeStats.total,
+          activeStudents: safeStats.active,
+          totalXP: safeStats.totalXP,
+          totalBadges: safeStats.totalBadges,
+          averageXP: safeStats.avgXP,
+          moduleStats: safeStats.moduleStats,
+          unfinishedCount: safeStats.total - safeStats.active
+        });
+        setAiInsight(result);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setAiLoading(false);
+      }
+    }
+
+    void getInsight();
+  }, [aiInsight, aiLoading, safeStats.active, safeStats.avgXP, safeStats.moduleStats, safeStats.total, safeStats.totalBadges, safeStats.totalXP, stats]);
 
   if (authLoading || studentsLoading || !profile) {
     return (

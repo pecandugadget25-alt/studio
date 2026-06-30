@@ -89,38 +89,47 @@ export default function TeacherReportsPage() {
   }, [students]);
 
   useEffect(() => {
-    if (stats && !aiInsight && !aiLoading) {
-      async function getInsight() {
-        setAiLoading(true);
-        try {
-          const modMap: Record<string, number> = {};
-          stats.moduleStats.forEach(m => modMap[m.name] = m.count);
-
-          const result = await analyzeClassPerformance({
-            totalStudents: stats.total,
-            activeStudents: stats.activeSiswa,
-            totalXP: stats.totalXP,
-            totalBadges: stats.totalBadges,
-            averageXP: stats.avgXP,
-            moduleStats: modMap,
-            unfinishedCount: stats.statusCounts.Perhatian
-          });
-          setAiInsight(result);
-        } catch (e) {
-          console.error(e);
-        } finally {
-          setAiLoading(false);
-        }
-      }
-      getInsight();
+    if (!stats || aiInsight || aiLoading) {
+      return;
     }
+
+    async function getInsight() {
+      setAiLoading(true);
+      try {
+        if (!stats) {
+          return;
+        }
+
+        const modMap: Record<string, number> = {};
+        stats.moduleStats.forEach((m) => {
+          modMap[m.name] = m.count;
+        });
+
+        const result = await analyzeClassPerformance({
+          totalStudents: stats.total,
+          activeStudents: stats.activeSiswa,
+          totalXP: stats.totalXP,
+          totalBadges: stats.totalBadges,
+          averageXP: stats.avgXP,
+          moduleStats: modMap,
+          unfinishedCount: stats.statusCounts.Perhatian
+        });
+        setAiInsight(result);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setAiLoading(false);
+      }
+    }
+
+    void getInsight();
   }, [stats, aiInsight, aiLoading]);
 
   // Export handlers
   const handleExportExcel = () => {
     if (!students?.length) return;
     setIsExportingExcel(true);
-    const data = students.map(s => ({
+    const data = students.map((s) => ({
       "Nama": s.nama,
       "Level": s.level || 1,
       "XP": s.poin || 0,
@@ -132,6 +141,18 @@ export default function TeacherReportsPage() {
     XLSX.utils.book_append_sheet(wb, ws, "Laporan");
     XLSX.writeFile(wb, "Laporan_ETHNO_ARITH.xlsx");
     setIsExportingExcel(false);
+  };
+
+  const handleExportPdf = () => {
+    if (!students?.length) return;
+    setIsExportingPdf(true);
+    const doc = new jsPDF();
+    autoTable(doc, {
+      head: [["Nama", "Level", "XP", "Lencana", "Modul Selesai"]],
+      body: students.map((s) => [s.nama, s.level || 1, s.poin || 0, s.badges?.length || 0, s.completedModules?.join(", ") || "-"]),
+    });
+    doc.save("Laporan_ETHNO_ARITH.pdf");
+    setIsExportingPdf(false);
   };
 
   if (authLoading || loading || !profile) {
