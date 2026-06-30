@@ -4,11 +4,28 @@ import { CINARAI_STAGES, CinaraiStageId } from './types';
 interface CinaraiStageProgressProps {
   completedStages: CinaraiStageId[];
   currentStageId: CinaraiStageId;
+  compact?: boolean;
 }
 
-export function CinaraiStageProgress({ completedStages, currentStageId }: CinaraiStageProgressProps) {
+export function CinaraiStageProgress({ completedStages, currentStageId, compact = false }: CinaraiStageProgressProps) {
   const completedSet = new Set(completedStages);
   const progress = Math.round((completedStages.length / CINARAI_STAGES.length) * 100);
+
+  if (compact) {
+    return (
+      <div className="rounded-[1.25rem] border border-orange-100 bg-white/90 p-3 shadow-sm">
+        <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">
+          <span>Stage</span>
+          <span>{Math.min(completedStages.length + 1, CINARAI_STAGES.length)} / {CINARAI_STAGES.length}</span>
+        </div>
+        <div className="mt-2 flex items-center justify-between text-sm font-semibold text-slate-900">
+          <span>{CINARAI_STAGES.find((stage) => stage.id === currentStageId)?.title ?? 'Contextualization'}</span>
+          <span className="text-orange-600">{progress}%</span>
+        </div>
+        <Progress value={progress} className="mt-3 h-2" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 rounded-[1.5rem] bg-gradient-to-br from-orange-50 to-amber-50 p-4 shadow-inner">

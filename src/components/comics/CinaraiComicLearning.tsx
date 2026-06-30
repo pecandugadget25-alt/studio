@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, BookOpen, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCircle2, ChevronDown, ChevronUp, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -173,6 +173,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   const [session, setSession] = useState<CinaraiSessionData>(() => createDefaultSession(comicId));
   const [isSaving, setIsSaving] = useState(false);
   const [clockTick, setClockTick] = useState(0);
+  const [isProgressOpen, setIsProgressOpen] = useState(false);
   const activeProfile = user?.uid && profile?.uid === user.uid ? profile : null;
   const shouldRestart = searchParams.get('restart') === '1';
   const comicPdfUrl = useMemo(() => `/comics/${comic.comicFolder}/comic.pdf`, [comic.comicFolder]);
@@ -240,6 +241,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
 
   const currentStageId = useMemo(() => getNextStageId(session.completedStages), [session.completedStages]);
   const isComicReadingCompleted = Boolean(session.readingCompleted) || Boolean(session.stageData?.reading?.completed);
+  const isReadingStage = currentStageId === 'contextualization' && !isComicReadingCompleted;
   const currentStage = useMemo(() => 
     CINARAI_STAGES.find((stage) => stage.id === currentStageId) ?? CINARAI_STAGES[0],
     [currentStageId]
@@ -428,12 +430,17 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
         return (
           <PdfComicReader
             pdfUrl={comicPdfUrl}
+            comicTitle={comic.title}
             session={session}
             onPageChange={(nextPage, totalPages, readingCompleted) => {
               void persistReadingProgress(nextPage, totalPages, readingCompleted);
             }}
             onReadingComplete={(nextPage, totalPages, readingCompleted) => {
               void handleReadingComplete(nextPage, totalPages, readingCompleted);
+            }}
+            onExit={() => {
+              const completedPage = Math.max(1, Math.min(session.currentPage ?? 1, session.totalPages ?? 1));
+              void handleReadingComplete(completedPage, session.totalPages ?? 1, true);
             }}
           />
         );
@@ -517,9 +524,9 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F5] pb-24">
+    <div className="min-h-screen bg-[#FAF7F5] pb-0">
       <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-full max-w-[500px] items-center justify-between px-6">
+        <div className="mx-auto flex h-full max-w-[560px] items-center justify-between px-4 sm:px-6">
           <Link href="/comics">
             <Button variant="ghost" size="icon" className="rounded-full">
               <ArrowLeft className="h-5 w-5" />
@@ -528,43 +535,80 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
           <div className="flex min-w-0 flex-1 items-center justify-center px-2">
             <h1 className="truncate text-center text-sm font-bold text-slate-900">{comic.title}</h1>
           </div>
-          <div className="w-10" />
+          {isReadingStage ? (
+            <Button variant="ghost" size="sm" className="rounded-full px-3 text-xs font-semibold text-slate-700" onClick={() => setIsProgressOpen((value) => !value)}>
+              {isProgressOpen ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}
+              Progress
+            </Button>
+          ) : (
+            <div className="w-10" />
+          )}
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-[500px] flex-col gap-5 px-4 pb-8 pt-24">
-        <div className="relative overflow-hidden rounded-[2rem] border border-white/70 shadow-xl">
-          <Image src={comic.image} alt={comic.title} width={800} height={600} className="h-48 w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-            <div className={cn('inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white', comic.color)}>
-              {comic.moduleName}
+      <main className={cn('mx-auto flex max-w-[560px] flex-col pt-16', isReadingStage ? 'min-h-screen px-0 pb-0' : 'gap-5 px-4 pb-8')}>
+        {!isReadingStage ? (
+          <>
+            <div className="relative mt-4 overflow-hidden rounded-[2rem] border border-white/70 shadow-xl">
+              <Image src={comic.image} alt={comic.title} width={800} height={600} className="h-48 w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                <div className={cn('inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white', comic.color)}>
+                  {comic.moduleName}
+                </div>
+                <h2 className="mt-3 text-xl font-headline font-bold">{comic.title}</h2>
+                <p className="mt-2 text-sm text-white/80">{comic.description}</p>
+              </div>
             </div>
-            <h2 className="mt-3 text-xl font-headline font-bold">{comic.title}</h2>
-            <p className="mt-2 text-sm text-white/80">{comic.description}</p>
-          </div>
-        </div>
 
-        <CinaraiStageProgress completedStages={session.completedStages} currentStageId={currentStageId} />
+            <CinaraiStageProgress completedStages={session.completedStages} currentStageId={currentStageId} />
 
-        <Card className="rounded-[1.75rem] border-none bg-white p-4 shadow-lg shadow-orange-100/70">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Tahap saat ini</p>
-              <p className="text-lg font-bold text-slate-900">{currentStage?.title}</p>
-            </div>
-            <div className="rounded-full bg-orange-100 px-3 py-2 text-right text-xs font-semibold text-orange-700">
-              {session.completedStages.length}/{CINARAI_STAGES.length} selesai
-            </div>
+            <Card className="rounded-[1.75rem] border-none bg-white p-4 shadow-lg shadow-orange-100/70">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Tahap saat ini</p>
+                  <p className="text-lg font-bold text-slate-900">{currentStage?.title}</p>
+                </div>
+                <div className="rounded-full bg-orange-100 px-3 py-2 text-right text-xs font-semibold text-orange-700">
+                  {session.completedStages.length}/{CINARAI_STAGES.length} selesai
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">
+                <Sparkles className="h-4 w-4 text-orange-500" />
+                <span>{currentStage?.subtitle}</span>
+              </div>
+            </Card>
+          </>
+        ) : null}
+
+        {isReadingStage ? (
+          <div className="px-3 pb-3 pt-2">
+            <Button variant="ghost" className="w-full justify-between rounded-[1.25rem] border border-slate-200 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm" onClick={() => setIsProgressOpen((value) => !value)}>
+              <span>Learning Progress</span>
+              {isProgressOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+            {isProgressOpen ? (
+              <div className="mt-2 space-y-3 rounded-[1.5rem] border border-orange-100 bg-white/95 p-3 shadow-sm">
+                <CinaraiStageProgress completedStages={session.completedStages} currentStageId={currentStageId} compact />
+                <div className="flex items-center justify-between gap-3 rounded-[1.25rem] bg-slate-50 p-3 text-sm text-slate-600">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">Tahap sekarang</p>
+                    <p className="mt-1 font-semibold text-slate-900">{currentStage?.title}</p>
+                  </div>
+                  <Button className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white" onClick={() => {
+                    const completedPage = Math.max(1, Math.min(session.currentPage ?? 1, session.totalPages ?? 1));
+                    void handleReadingComplete(completedPage, session.totalPages ?? 1, true);
+                  }}>
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
-          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">
-            <Sparkles className="h-4 w-4 text-orange-500" />
-            <span>{currentStage?.subtitle}</span>
-          </div>
-        </Card>
+        ) : null}
 
         {isSaving ? (
-          <div className="flex items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700">
+          <div className="mx-4 mt-2 flex items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700">
             <Loader2 className="h-4 w-4 animate-spin" />
             Menyimpan progresmu…
           </div>
@@ -572,19 +616,21 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
 
         {renderStage()}
 
-        <Card className="rounded-[1.75rem] border-none bg-slate-50 p-4 text-sm text-slate-600">
-          <div className="flex items-center gap-2 font-semibold text-slate-900">
-            <BookOpen className="h-4 w-4 text-primary" />
-            Lanjutkan dari tahap sebelumnya
-          </div>
-          <p className="mt-2 leading-relaxed">
-            Kamu tidak bisa melewati tahapan. Setiap langkah akan dibuka setelah tahap sebelumnya selesai dan otomatis tersimpan di akunmu.
-          </p>
-          <div className="mt-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            <span>Durasi belajar: {Math.floor(elapsedSeconds / 60)} menit {elapsedSeconds % 60} detik</span>
-          </div>
-        </Card>
+        {!isReadingStage ? (
+          <Card className="rounded-[1.75rem] border-none bg-slate-50 p-4 text-sm text-slate-600">
+            <div className="flex items-center gap-2 font-semibold text-slate-900">
+              <BookOpen className="h-4 w-4 text-primary" />
+              Lanjutkan dari tahap sebelumnya
+            </div>
+            <p className="mt-2 leading-relaxed">
+              Kamu tidak bisa melewati tahapan. Setiap langkah akan dibuka setelah tahap sebelumnya selesai dan otomatis tersimpan di akunmu.
+            </p>
+            <div className="mt-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <span>Durasi belajar: {Math.floor(elapsedSeconds / 60)} menit {elapsedSeconds % 60} detik</span>
+            </div>
+          </Card>
+        ) : null}
       </main>
     </div>
   );

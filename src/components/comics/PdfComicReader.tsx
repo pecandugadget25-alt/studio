@@ -3,10 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { CinaraiSessionData } from '@/components/cinarai/types';
 
 if (typeof window !== 'undefined') {
@@ -15,12 +13,14 @@ if (typeof window !== 'undefined') {
 
 interface PdfComicReaderProps {
   pdfUrl: string;
+  comicTitle: string;
   session: CinaraiSessionData;
   onPageChange: (page: number, totalPages: number, readingCompleted: boolean) => void;
   onReadingComplete: (page: number, totalPages: number, readingCompleted: boolean) => void;
+  onExit: () => void;
 }
 
-export function PdfComicReader({ pdfUrl, session, onPageChange, onReadingComplete }: PdfComicReaderProps) {
+export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onReadingComplete, onExit }: PdfComicReaderProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(Math.max(1, session.currentPage ?? 1));
   const [isLoading, setIsLoading] = useState(true);
@@ -177,21 +177,13 @@ export function PdfComicReader({ pdfUrl, session, onPageChange, onReadingComplet
   }, [pageNumber, totalPages]);
 
   const readingCompleted = Boolean(session.readingCompleted);
-  const progressPercent = totalPages > 0 ? Math.round((pageNumber / totalPages) * 100) : 0;
   const isAtLastPage = totalPages > 0 && pageNumber >= totalPages;
-  const statusText = readingCompleted ? 'Komik selesai dibaca' : isAtLastPage ? 'Halaman terakhir tercapai' : 'Baca satu halaman per satu';
 
   const handlePageChange = (nextPage: number) => {
     const boundedPage = Math.min(Math.max(1, nextPage), totalPages || 1);
     const reachedEnd = boundedPage >= totalPages;
     setPageNumber(boundedPage);
     onPageChangeRef.current(boundedPage, totalPages || 1, reachedEnd);
-  };
-
-  const handleContinueToContextualization = () => {
-    const completedPage = Math.max(1, Math.min(pageNumber, totalPages || 1));
-    onPageChangeRef.current(completedPage, totalPages || 1, true);
-    onReadingComplete(completedPage, totalPages || 1, true);
   };
 
   const goToPrevious = () => {
@@ -207,29 +199,19 @@ export function PdfComicReader({ pdfUrl, session, onPageChange, onReadingComplet
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="rounded-[1.75rem] border-none bg-white p-4 shadow-lg shadow-orange-100/70">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <BookOpen className="h-4 w-4 text-primary" />
-          Pembaca Komik PDF
+    <div className="flex min-h-screen flex-col bg-[#f7f2e9]">
+      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-slate-900">{comicTitle}</p>
+          <p className="text-xs text-slate-500">Page {pageNumber} / {totalPages}</p>
         </div>
-        <p className="mt-2 text-sm text-slate-600">Satu halaman per satu halaman. Kamu tidak bisa scroll terus-menerus.</p>
-      </Card>
+        <Button variant="ghost" size="sm" className="rounded-full px-3 text-sm font-semibold text-slate-700" onClick={onExit}>
+          Exit
+        </Button>
+      </div>
 
-      <Card className="rounded-[1.75rem] border-none bg-slate-50 p-4 shadow-sm">
-        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
-          <span>Reading Progress</span>
-          <span>{progressPercent}%</span>
-        </div>
-        <Progress value={progressPercent} className="mt-3 h-3" />
-        <div className="mt-3 flex items-center justify-between text-sm font-semibold text-slate-700">
-          <span>Page {pageNumber} / {totalPages}</span>
-          <span>{statusText}</span>
-        </div>
-      </Card>
-
-      <Card className="overflow-hidden rounded-[2rem] border-none bg-white p-3 shadow-lg shadow-slate-200/80">
-        <div ref={containerRef} className="flex min-h-[420px] items-center justify-center rounded-[1.5rem] border border-slate-100 bg-slate-50 p-2">
+      <div ref={containerRef} className="flex-1 bg-[#f7f2e9] px-2 py-2 sm:px-3 sm:py-3">
+        <div className="flex h-full min-h-[calc(100vh-170px)] items-center justify-center rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-inner">
           {isLoading ? (
             <div className="flex flex-col items-center gap-3 text-sm font-semibold text-slate-500">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -238,37 +220,25 @@ export function PdfComicReader({ pdfUrl, session, onPageChange, onReadingComplet
           ) : error ? (
             <div className="max-w-full px-4 text-center text-sm text-red-500">{error}</div>
           ) : (
-            <div className="w-full overflow-hidden rounded-[1.25rem] bg-white p-2">
-              <canvas ref={canvasRef} className="mx-auto block max-w-full" />
+            <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[1.25rem] bg-[#f3eee8] p-2">
+              <canvas ref={canvasRef} className="mx-auto block max-h-full max-w-full" />
             </div>
           )}
         </div>
-      </Card>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Button variant="outline" className="h-14 rounded-[1.5rem] border-slate-200 bg-white text-base font-semibold text-slate-700 shadow-sm" onClick={goToPrevious} disabled={pageNumber <= 1}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Previous
-        </Button>
-        <Button className="h-14 rounded-[1.5rem] bg-primary text-base font-semibold text-white shadow-lg shadow-orange-100/70" onClick={goToNext} disabled={pageNumber >= totalPages}>
-          Next
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
       </div>
 
-      <Card className="rounded-[1.75rem] border-none bg-gradient-to-br from-emerald-50 to-cyan-50 p-4 shadow-sm">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <Sparkles className="h-4 w-4 text-emerald-600" />
-          <span>{readingCompleted ? 'Comic completed' : isAtLastPage ? 'Comic completed' : 'Baca sampai selesai untuk lanjut ke Contextualization'}</span>
+      <div className="sticky bottom-0 z-20 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur">
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" className="h-12 rounded-[1.25rem] border-slate-200 bg-white text-sm font-semibold text-slate-700" onClick={goToPrevious} disabled={pageNumber <= 1}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Previous
+          </Button>
+          <Button className="h-12 rounded-[1.25rem] bg-primary text-sm font-semibold text-white" onClick={goToNext} disabled={pageNumber >= totalPages}>
+            Next
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
-        <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-          <span>{readingCompleted ? 'Kamu sudah menyelesaikan komik. Kamu bisa melanjutkan ke Contextualization.' : 'Selesaikan semua halaman untuk membuka tahap berikutnya.'}</span>
-        </div>
-        <Button className="mt-4 h-12 w-full rounded-[1.5rem] bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700" onClick={handleContinueToContextualization} disabled={!isAtLastPage && !readingCompleted}>
-          Continue to Contextualization
-        </Button>
-      </Card>
+      </div>
     </div>
   );
 }
