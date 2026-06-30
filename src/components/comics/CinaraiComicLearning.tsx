@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, BookOpen, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -29,7 +29,7 @@ interface CinaraiComicLearningProps {
   comicId: string;
 }
 
-const COMIC_DATA: Record<string, {
+export const COMIC_DATA: Record<string, {
   title: string;
   description: string;
   driveId: string;
@@ -155,6 +155,7 @@ const createDefaultSession = (comicId: string): CinaraiSessionData => ({
 
 export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, profile } = useUser();
   const db = useFirestore();
@@ -164,11 +165,45 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [clockTick, setClockTick] = useState(0);
   const activeProfile = user?.uid && profile?.uid === user.uid ? profile : null;
+  const shouldRestart = searchParams.get('restart') === '1';
 
   useEffect(() => {
     const interval = window.setInterval(() => setClockTick((value) => value + 1), 1000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!shouldRestart || !user?.uid || !db) return;
+
+    const resetSession = async () => {
+      const defaultSession = createDefaultSession(comicId);
+      setSession(defaultSession);
+      setIsSaving(true);
+
+      try {
+        await updateDoc(doc(db, 'users', user.uid), {
+          [`comicProgress.${comicId}`]: {
+            ...defaultSession,
+            userId: user.uid,
+            updatedAt: new Date().toISOString(),
+            durationSeconds: 0,
+          },
+        });
+        router.replace(`/comics/${comicId}`);
+      } catch (error) {
+        console.error('Gagal mereset progres komik CINARAI', error);
+        toast({
+          variant: 'destructive',
+          title: 'Gagal mereset progres',
+          description: 'Periksa koneksi internetmu lalu coba lagi.',
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    void resetSession();
+  }, [comicId, db, router, shouldRestart, toast, user?.uid]);
 
   useEffect(() => {
     const defaultSession = createDefaultSession(comicId);

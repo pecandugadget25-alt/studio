@@ -1,90 +1,36 @@
 'use client';
 
-import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { 
-  Star, 
-  MapPin, 
-  CheckCircle2,
-  Loader2,
-  Castle,
-  Dices,
-  Landmark,
-  ChevronRight,
-  TrendingUp,
-  Camera,
-  Flame,
-  Award,
-  Bell,
-  Search,
-  Zap,
-  Trophy,
-  BookOpen,
-  Sparkles,
-  QrCode
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useUser } from "@/firebase";
-import { personalizedLearningRecommendation, type PersonalizedLearningRecommendationOutput } from "@/ai/flows/personalized-learning-recommendation";
-import { cn } from "@/lib/utils";
+import { useEffect, useMemo } from 'react';
+import Link from 'next/link';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Award, BookOpen, Clock3, Loader2, RotateCcw, Sparkles, Trophy } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
+import { CINARAI_STAGES, type CinaraiSessionData, type CinaraiStageId } from '@/components/cinarai/types';
+import { getNextStageId } from '@/components/cinarai/progression';
+import { COMIC_DATA } from '@/components/comics/CinaraiComicLearning';
 
-const MODULES = [
-  { id: 'batik', name: 'Batik Nusantara', icon: MapPin, color: 'bg-orange-500', tag: 'Simetri', progress: 75, img: 'batik-pattern' },
-  { id: 'candi', name: 'Candi Nusantara', icon: Castle, color: 'bg-primary', tag: 'Geometri', progress: 30, img: 'borobudur-temple' },
-  { id: 'masjid', name: 'Masjid Al Akbar', icon: Landmark, color: 'bg-emerald-500', tag: 'Numerasi', progress: 0, img: 'mosque-architecture' },
-  { id: 'games', name: 'Permainan Tradisional', icon: Dices, color: 'bg-red-500', tag: 'Logika', progress: 10, img: 'traditional-games' },
-];
+const DEFAULT_COMIC_ID = 'komik-1';
 
 export default function MobileDashboard() {
   const router = useRouter();
   const { user, profile, loading: authLoading } = useUser();
-  const [recommendations, setRecommendations] = useState<PersonalizedLearningRecommendationOutput | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        router.push("/login");
+        router.push('/login');
       } else if (profile && profile.peran !== 'siswa') {
-        router.push("/teacher");
+        router.push('/teacher');
       }
     }
   }, [user, profile, authLoading, router]);
 
-  useEffect(() => {
-    if (profile && profile.peran === 'siswa' && !recommendations && !aiLoading) {
-      async function fetchRecommendations() {
-        setAiLoading(true);
-        try {
-          const result = await personalizedLearningRecommendation({
-            studentName: profile?.nama || "Teman",
-            points: profile?.poin || 0,
-            level: profile?.level || 1,
-            completedModules: profile?.completedModules || [],
-            availableModules: MODULES.map(m => m.name),
-            availableBadges: ["Ahli Geometri Batik", "Penjelajah Candi Nusantara", "Ahli Matematika Masjid", "Juara Numerasi", "Explorer QR"]
-          });
-          setRecommendations(result);
-        } catch (error) {
-          console.error("Dashboard AI invocation failed:", error);
-          setRecommendations({
-            nextChallenge: "Ayo lanjut belajar Modul Batik!",
-            motivationMessage: "Terus semangat ya, setiap langkahmu sangat berharga!"
-          });
-        } finally {
-          setAiLoading(false);
-        }
-      }
-      fetchRecommendations();
-    }
-  }, [profile?.uid, profile?.peran, recommendations, aiLoading]);
-
   if (authLoading || (user && !profile)) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-white">
+      <div className="flex h-screen w-full items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -94,176 +40,138 @@ export default function MobileDashboard() {
     return null;
   }
 
-  const currentLevel = profile?.level || 1;
-  const currentXPInLevel = (profile?.poin || 0) % 100;
-  const progressPercent = (currentXPInLevel / 100) * 100;
-  const firstName = profile?.nama ? profile.nama.split(' ')[0] : "Siswa";
+  const firstName = profile?.nama ? profile.nama.split(' ')[0] : 'Siswa';
+  const activeComicId = useMemo(() => {
+    const savedProgress = Object.keys(profile?.comicProgress ?? {}).filter((comicId) => comicId in COMIC_DATA);
+    return savedProgress[0] ?? DEFAULT_COMIC_ID;
+  }, [profile?.comicProgress]);
+
+  const activeComic = COMIC_DATA[activeComicId] ?? COMIC_DATA[DEFAULT_COMIC_ID];
+  const activeProgress = (profile?.comicProgress?.[activeComicId] as Partial<CinaraiSessionData> | undefined) ?? null;
+  const completedStages = (activeProgress?.completedStages ?? []) as CinaraiStageId[];
+  const currentStageId = useMemo(() => getNextStageId(completedStages), [completedStages]);
+  const currentStage = useMemo(() => CINARAI_STAGES.find((stage) => stage.id === currentStageId) ?? CINARAI_STAGES[0], [currentStageId]);
+  const progressPercent = completedStages.length === 0 ? 0 : Math.round((completedStages.length / CINARAI_STAGES.length) * 100);
+
+  const recentHistory = useMemo(() => {
+    return Object.entries(profile?.comicProgress ?? {})
+      .filter(([, value]) => value && typeof value === 'object')
+      .map(([comicId, value]) => {
+        const session = value as Partial<CinaraiSessionData>;
+        return {
+          comicId,
+          title: COMIC_DATA[comicId]?.title ?? 'Komik EthnoArith',
+          updatedAt: session.updatedAt ?? '',
+          completedStages: session.completedStages ?? [],
+          xp: session.xp ?? 0,
+        };
+      })
+      .filter((entry) => entry.completedStages.length > 0)
+      .sort((left, right) => (right.updatedAt || '').localeCompare(left.updatedAt || ''))
+      .slice(0, 4);
+  }, [profile?.comicProgress]);
 
   return (
-    <div className="pt-20 pb-32 px-4 space-y-6 bg-slate-50/50 min-h-screen overflow-y-auto">
-      <section className="px-2">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50/50 px-4 pb-32 pt-20">
+      <section className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-headline font-bold text-slate-900">Halo, {firstName}! 👋</h2>
-            <p className="text-sm text-muted-foreground font-medium">Semangat belajar hari ini.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">CINARAI Dashboard</p>
+            <h2 className="mt-1 text-2xl font-headline font-bold text-slate-900">Halo, {firstName}! 👋</h2>
+            <p className="mt-1 text-sm text-slate-500">Belajar dimulai dari tahap yang belum selesai, tanpa harus mencari komik lagi.</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full bg-white shadow-sm relative">
-              <Bell className="h-5 w-5 text-slate-400" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </Button>
+          <div className="rounded-2xl bg-orange-100 p-3 text-orange-600">
+            <Sparkles className="h-6 w-6" />
           </div>
         </div>
-      </section>
 
-      <section className="grid grid-cols-1 gap-4">
-        <Card className="rounded-[2.5rem] border-none bg-gradient-to-br from-primary to-blue-700 text-white p-6 card-shadow relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex justify-between items-center mb-6">
-              <div className="space-y-1">
-                <span className="text-xs font-bold uppercase tracking-widest text-white/70">Level Saya</span>
-                <h3 className="text-3xl font-headline font-bold">Level {currentLevel}</h3>
-              </div>
-              <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                <Star className="h-8 w-8 text-yellow-300 fill-current" />
-              </div>
+        <Card className="rounded-[2rem] border-none bg-gradient-to-br from-primary to-blue-700 p-5 text-white shadow-lg">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/70">Modul aktif</p>
+              <h3 className="mt-2 text-xl font-headline font-bold">{activeComic.moduleName}</h3>
+              <p className="mt-2 text-sm text-white/80">{activeComic.title}</p>
             </div>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between text-xs font-bold">
-                <span>{currentXPInLevel} / 100 XP</span>
-                <span className="opacity-80">Level {currentLevel + 1}</span>
+            <div className="rounded-2xl bg-white/15 p-3 backdrop-blur">
+              <BookOpen className="h-6 w-6" />
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-[1.5rem] bg-white/10 p-4 backdrop-blur">
+            <div className="flex items-center justify-between text-sm font-semibold">
+              <span>Tahap saat ini</span>
+              <span>{currentStage?.title}</span>
+            </div>
+            <p className="mt-2 text-sm text-white/80">Tujuan belajar: {activeComic.learningObjectives[0]}</p>
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+                <span>Progres belajar</span>
+                <span>{progressPercent}%</span>
               </div>
               <Progress value={progressPercent} className="h-3 bg-white/20" />
             </div>
-
-            <div className="grid grid-cols-3 gap-2 mt-6 pt-6 border-t border-white/10">
-              <div className="flex flex-col items-center gap-1">
-                <Flame className="h-5 w-5 text-orange-400 fill-current" />
-                <span className="text-xs font-bold">{profile.scanCount || 0}</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold text-center leading-tight">Smart Scan</span>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <Award className="h-5 w-5 text-yellow-400" />
-                <span className="text-xs font-bold">{profile?.badges?.length || 0}</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold text-center leading-tight">Lencana</span>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <TrendingUp className="h-5 w-5 text-emerald-400" />
-                <span className="text-xs font-bold">{profile?.poin || 0}</span>
-                <span className="text-[9px] opacity-60 uppercase font-bold text-center leading-tight">Total XP</span>
-              </div>
-            </div>
           </div>
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-        </Card>
-      </section>
 
-      <section className="px-1">
-        <Link href="/scan">
-          <Button className="w-full h-16 rounded-3xl bg-accent hover:bg-accent/90 text-white font-bold gap-3 shadow-lg transition-all active:scale-95">
-             <QrCode className="h-6 w-6" />
-             <div className="text-left">
-                <p className="text-sm font-bold uppercase leading-none">Smart QR Scanner</p>
-                <p className="text-[10px] font-medium opacity-80">Scan buku, modul, atau video</p>
-             </div>
-             <ChevronRight className="h-5 w-5 ml-auto opacity-50" />
-          </Button>
-        </Link>
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 px-1">
-          <Sparkles className="h-4 w-4 text-accent" />
-          <h3 className="font-headline font-bold text-sm uppercase tracking-wider">Tantangan Pintar AI</h3>
-        </div>
-        <Card className="rounded-2xl border-none bg-accent/10 overflow-hidden min-h-[140px] flex flex-col justify-center transition-all">
-          {aiLoading ? (
-            <div className="p-6 flex justify-center">
-              <Loader2 className="animate-spin h-5 w-5 text-accent" />
-            </div>
-          ) : recommendations ? (
-            <div className="p-5 space-y-3">
-              <p className="text-xs font-bold text-accent uppercase tracking-widest">Saran Untukmu</p>
-              <h4 className="font-bold text-sm leading-snug">{recommendations.nextChallenge}</h4>
-              <p className="text-xs text-muted-foreground italic font-medium">"{recommendations.motivationMessage}"</p>
-              <Link href="/modules" className="block">
-                <Button size="sm" className="w-full bg-accent hover:bg-accent/90 font-bold rounded-xl mt-2 h-10">
-                  Terima Tantangan
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="p-5 text-center">
-              <p className="text-xs text-muted-foreground italic">Mulai belajar untuk melihat rekomendasi personal dari ETHNO-AI!</p>
-            </div>
-          )}
-        </Card>
-      </section>
-
-      <section className="grid grid-cols-4 gap-4 px-1">
-        {[
-          { icon: Camera, label: "Scan AR", color: "bg-accent", href: "/scan" },
-          { icon: BookOpen, label: "Modul", color: "bg-blue-500", href: "/modules" },
-          { icon: Zap, label: "Misi", color: "bg-orange-500", href: "/challenges" },
-          { icon: Trophy, label: "Peringkat", color: "bg-yellow-500", href: "/leaderboard" },
-        ].map((item, i) => {
-          const Icon = item.icon;
-          return (
-            <Link key={i} href={item.href} className="flex flex-col items-center gap-2">
-              <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform active:scale-90", item.color)}>
-                <Icon className="h-6 w-6" />
-              </div>
-              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide text-center">{item.label}</span>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <Link href={`/comics/${activeComicId}`} className="block">
+              <Button className="h-12 w-full rounded-2xl bg-white font-semibold text-primary hover:bg-white/90">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Continue Learning
+              </Button>
             </Link>
-          )
-        })}
+            <Link href={`/comics/${activeComicId}?restart=1`} className="block">
+              <Button variant="outline" className="h-12 w-full rounded-2xl border-white/50 bg-transparent font-semibold text-white hover:bg-white/10">
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Restart Learning
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </section>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="font-headline font-bold text-lg text-slate-900">Materi Eksplorasi</h3>
-          <Link href="/modules" className="text-xs font-bold text-primary">Lihat Semua</Link>
+      <section className="mt-5 grid grid-cols-2 gap-3">
+        <Card className="rounded-[1.5rem] border-none bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">XP</p>
+          <div className="mt-2 flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-500" />
+            <span className="text-xl font-bold text-slate-900">{profile.poin || 0}</span>
+          </div>
+        </Card>
+        <Card className="rounded-[1.5rem] border-none bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Badges</p>
+          <div className="mt-2 flex items-center gap-2">
+            <Award className="h-5 w-5 text-emerald-500" />
+            <span className="text-xl font-bold text-slate-900">{profile?.badges?.length || 0}</span>
+          </div>
+        </Card>
+      </section>
+
+      <section className="mt-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-headline font-bold text-slate-900">Riwayat belajar terkini</h3>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">Auto-synced</span>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4">
-          {MODULES.map((mod) => {
-            const isDone = profile?.completedModules?.includes(mod.id);
-            return (
-              <Link key={mod.id} href={`/modules/${mod.id}`} className="shrink-0 w-64">
-                <Card className="rounded-[1.5rem] border-none overflow-hidden card-shadow bg-white active:scale-95 transition-transform">
-                  <div className="relative h-32">
-                    <img 
-                      src={`https://picsum.photos/seed/${mod.img}/600/400`} 
-                      alt={mod.name} 
-                      className="w-full h-full object-cover" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-white", mod.color)}>
-                        <mod.icon className="h-4 w-4" />
-                      </div>
-                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">{mod.tag}</span>
-                    </div>
-                    {isDone && (
-                      <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-lg">
-                        <CheckCircle2 className="h-4 w-4" />
-                      </div>
-                    )}
+        <div className="space-y-3">
+          {recentHistory.length > 0 ? (
+            recentHistory.map((entry) => (
+              <Card key={`${entry.comicId}-${entry.updatedAt}`} className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{entry.title}</p>
+                    <p className="mt-1 text-xs text-slate-500">{entry.completedStages.length}/{CINARAI_STAGES.length} tahap selesai • {entry.xp} XP</p>
                   </div>
-                  <div className="p-4 space-y-3">
-                    <h4 className="font-bold text-sm text-slate-900 truncate">{mod.name}</h4>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                        <span>Progres</span>
-                        <span>{isDone ? 100 : mod.progress}%</span>
-                      </div>
-                      <Progress value={isDone ? 100 : mod.progress} className="h-1.5" />
-                    </div>
+                  <div className="flex items-center gap-1 text-xs font-semibold text-slate-400">
+                    <Clock3 className="h-4 w-4" />
+                    <span>{entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'Baru'}</span>
                   </div>
-                </Card>
-              </Link>
-            );
-          })}
+                </div>
+              </Card>
+            ))
+          ) : (
+            <Card className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+              Belum ada riwayat belajar. Mulai dari Cover untuk memulai perjalanan CINARAI.
+            </Card>
+          )}
         </div>
       </section>
     </div>
