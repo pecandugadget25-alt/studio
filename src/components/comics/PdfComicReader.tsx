@@ -266,12 +266,12 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[min(100%,1000px)] flex-col bg-[radial-gradient(circle_at_top,_#fbf6ee_0%,_#f3eadc_100%)]" style={{
-      ['--reader-header-height' as any]: 'clamp(52px,6vh,60px)',
-      ['--reader-footer-height' as any]: 'clamp(58px,6.4vh,66px)',
+      ['--reader-header-height' as any]: 'clamp(48px,5.5vh,56px)',
+      ['--reader-footer-height' as any]: 'clamp(54px,6vh,60px)',
       width: 'min(100%,1000px)',
       margin: '0 auto',
-      paddingLeft: 'max(0.5rem, env(safe-area-inset-left))',
-      paddingRight: 'max(0.5rem, env(safe-area-inset-right))',
+      paddingLeft: 'max(0.25rem, env(safe-area-inset-left))',
+      paddingRight: 'max(0.25rem, env(safe-area-inset-right))',
     }}>
       <style jsx global>{`
         @keyframes comicPageEnter {
@@ -287,29 +287,29 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
       `}</style>
 
       <div
-        className={`flex items-center justify-between gap-3 border-b border-slate-200/70 bg-white/85 px-3 py-2 backdrop-blur transition-all duration-300 ${showChrome ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}
+        className={`flex items-center justify-between gap-2 border-b border-slate-200/70 bg-white/80 px-2.5 py-1.5 backdrop-blur transition-all duration-300 ${showChrome ? 'translate-y-0 opacity-100' : '-translate-y-3 opacity-0 pointer-events-none'}`}
         style={{ minHeight: 'var(--reader-header-height)' }}
       >
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-sm font-semibold text-slate-900">{comicTitle}</p>
-          <p className="text-xs text-slate-500">Halaman {pageNumber} / {totalPages}</p>
+          <p className="truncate text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-800">{comicTitle}</p>
+          <p className="text-[11px] text-slate-500">Halaman {pageNumber} / {totalPages}</p>
         </div>
-        <Button variant="ghost" size="sm" className="rounded-full px-3 text-sm font-semibold text-slate-700" onClick={onExit}>
+        <Button variant="ghost" size="sm" className="h-8 rounded-full px-2.5 text-xs font-semibold text-slate-700" onClick={onExit}>
           Keluar
         </Button>
       </div>
 
-      <div className="flex-1 bg-transparent px-0 py-1 sm:px-1 sm:py-2">
+      <div className="flex-1 bg-transparent px-0 py-0.5 sm:py-1">
         <div
-          className="relative mx-auto flex h-full min-h-[72dvh] w-full max-w-[96%] items-center justify-center overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-[#f7efe3] shadow-[0_16px_45px_rgba(15,23,42,0.12)]"
+          className="relative mx-auto flex h-full min-h-[calc(100dvh-7rem)] w-full max-w-[100%] items-center justify-center overflow-hidden border border-slate-200/70 bg-[#f7efe3] shadow-[0_10px_30px_rgba(15,23,42,0.08)]"
           onClick={revealChrome}
           onPointerMove={revealChrome}
           onTouchStart={revealChrome}
         >
-          <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-auto bg-[radial-gradient(circle_at_top,_#fdf6e8_0%,_#efe1cc_100%)] p-1 sm:p-2">
+          <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-auto bg-[radial-gradient(circle_at_top,_#fdf6e8_0%,_#efe1cc_100%)] p-0 sm:p-0">
             <div key={`${pageNumber}-${layoutVersion}`} className="w-full max-w-full origin-center opacity-100 transition-all duration-300 ease-out" style={{ animation: 'comicPageEnter 280ms cubic-bezier(0.22, 1, 0.36, 1)' }}>
-              <div className="mx-auto max-w-[92%] rounded-[1.25rem] border border-slate-200/80 bg-white p-2 shadow-[0_16px_35px_rgba(15,23,42,0.12)] sm:p-3">
-                <canvas ref={canvasRef} className="mx-auto block h-auto w-full object-contain" />
+              <div className="mx-auto flex w-full max-w-full items-center justify-center bg-white/70 p-0 sm:p-0">
+                <canvas ref={canvasRef} className="mx-auto block h-auto w-full max-w-full object-contain" />
               </div>
             </div>
           </div>
@@ -358,15 +358,13 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         </div>
       </div>
 
-      <div className={`border-t border-slate-200/70 bg-white/85 px-2 py-2 backdrop-blur transition-all duration-300 ${showChrome ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}`} style={{ minHeight: 'var(--reader-footer-height)' }}>
-        <div className="mx-auto flex items-center gap-2">
-          <Button variant="outline" className="flex-1 rounded-2xl border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm" onClick={goToPrevious} disabled={pageNumber <= 1}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Sebelumnya
+      <div className={`border-t border-slate-200/70 bg-white/80 px-2 py-1.5 backdrop-blur transition-all duration-300 ${showChrome ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0 pointer-events-none'}`} style={{ minHeight: 'var(--reader-footer-height)' }}>
+        <div className="mx-auto flex max-w-[12rem] items-center justify-center gap-2">
+          <Button variant="outline" className="h-9 w-9 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-sm" onClick={goToPrevious} disabled={pageNumber <= 1} aria-label="Halaman sebelumnya">
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Button className="flex-1 rounded-2xl bg-primary text-sm font-semibold text-white shadow-sm" onClick={goToNext} disabled={pageNumber >= totalPages}>
-            Selanjutnya
-            <ArrowRight className="ml-2 h-4 w-4" />
+          <Button className="h-9 w-9 rounded-full bg-primary p-0 text-white shadow-sm" onClick={goToNext} disabled={pageNumber >= totalPages} aria-label="Halaman berikutnya">
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
