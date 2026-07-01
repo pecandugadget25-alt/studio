@@ -1,0 +1,1 @@
+export { ResultLeaderboardCard } from './ResultLeaderboardCard';

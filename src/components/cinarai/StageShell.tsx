@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
-import { Sparkles } from 'lucide-react';
+import { CheckCircle2, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface StageShellProps {
   title: string;
@@ -9,17 +10,32 @@ interface StageShellProps {
   badge?: string;
   code?: string;
   tone?: string;
+  current?: boolean;
+  completed?: boolean;
   children: ReactNode;
+  footer?: ReactNode;
 }
 
-export function StageShell({ title, subtitle, badge, code, tone = 'bg-blue-600', children }: StageShellProps) {
+const syntaxSteps = ['C', 'I', 'N', 'A', 'R', 'A', 'I'];
+
+export function StageShell({
+  title,
+  subtitle,
+  badge,
+  code,
+  tone = 'bg-blue-600',
+  current = false,
+  completed = false,
+  children,
+  footer,
+}: StageShellProps) {
   return (
-    <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <Card className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-slate-50 p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
             {code ? (
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm ${tone}`}>
+              <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm', tone)}>
                 {code}
               </div>
             ) : null}
@@ -37,8 +53,27 @@ export function StageShell({ title, subtitle, badge, code, tone = 'bg-blue-600',
             </Badge>
           ) : null}
         </div>
+
+        <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white/80 px-3 py-2">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+            <span>Progress</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {syntaxSteps.map((step) => {
+              const isCurrent = step === code;
+              const isComplete = completed || step === 'C';
+              return (
+                <div key={step} className={cn('flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold', isCurrent ? `bg-slate-900 text-white` : isComplete ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400')}>
+                  {isComplete && step !== code ? <CheckCircle2 className="h-4 w-4" /> : step}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
       <div className="p-4 sm:p-5">{children}</div>
+      {footer ? <div className="border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5">{footer}</div> : null}
     </Card>
   );
 }

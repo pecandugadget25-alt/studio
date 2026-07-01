@@ -7,6 +7,13 @@ export function getNextStageId(completedStages: CinaraiStageId[]): CinaraiStageI
   return CINARAI_STAGES[currentIndex].id;
 }
 
+export function getLinearStageOrder(completedStages: CinaraiStageId[]) {
+  return CINARAI_STAGES.filter((stage) => stage.id !== 'report').map((stage) => ({
+    ...stage,
+    completed: completedStages.includes(stage.id),
+  }));
+}
+
 export function calculateMasteryPercentage(completedStages: CinaraiStageId[]): number {
   if (completedStages.length === 0) return 0;
   return Math.round((completedStages.length / CINARAI_STAGES.length) * 100);

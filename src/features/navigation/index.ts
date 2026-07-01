@@ -1,0 +1,1 @@
+export { NavigationSyntaxFeature } from './NavigationSyntaxFeature';

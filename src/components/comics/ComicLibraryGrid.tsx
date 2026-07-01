@@ -1,13 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { BookOpen, CheckCircle2, Clock, PlayCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { ComicCard } from '@/components/comics/ComicCard';
 import { COMIC_LIBRARY, type ComicLibraryItem } from '@/lib/comic-library';
-import { cn } from '@/lib/utils';
 
 type ComicProgress = {
   currentPage?: number;
@@ -24,30 +18,6 @@ type ComicLibraryGridProps = {
     comicProgress?: Record<string, unknown>;
   } | null;
 };
-
-function ComicCover({ comic }: { comic: ComicLibraryItem }) {
-  const [hasError, setHasError] = useState(false);
-
-  if (hasError) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-slate-100 px-4 text-center text-sm font-bold text-slate-500">
-        {comic.title}
-      </div>
-    );
-  }
-
-  return (
-    <Image
-      src={comic.coverImage}
-      alt={comic.title}
-      fill
-      sizes="(min-width: 1280px) 240px, (min-width: 768px) 220px, 42vw"
-      className="object-cover"
-      data-ai-hint={comic.imageHint}
-      onError={() => setHasError(true)}
-    />
-  );
-}
 
 function getReadingState(comic: ComicLibraryItem, progress?: ComicProgress, isCompleted = false) {
   const totalPages = progress?.totalPages || comic.pageCount;
@@ -70,75 +40,63 @@ function isComicProgress(value: unknown): value is ComicProgress {
 }
 
 export function ComicLibraryGrid({ basePath, profile }: ComicLibraryGridProps) {
+  const currentComicId = profile?.comicProgress && typeof profile.comicProgress === 'object'
+    ? Object.keys(profile.comicProgress).find((id) => COMIC_LIBRARY.some((comic) => comic.id === id))
+    : undefined;
+
+  const completedIds = new Set(profile?.completedComics ?? []);
+  const currentIndex = currentComicId ? COMIC_LIBRARY.findIndex((comic) => comic.id === currentComicId) : 0;
+
+  const sections = COMIC_LIBRARY.map((comic, index) => {
+    const savedProgress = profile?.comicProgress?.[comic.id];
+    const progress = isComicProgress(savedProgress) ? savedProgress : undefined;
+    const isCompleted = completedIds.has(comic.id);
+    const isCurrent = comic.id === currentComicId;
+    const hasStarted = Boolean(progress?.currentPage || progress?.completedStages?.length || progress?.readingCompleted);
+    const isLocked = !isCurrent && !isCompleted && index > (currentIndex >= 0 ? currentIndex : 0);
+    const reading = getReadingState(comic, progress, isCompleted);
+
+    let status: 'current' | 'continue' | 'locked' | 'completed' = 'locked';
+    let buttonLabel = 'Terkunci';
+    let subtitle = 'Selesaikan komik sebelumnya untuk membuka bab ini.';
+
+    if (isCompleted) {
+      status = 'completed';
+      buttonLabel = '✓ Completed';
+      subtitle = 'Kamu telah menyelesaikan perjalanan ini.';
+    } else if (isCurrent || hasStarted) {
+      status = 'continue';
+      buttonLabel = reading.buttonLabel;
+      subtitle = reading.status === 'Sedang Dibaca' ? 'Lanjutkan membaca komik ini.' : 'Mulai petualangan learning journey ini.';
+    } else if (isLocked) {
+      status = 'locked';
+      buttonLabel = 'Terkunci';
+      subtitle = 'Selesaikan komik sebelumnya untuk membuka bab ini.';
+    } else {
+      status = 'current';
+      buttonLabel = 'Mulai Journey';
+      subtitle = 'Mulai perjalanan belajar dari komik ini.';
+    }
+
+    return (
+      <ComicCard
+        key={comic.id}
+        comic={comic}
+        status={status}
+        href={`${basePath}/${comic.id}`}
+        buttonLabel={buttonLabel}
+        subtitle={subtitle}
+      />
+    );
+  });
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {COMIC_LIBRARY.map((comic) => {
-        const savedProgress = profile?.comicProgress?.[comic.id];
-        const progress = isComicProgress(savedProgress) ? savedProgress : undefined;
-        const isCompleted = Boolean(profile?.completedComics?.includes(comic.id));
-        const reading = getReadingState(comic, progress, isCompleted);
-
-        return (
-          <Card key={comic.id} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-            <div className="grid grid-cols-[118px_minmax(0,1fr)] sm:grid-cols-[142px_minmax(0,1fr)]">
-              <div className="relative min-h-[184px] border-r border-slate-100 bg-slate-100 sm:min-h-[214px]">
-                <ComicCover comic={comic} />
-              </div>
-
-              <div className="flex min-w-0 flex-col">
-                <CardContent className="flex-1 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900">
-                        {comic.title}
-                      </h3>
-                      <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                        <BookOpen className="h-3.5 w-3.5" />
-                        <span>{comic.pageCount} halaman</span>
-                      </div>
-                    </div>
-                    {reading.readingCompleted ? (
-                      <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-                    ) : reading.status === 'Sedang Dibaca' ? (
-                      <Clock className="h-5 w-5 shrink-0 text-amber-500" />
-                    ) : (
-                      <PlayCircle className="h-5 w-5 shrink-0 text-slate-400" />
-                    )}
-                  </div>
-
-                  <div className="mt-5 space-y-2">
-                    <div className="flex items-center justify-between gap-3 text-xs font-semibold">
-                      <span className={cn(
-                        reading.readingCompleted ? 'text-emerald-700' : reading.status === 'Sedang Dibaca' ? 'text-amber-700' : 'text-slate-500'
-                      )}>
-                        {reading.status}
-                      </span>
-                      <span className="text-slate-500">{reading.percent}%</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div className={cn(
-                        'h-full rounded-full transition-all',
-                        reading.readingCompleted ? 'bg-emerald-500' : reading.status === 'Sedang Dibaca' ? 'bg-amber-500' : 'bg-slate-300'
-                      )} style={{ width: `${reading.percent}%` }} />
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {reading.currentPage > 0 ? `Halaman ${reading.currentPage} dari ${reading.totalPages}` : 'Belum ada progres membaca'}
-                    </p>
-                  </div>
-                </CardContent>
-
-                <CardFooter className="p-4 pt-0">
-                  <Link href={`${basePath}/${comic.id}`} className="w-full">
-                    <Button className="h-10 w-full rounded-lg font-semibold">
-                      {reading.buttonLabel}
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </div>
-            </div>
-          </Card>
-        );
-      })}
+    <div className="mx-auto flex max-w-5xl flex-col gap-4">
+      <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Learning Journey</p>
+        <p className="mt-1 font-semibold text-slate-900">Ikuti satu bab demi bab sampai kamu sampai ke hasil belajar.</p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{sections}</div>
     </div>
   );
 }

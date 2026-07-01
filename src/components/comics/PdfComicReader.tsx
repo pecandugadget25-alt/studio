@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CinaraiSessionData } from '@/components/cinarai/types';
 
@@ -29,6 +29,7 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [layoutVersion, setLayoutVersion] = useState(0);
+  const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null);
@@ -210,6 +211,11 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
     onPageChangeRef.current(boundedPage, totalPages || 1, reachedEnd);
   };
 
+  const progressPercent = useMemo(() => {
+    if (!totalPages || totalPages <= 1) return 0;
+    return Math.round((pageNumber / totalPages) * 100);
+  }, [pageNumber, totalPages]);
+
   const goToPrevious = () => {
     if (pageNumber > 1) {
       handlePageChange(pageNumber - 1);
@@ -222,60 +228,84 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
     }
   };
 
+  useEffect(() => {
+    if (!totalPages || pageNumber < totalPages) return;
+
+    const timeout = window.setTimeout(() => {
+      setIsAutoAdvancing(true);
+      onReadingComplete(pageNumber, totalPages, true);
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [onReadingComplete, pageNumber, totalPages]);
+
   return (
-    <div className="mx-auto flex w-full max-w-[min(100%,1000px)] min-w-0 flex-col bg-[#f7f2e9]" style={{
+    <div className="mx-auto flex min-h-screen w-full max-w-[min(100%,1000px)] flex-col bg-[#f7f2e9]" style={{
       ['--reader-header-height' as any]: 'clamp(56px,6.5vh,64px)',
-      ['--reader-footer-height' as any]: 'clamp(48px,5.5vh,56px)',
-      ['--reader-gap' as any]: 'clamp(0.5rem,1.5dvw,1rem)',
+      ['--reader-footer-height' as any]: 'clamp(56px,6vh,64px)',
       width: 'min(100%,1000px)',
       margin: '0 auto',
       paddingLeft: 'max(1rem, env(safe-area-inset-left))',
       paddingRight: 'max(1rem, env(safe-area-inset-right))',
     }}>
-      <div className="flex items-center justify-between gap-[clamp(0.5rem,2dvw,1rem)] border-b border-slate-200 bg-white/90 px-[var(--reader-gap)] backdrop-blur" style={{ height: 'var(--reader-header-height)' }}>
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur" style={{ minHeight: 'var(--reader-header-height)' }}>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-semibold text-slate-900">{comicTitle}</p>
-          <p className="text-xs text-slate-500">Page {pageNumber} / {totalPages}</p>
+          <p className="text-xs text-slate-500">Halaman {pageNumber} / {totalPages}</p>
         </div>
-        <Button variant="ghost" size="sm" className="rounded-full px-[clamp(0.75rem,2dvw,1rem)] text-sm font-semibold text-slate-700" onClick={onExit}>
-          Exit
+        <Button variant="ghost" size="sm" className="rounded-full px-3 text-sm font-semibold text-slate-700" onClick={onExit}>
+          Keluar
         </Button>
       </div>
 
-      <div className="flex-1 bg-[#f7f2e9] px-[var(--reader-gap)] py-[var(--reader-gap)]">
-        <div className="relative flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white p-[clamp(0.25rem,0.8dvw,0.5rem)] shadow-inner" style={{
-          minHeight: 'min(70vh, calc(100vh - var(--reader-header-height) - var(--reader-footer-height) - 6rem))',
-          alignItems: 'center',
-        }}>
-          <div ref={containerRef} className="flex h-full w-full min-w-0 items-center justify-center overflow-auto rounded-md bg-[#f3eee8] p-[clamp(0.25rem,0.8dvw,0.5rem)]">
-            <div className="w-full" style={{ maxWidth: '100%' }}>
-              <canvas ref={canvasRef} className="mx-auto block w-full h-auto object-contain" />
+      <div className="flex-1 bg-[#f7f2e9] px-2 py-2 sm:px-3 sm:py-3">
+        <div className="relative flex h-full min-h-[70vh] w-full items-center justify-center overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+          <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-auto bg-[#f4eee6] p-1 sm:p-2">
+            <div className="w-full max-w-full">
+              <canvas ref={canvasRef} className="mx-auto block h-auto w-full object-contain" />
             </div>
           </div>
 
+          <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-600 shadow-sm">
+            {pageNumber}/{totalPages}
+          </div>
+
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary shadow-sm">
+            {progressPercent}%
+          </div>
+
           {isLoading ? (
-            <div className="absolute inset-1 flex flex-col items-center justify-center gap-3 rounded-md bg-white/90 text-sm font-semibold text-slate-500 backdrop-blur-sm">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/90 text-sm font-semibold text-slate-500 backdrop-blur-sm">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
               Memuat halaman komik...
             </div>
           ) : null}
 
           {!isLoading && error ? (
-            <div className="absolute inset-1 flex items-center justify-center rounded-md bg-white/95 px-4 text-center text-sm text-red-500">
+            <div className="absolute inset-0 flex items-center justify-center bg-white/95 px-4 text-center text-sm text-red-500">
               {error}
+            </div>
+          ) : null}
+
+          {isAutoAdvancing ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-950/20 text-sm font-semibold text-white backdrop-blur-sm">
+              <div className="flex items-center gap-2 rounded-full bg-slate-900/80 px-3 py-2">
+                <Sparkles className="h-4 w-4" />
+                Melanjutkan ke Contextualization...
+              </div>
             </div>
           ) : null}
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-40 border-t border-slate-200 bg-white/95 px-[var(--reader-gap)] py-[clamp(0.375rem,1dvh,0.75rem)] backdrop-blur" style={{ height: 'var(--reader-footer-height)' }}>
-        <div className="mx-auto grid w-full grid-cols-2 gap-[clamp(0.5rem,1.5dvw,0.75rem)]">
-          <Button variant="outline" className="rounded-lg border-slate-200 bg-white text-sm font-semibold text-slate-700" onClick={goToPrevious} disabled={pageNumber <= 1}>
+      <div className="border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur" style={{ minHeight: 'var(--reader-footer-height)' }}>
+        <div className="mx-auto flex items-center gap-2">
+          <Button variant="outline" className="flex-1 rounded-2xl border-slate-200 bg-white text-sm font-semibold text-slate-700" onClick={goToPrevious} disabled={pageNumber <= 1}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Previous
+            Sebelumnya
           </Button>
-          <Button className="rounded-lg bg-primary text-sm font-semibold text-white" onClick={goToNext} disabled={pageNumber >= totalPages}>
-            Next
+          <Button className="flex-1 rounded-2xl bg-primary text-sm font-semibold text-white" onClick={goToNext} disabled={pageNumber >= totalPages}>
+            Selanjutnya
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

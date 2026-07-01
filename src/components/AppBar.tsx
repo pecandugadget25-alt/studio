@@ -2,7 +2,7 @@
 'use client';
 
 import { useUser } from "@/firebase";
-import { Star, Box, Home, BookOpen, QrCode, Trophy, LayoutDashboard, Users, FileText } from "lucide-react";
+import { Star, Box, Home, GraduationCap, Trophy, LayoutDashboard, Users, FileText, UserCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,15 +20,16 @@ export function AppBar() {
   const isStudent = profile.peran === 'siswa';
   const desktopNavItems = isStudent
       ? [
-        { label: "Beranda", icon: Home, href: "/" },
-        { label: "Komik", icon: BookOpen, href: "/komik" },
-        { label: "Scan QR", icon: QrCode, href: "/scan" },
-        { label: "Peringkat", icon: Trophy, href: "/leaderboard" },
+        { label: "Home", icon: Home, href: "/", activePaths: ["/"] },
+        // TODO: Point this to the dedicated learning route when the learning pages are integrated.
+        { label: "Learning", icon: GraduationCap, href: "/komik", activePaths: ["/komik", "/comics"] },
+        { label: "Leaderboard", icon: Trophy, href: "/leaderboard", activePaths: ["/leaderboard"] },
+        { label: "Profile", icon: UserCircle, href: "/profile", activePaths: ["/profile"] },
       ]
     : [
-        { label: "Dashboard", icon: LayoutDashboard, href: "/teacher" },
-        { label: "Siswa", icon: Users, href: "/teacher/students" },
-        { label: "Laporan", icon: FileText, href: "/teacher/reports" },
+        { label: "Dashboard", icon: LayoutDashboard, href: "/teacher", activePaths: ["/teacher"] },
+        { label: "Siswa", icon: Users, href: "/teacher/students", activePaths: ["/teacher/students"] },
+        { label: "Laporan", icon: FileText, href: "/teacher/reports", activePaths: ["/teacher/reports"] },
       ];
 
   return (
@@ -60,7 +61,7 @@ export function AppBar() {
         <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 px-6 md:flex">
           {desktopNavItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            const isActive = item.activePaths.some((path) => pathname === path || (path !== "/" && pathname.startsWith(path)));
 
             return (
               <Link

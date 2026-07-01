@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Trophy, QrCode } from "lucide-react";
+import { GraduationCap, Home, Trophy, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/firebase";
 
@@ -16,34 +16,52 @@ export function BottomNav() {
   if (isAuthPage || !profile) return null;
 
   const navItems = [
-    { label: "Beranda", icon: Home, href: "/" },
-    { label: "Komik", icon: BookOpen, href: "/komik" },
-    { label: "Scan QR", icon: QrCode, href: "/scan" },
-    { label: "Peringkat", icon: Trophy, href: "/leaderboard" },
+    { label: "Home", icon: Home, href: "/", activePaths: ["/"] },
+    // TODO: Point this to the dedicated learning route when the learning pages are integrated.
+    { label: "Learning", icon: GraduationCap, href: "/komik", activePaths: ["/komik", "/comics"] },
+    { label: "Leaderboard", icon: Trophy, href: "/leaderboard", activePaths: ["/leaderboard"] },
+    { label: "Profile", icon: UserCircle, href: "/profile", activePaths: ["/profile"] },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 grid h-20 grid-cols-4 items-center border-t bg-white/90 px-2 pb-3 android-shadow bottom-nav-blur md:hidden">
+    <nav
+      aria-label="Primary mobile navigation"
+      className="bottom-nav-blur android-shadow fixed bottom-0 left-0 right-0 z-50 grid h-[72px] grid-cols-4 items-center border-t border-slate-200/80 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 md:hidden"
+    >
       {navItems.map((item) => {
-        const isActive = pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
+        const isActive = item.activePaths.some((path) => pathname === path || (path !== "/" && pathname.startsWith(path)));
         const Icon = item.icon;
 
         return (
           <Link 
             key={item.label} 
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex flex-col items-center justify-center gap-1.5 px-2 transition-all active:scale-90",
-              isActive ? "text-primary" : "text-slate-400"
+              "group relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-center transition-all duration-300 ease-out active:scale-95",
+              isActive ? "text-primary" : "text-slate-500 hover:text-slate-800"
             )}
           >
-            <Icon className={cn("h-6 w-6 transition-all", isActive && "scale-110 fill-primary/10")} />
-            <span className={cn("text-[10px] font-bold uppercase tracking-wider")}>
+            <span
+              className={cn(
+                "absolute top-0 h-1 w-8 rounded-full bg-primary opacity-0 transition-all duration-300 ease-out",
+                isActive && "opacity-100"
+              )}
+            />
+            <span
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-2xl transition-all duration-300 ease-out",
+                isActive ? "bg-primary/10 shadow-sm" : "bg-transparent group-hover:bg-slate-100"
+              )}
+            >
+              <Icon className={cn("h-5 w-5 transition-all duration-300 ease-out", isActive && "scale-110")} />
+            </span>
+            <span className="max-w-full truncate text-[10px] font-bold leading-none">
               {item.label}
             </span>
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }
