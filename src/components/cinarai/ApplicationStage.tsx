@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { StageShell } from './StageShell';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ApplicationStageProps {
   onComplete: (payload?: Record<string, unknown>) => void;
@@ -16,7 +16,7 @@ export function ApplicationStage({ onComplete, onAiAssist }: ApplicationStagePro
   const handleCoach = async () => {
     setLoading(true);
     try {
-      const result = await onAiAssist('Beri bimbingan singkat untuk situasi dunia nyata: menghitung banyak motif pada kain batik yang dipakai di acara pasar. Jangan langsung memberi jawaban, ajak siswa berpikir terlebih dahulu.');
+      const result = await onAiAssist('Beri bimbingan singkat untuk tantangan aplikasi: siswa perlu mencocokkan bagian atap candi dengan bangun ruang limas. Jangan langsung memberi jawaban jika belum memilih.');
       setFeedback(result);
     } finally {
       setLoading(false);
@@ -24,18 +24,35 @@ export function ApplicationStage({ onComplete, onAiAssist }: ApplicationStagePro
   };
 
   return (
-    <StageShell title="Aplikasi" subtitle="Terapkan konsep pada situasi nyata" badge="Konteks">
+    <StageShell title="Application" subtitle="Terapkan konsep bangun ruang pada bagian candi yang baru" badge="Tantangan" code="A" tone="bg-violet-600">
       <div className="space-y-4">
-        <div className="rounded-[1.5rem] bg-emerald-50 p-4 text-sm text-slate-600">
-          <p className="font-semibold text-slate-800">Situasi</p>
-          <p className="mt-2">Di pasar, ada 5 lembar kain batik. Setiap kain memiliki 2 motif besar. Bagaimana kamu bisa menghitung total motif?</p>
+        <div className="rounded-lg bg-violet-50 p-4 text-sm text-slate-600">
+          <p className="font-semibold text-slate-800">Tantangan baru</p>
+          <p className="mt-2">Perhatikan bagian atap candi. Bangun ruang apa yang paling sesuai dengan bagian tersebut?</p>
         </div>
-        <Textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Coba jelaskan langkahmu" rows={4} />
-        <Button variant="secondary" className="w-full rounded-2xl" onClick={handleCoach} disabled={loading}>
-          {loading ? 'AI sedang membimbing…' : 'Dapatkan bimbingan AI'}
+        <div className="grid grid-cols-3 gap-2">
+          {['Alas', 'Tubuh', 'Atap'].map((part) => (
+            <div key={part} className="flex h-20 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+              {part}
+            </div>
+          ))}
+        </div>
+        <Select value={response} onValueChange={setResponse}>
+          <SelectTrigger className="rounded-lg">
+            <SelectValue placeholder="Pilih bangun ruang..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="kubus">Kubus</SelectItem>
+            <SelectItem value="balok">Balok</SelectItem>
+            <SelectItem value="limas">Limas</SelectItem>
+            <SelectItem value="kerucut">Kerucut</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="secondary" className="w-full rounded-lg" onClick={handleCoach} disabled={loading}>
+          {loading ? 'AI sedang membimbing...' : 'Dapatkan bimbingan AI'}
         </Button>
-        {feedback ? <div className="rounded-[1.25rem] bg-slate-50 p-3 text-sm text-slate-600">{feedback}</div> : null}
-        <Button onClick={() => onComplete({ reflection: response })} className="w-full rounded-2xl bg-emerald-500 py-6 text-base font-semibold hover:bg-emerald-600">
+        {feedback ? <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{feedback}</div> : null}
+        <Button onClick={() => onComplete({ answer: response, score: response === 'limas' ? 100 : 70 })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700" disabled={!response}>
           Lanjut refleksi
         </Button>
       </div>

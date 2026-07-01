@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { StageShell } from './StageShell';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Star } from 'lucide-react';
 
 interface IntrospectionStageProps {
   onComplete: (payload?: Record<string, unknown>) => void;
@@ -9,40 +11,58 @@ interface IntrospectionStageProps {
 }
 
 export function IntrospectionStage({ onComplete, onAiAssist }: IntrospectionStageProps) {
-  const [confidence, setConfidence] = useState('5');
-  const [checklist, setChecklist] = useState('Saya bisa mengenali pola');
+  const [confidence, setConfidence] = useState(4);
+  const [checklist, setChecklist] = useState<string[]>(['Memahami bangun ruang']);
   const [notes, setNotes] = useState('');
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
+  const checklistOptions = ['Memahami bangun ruang', 'Membedakan kubus dan balok', 'Menghitung volume kubus', 'Yakin mengerjakan soal serupa'];
 
   const handleSummarize = async () => {
     setLoading(true);
     try {
-      const response = await onAiAssist('Buat ringkasan singkat tentang pengalaman belajar siswa dalam tahap introspeksi, dengan nada yang positif dan sederhana.');
+      const response = await onAiAssist(`Buat komentar refleksi singkat, positif, dan sederhana. Checklist siswa: ${checklist.join(', ')}. Rating keyakinan: ${confidence}/5. Catatan siswa: ${notes}`);
       setSummary(response);
     } finally {
       setLoading(false);
     }
   };
 
+  const toggleChecklist = (item: string) => {
+    setChecklist((current) => current.includes(item) ? current.filter((value) => value !== item) : [...current, item]);
+  };
+
   return (
-    <StageShell title="Introspeksi" subtitle="Tandai rasa percaya diri dan refleksi belajar" badge="Refleksi">
+    <StageShell title="Introspection" subtitle="Refleksikan pembelajaran dan nilai tingkat keyakinanmu" badge="Refleksi" code="I" tone="bg-sky-600">
       <div className="space-y-4">
-        <div className="rounded-[1.5rem] bg-violet-50 p-4 text-sm text-slate-600">
+        <div className="rounded-lg bg-sky-50 p-4 text-sm text-slate-600">
           <label className="mb-2 block font-semibold text-slate-800">Tingkat kepercayaan diri</label>
-          <input type="range" min="1" max="5" value={confidence} onChange={(event) => setConfidence(event.target.value)} className="w-full" />
-          <p className="mt-2 text-xs uppercase tracking-[0.2em]">Skala: {confidence}/5</p>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <button key={value} type="button" onClick={() => setConfidence(value)} className="rounded-md p-1" aria-label={`Rating ${value}`}>
+                <Star className={`h-7 w-7 ${value <= confidence ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em]">Skala: {confidence}/5</p>
         </div>
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
           <label className="mb-2 block text-sm font-semibold text-slate-800">Checklist pemahaman</label>
-          <Textarea value={checklist} onChange={(event) => setChecklist(event.target.value)} rows={3} />
+          <div className="space-y-3">
+            {checklistOptions.map((item) => (
+              <label key={item} className="flex items-center gap-3 text-sm text-slate-600">
+                <Checkbox checked={checklist.includes(item)} onCheckedChange={() => toggleChecklist(item)} />
+                {item}
+              </label>
+            ))}
+          </div>
         </div>
-        <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={4} placeholder="Tuliskan refleksi singkatmu" />
-        <Button variant="secondary" className="w-full rounded-2xl" onClick={handleSummarize} disabled={loading}>
-          {loading ? 'AI sedang membuat rangkuman…' : 'Buat ringkasan AI'}
+        <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={4} placeholder="Apa hal baru yang kamu pelajari hari ini?" className="rounded-lg" />
+        <Button variant="secondary" className="w-full rounded-lg" onClick={handleSummarize} disabled={loading}>
+          {loading ? 'AI sedang membuat rangkuman...' : 'Buat komentar AI'}
         </Button>
-        {summary ? <div className="rounded-[1.25rem] bg-slate-50 p-3 text-sm text-slate-600">{summary}</div> : null}
-        <Button onClick={() => onComplete({ confidence, checklist, notes, summary })} className="w-full rounded-2xl bg-emerald-500 py-6 text-base font-semibold hover:bg-emerald-600">
+        {summary ? <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{summary}</div> : null}
+        <Button onClick={() => onComplete({ confidence, checklist, notes, summary })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700">
           Lihat laporan akhir
         </Button>
       </div>

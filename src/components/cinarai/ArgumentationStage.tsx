@@ -16,7 +16,7 @@ export function ArgumentationStage({ onComplete, onAiAssist }: ArgumentationStag
   const handleEvaluate = async () => {
     setLoading(true);
     try {
-      const response = await onAiAssist(`Nilai alasan berikut dengan kriteria: akurasi konsep, kelengkapan, kosakata matematika, dan penjelasan logis. Berikan skor 1-5 untuk setiap kriteria dan saran singkat. Alasan: ${reasoning}`);
+      const response = await onAiAssist(`Nilai alasan berikut dengan rubrik: benar 5 poin, alasan lengkap 10 poin, memakai istilah matematika 10 poin. Pertanyaan: Mengapa bagian tubuh Candi Jawi dapat dimodelkan sebagai kubus atau balok? Alasan siswa: ${reasoning}`);
       setFeedback(response);
     } finally {
       setLoading(false);
@@ -24,15 +24,18 @@ export function ArgumentationStage({ onComplete, onAiAssist }: ArgumentationStag
   };
 
   return (
-    <StageShell title="Argumentasi" subtitle="Tulis alasanmu dan dapatkan evaluasi AI" badge="Penalaran">
+    <StageShell title="Argumentation" subtitle="Bangun alasan logis dari pengamatan bangun ruang" badge="Penalaran" code="A" tone="bg-orange-500">
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">Jelaskan mengapa bentuk segitiga cocok untuk pola tersebut. Gunakan istilah matematika seperti sisi, sudut, dan simetri.</p>
-        <Textarea placeholder="Tuliskan alasanmu di sini..." rows={6} value={reasoning} onChange={(event) => setReasoning(event.target.value)} />
-        <Button variant="secondary" className="w-full rounded-2xl" onClick={handleEvaluate} disabled={loading || !reasoning.trim()}>
-          {loading ? 'AI sedang menilai…' : 'Nilai alasan saya'}
+        <div className="rounded-lg bg-orange-50 p-4 text-sm text-slate-600">
+          <p className="font-semibold text-slate-800">Pertanyaan terbuka</p>
+          <p className="mt-2">Mengapa bagian tubuh Candi Jawi dapat dimodelkan sebagai kubus atau balok?</p>
+        </div>
+        <Textarea placeholder="Tuliskan alasanmu di sini..." rows={6} value={reasoning} onChange={(event) => setReasoning(event.target.value)} className="rounded-lg" />
+        <Button variant="secondary" className="w-full rounded-lg" onClick={handleEvaluate} disabled={loading || !reasoning.trim()}>
+          {loading ? 'AI sedang menilai...' : 'Nilai alasan saya'}
         </Button>
-        {feedback ? <div className="rounded-[1.25rem] bg-slate-50 p-3 text-sm text-slate-600">{feedback}</div> : null}
-        <Button onClick={() => onComplete({ reasoning })} className="w-full rounded-2xl bg-emerald-500 py-6 text-base font-semibold hover:bg-emerald-600">
+        {feedback ? <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{feedback}</div> : null}
+        <Button onClick={() => onComplete({ reasoning, rubric: '5-10-10' })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700" disabled={!reasoning.trim()}>
           Lanjut ke penyelesaian
         </Button>
       </div>

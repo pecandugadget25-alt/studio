@@ -8,7 +8,10 @@ import { Button } from '@/components/ui/button';
 import { CinaraiSessionData } from '@/components/cinarai/types';
 
 if (typeof window !== 'undefined') {
-  pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
 }
 
 interface PdfComicReaderProps {
@@ -211,19 +214,23 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
       </div>
 
       <div ref={containerRef} className="flex-1 bg-[#f7f2e9] px-2 py-2 sm:px-3 sm:py-3">
-        <div className="flex h-full min-h-[calc(100vh-170px)] items-center justify-center rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-inner">
+        <div className="relative flex h-full min-h-[calc(100vh-170px)] items-center justify-center rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-inner">
+          <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[1.25rem] bg-[#f3eee8] p-2">
+            <canvas ref={canvasRef} className="mx-auto block max-h-full max-w-full" />
+          </div>
+
           {isLoading ? (
-            <div className="flex flex-col items-center gap-3 text-sm font-semibold text-slate-500">
+            <div className="absolute inset-2 flex flex-col items-center justify-center gap-3 rounded-[1.25rem] bg-white/90 text-sm font-semibold text-slate-500 backdrop-blur-sm">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              Memuat halaman komik…
+              Memuat halaman komik...
             </div>
-          ) : error ? (
-            <div className="max-w-full px-4 text-center text-sm text-red-500">{error}</div>
-          ) : (
-            <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[1.25rem] bg-[#f3eee8] p-2">
-              <canvas ref={canvasRef} className="mx-auto block max-h-full max-w-full" />
+          ) : null}
+
+          {!isLoading && error ? (
+            <div className="absolute inset-2 flex items-center justify-center rounded-[1.25rem] bg-white/95 px-4 text-center text-sm text-red-500">
+              {error}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

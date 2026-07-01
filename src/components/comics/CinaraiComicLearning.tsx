@@ -38,6 +38,12 @@ interface CinaraiComicLearningProps {
   comicId: string;
 }
 
+const COMIC_ID_ALIASES: Record<string, string> = {
+  batik: 'komik-1',
+  candi: 'komik-2',
+  permainan: 'komik-3',
+};
+
 export const COMIC_DATA: Record<string, {
   title: string;
   description: string;
@@ -51,16 +57,16 @@ export const COMIC_DATA: Record<string, {
   storyIntro: string;
 }> = {
   'komik-1': {
-    title: 'Misteri Simetri Batik',
-    description: 'Ikuti petualangan Adi menemukan rahasia matematika di balik motif batik parang yang indah.',
+    title: 'Bangun Ruang Candi Jawi',
+    description: 'Ikuti Aris, Naya, dan Bu Rani menemukan kubus, balok, prisma, dan limas pada arsitektur Candi Jawi.',
     comicFolder: 'candi-jawi',
-    moduleLink: '/modules/batik',
-    image: 'https://picsum.photos/seed/comic-batik/800/600',
-    moduleName: 'Batik Nusantara',
-    color: 'bg-orange-500',
-    learningObjectives: ['Mengidentifikasi bentuk geometri pada motif batik', 'Menerapkan konsep simetri dalam pola', 'Menjelaskan alasan matematika dari pola yang dilihat'],
-    characters: ['Adi', 'Ibu', 'Pak Guru'],
-    storyIntro: 'Adi menemukan motif batik yang berulang dan bertanya mengapa pola itu tampak begitu rapi.',
+    moduleLink: '/modules/candi',
+    image: 'https://picsum.photos/seed/candi-jawi-cinarai/800/600',
+    moduleName: 'Candi Jawi',
+    color: 'bg-blue-600',
+    learningObjectives: ['Mengidentifikasi bangun ruang pada arsitektur Candi Jawi', 'Menjelaskan alasan matematika dari bentuk candi', 'Menghitung volume kubus sederhana dari konteks candi'],
+    characters: ['Aris', 'Naya', 'Bu Rani'],
+    storyIntro: 'Aris dan Naya berkunjung ke Candi Jawi. Bu Rani mengajak mereka melihat bahwa bagian candi dapat dipelajari melalui bangun ruang.',
   },
   'komik-2': {
     title: 'Petualangan di Candi Megah',
@@ -169,14 +175,18 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   const { user, profile } = useUser();
   const db = useFirestore();
 
-  const comic = COMIC_DATA[comicId] || COMIC_DATA['komik-1'];
-  const [session, setSession] = useState<CinaraiSessionData>(() => createDefaultSession(comicId));
+  const normalizedComicId = COMIC_ID_ALIASES[comicId] ?? comicId;
+  const comic = COMIC_DATA[normalizedComicId] || COMIC_DATA['komik-1'];
+  const [session, setSession] = useState<CinaraiSessionData>(() => createDefaultSession(normalizedComicId));
   const [isSaving, setIsSaving] = useState(false);
   const [clockTick, setClockTick] = useState(0);
   const [isProgressOpen, setIsProgressOpen] = useState(false);
   const activeProfile = user?.uid && profile?.uid === user.uid ? profile : null;
   const shouldRestart = searchParams.get('restart') === '1';
-  const comicPdfUrl = useMemo(() => `/comics/${comic.comicFolder}/comic.pdf`, [comic.comicFolder]);
+  const comicPdfUrl = useMemo(
+    () => `/comics/${comic.comicFolder}/${comic.comicFolder}.pdf`,
+    [comic.comicFolder]
+  );
 
   useEffect(() => {
     const interval = window.setInterval(() => setClockTick((value) => value + 1), 1000);
@@ -217,7 +227,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   }, [comicId, db, router, shouldRestart, toast, user?.uid]);
 
   useEffect(() => {
-    const defaultSession = createDefaultSession(comicId);
+    const defaultSession = createDefaultSession(normalizedComicId);
     setSession(defaultSession);
 
     if (!user?.uid || !activeProfile) {
@@ -321,7 +331,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
       xp: calculateSessionXp(nextCompletedStages),
       masteryPercentage: calculateMasteryPercentage(nextCompletedStages),
       durationSeconds: elapsedSeconds,
-      reflection: session.reflection,
+      reflection: typeof payload?.notes === 'string' && payload.notes.trim() ? payload.notes : session.reflection,
     };
 
     setSession(nextSession);
@@ -524,19 +534,22 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F5] pb-0">
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-full max-w-[560px] items-center justify-between px-4 sm:px-6">
+    <div className="min-h-screen bg-slate-100 pb-0">
+      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex h-full max-w-[920px] items-center justify-between px-4 sm:px-6">
           <Link href="/comics">
-            <Button variant="ghost" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-lg">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div className="flex min-w-0 flex-1 items-center justify-center px-2">
-            <h1 className="truncate text-center text-sm font-bold text-slate-900">{comic.title}</h1>
+            <div className="min-w-0 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-blue-600">CINARAI Smart Learning</p>
+              <h1 className="truncate text-sm font-bold text-slate-900">{comic.title}</h1>
+            </div>
           </div>
           {isReadingStage ? (
-            <Button variant="ghost" size="sm" className="rounded-full px-3 text-xs font-semibold text-slate-700" onClick={() => setIsProgressOpen((value) => !value)}>
+            <Button variant="ghost" size="sm" className="rounded-lg px-3 text-xs font-semibold text-slate-700" onClick={() => setIsProgressOpen((value) => !value)}>
               {isProgressOpen ? <ChevronUp className="mr-1 h-4 w-4" /> : <ChevronDown className="mr-1 h-4 w-4" />}
               Progress
             </Button>
@@ -546,35 +559,35 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
         </div>
       </header>
 
-      <main className={cn('mx-auto flex max-w-[560px] flex-col pt-16', isReadingStage ? 'min-h-screen px-0 pb-0' : 'gap-5 px-4 pb-8')}>
+      <main className={cn('mx-auto flex max-w-[920px] flex-col pt-16', isReadingStage ? 'min-h-screen px-0 pb-0' : 'gap-5 px-4 pb-8')}>
         {!isReadingStage ? (
           <>
-            <div className="relative mt-4 overflow-hidden rounded-[2rem] border border-white/70 shadow-xl">
-              <Image src={comic.image} alt={comic.title} width={800} height={600} className="h-48 w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="relative mt-4 overflow-hidden rounded-lg border border-slate-200 bg-slate-900 shadow-sm">
+              <Image src={comic.image} alt={comic.title} width={1000} height={640} className="h-60 w-full object-cover sm:h-72" priority />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                <div className={cn('inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white', comic.color)}>
+                <div className={cn('inline-flex rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-white', comic.color)}>
                   {comic.moduleName}
                 </div>
-                <h2 className="mt-3 text-xl font-headline font-bold">{comic.title}</h2>
-                <p className="mt-2 text-sm text-white/80">{comic.description}</p>
+                <h2 className="mt-3 text-2xl font-headline font-bold">Critical Numeracy with AR & AI</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/85">{comic.description}</p>
               </div>
             </div>
 
             <CinaraiStageProgress completedStages={session.completedStages} currentStageId={currentStageId} />
 
-            <Card className="rounded-[1.75rem] border-none bg-white p-4 shadow-lg shadow-orange-100/70">
+            <Card className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Tahap saat ini</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Tahap saat ini</p>
                   <p className="text-lg font-bold text-slate-900">{currentStage?.title}</p>
                 </div>
-                <div className="rounded-full bg-orange-100 px-3 py-2 text-right text-xs font-semibold text-orange-700">
+                <div className="rounded-md bg-blue-50 px-3 py-2 text-right text-xs font-semibold text-blue-700">
                   {session.completedStages.length}/{CINARAI_STAGES.length} selesai
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-2 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">
-                <Sparkles className="h-4 w-4 text-orange-500" />
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
+                <Sparkles className="h-4 w-4 text-blue-600" />
                 <span>{currentStage?.subtitle}</span>
               </div>
             </Card>
@@ -583,19 +596,19 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
 
         {isReadingStage ? (
           <div className="px-3 pb-3 pt-2">
-            <Button variant="ghost" className="w-full justify-between rounded-[1.25rem] border border-slate-200 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm" onClick={() => setIsProgressOpen((value) => !value)}>
+            <Button variant="ghost" className="w-full justify-between rounded-lg border border-slate-200 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm" onClick={() => setIsProgressOpen((value) => !value)}>
               <span>Learning Progress</span>
               {isProgressOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
             {isProgressOpen ? (
-              <div className="mt-2 space-y-3 rounded-[1.5rem] border border-orange-100 bg-white/95 p-3 shadow-sm">
+              <div className="mt-2 space-y-3 rounded-lg border border-slate-200 bg-white/95 p-3 shadow-sm">
                 <CinaraiStageProgress completedStages={session.completedStages} currentStageId={currentStageId} compact />
-                <div className="flex items-center justify-between gap-3 rounded-[1.25rem] bg-slate-50 p-3 text-sm text-slate-600">
+                <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-400">Tahap sekarang</p>
                     <p className="mt-1 font-semibold text-slate-900">{currentStage?.title}</p>
                   </div>
-                  <Button className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white" onClick={() => {
+                  <Button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white" onClick={() => {
                     const completedPage = Math.max(1, Math.min(session.currentPage ?? 1, session.totalPages ?? 1));
                     void handleReadingComplete(completedPage, session.totalPages ?? 1, true);
                   }}>
@@ -608,19 +621,19 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
         ) : null}
 
         {isSaving ? (
-          <div className="mx-4 mt-2 flex items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700">
+          <div className="mx-4 mt-2 flex items-center justify-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Menyimpan progresmu…
+            Menyimpan progresmu...
           </div>
         ) : null}
 
         {renderStage()}
 
         {!isReadingStage ? (
-          <Card className="rounded-[1.75rem] border-none bg-slate-50 p-4 text-sm text-slate-600">
+          <Card className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
             <div className="flex items-center gap-2 font-semibold text-slate-900">
               <BookOpen className="h-4 w-4 text-primary" />
-              Lanjutkan dari tahap sebelumnya
+              Alur bertahap sesuai blueprint
             </div>
             <p className="mt-2 leading-relaxed">
               Kamu tidak bisa melewati tahapan. Setiap langkah akan dibuka setelah tahap sebelumnya selesai dan otomatis tersimpan di akunmu.

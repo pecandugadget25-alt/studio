@@ -68,32 +68,32 @@ export default function MobileDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 px-4 pb-32 pt-20">
+    <div className="min-h-screen bg-slate-100 px-4 pb-32 pt-20">
       <section className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">CINARAI Dashboard</p>
-            <h2 className="mt-1 text-2xl font-headline font-bold text-slate-900">Halo, {firstName}! 👋</h2>
-            <p className="mt-1 text-sm text-slate-500">Belajar dimulai dari tahap yang belum selesai, tanpa harus mencari komik lagi.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-blue-600">CINARAI Smart Learning</p>
+            <h2 className="mt-1 text-2xl font-headline font-bold text-slate-900">Halo, {firstName}</h2>
+            <p className="mt-1 text-sm text-slate-500">Lanjutkan perjalanan Critical Numeracy with AR & AI dari tahap yang belum selesai.</p>
           </div>
-          <div className="rounded-2xl bg-orange-100 p-3 text-orange-600">
+          <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
             <Sparkles className="h-6 w-6" />
           </div>
         </div>
 
-        <Card className="rounded-[2rem] border-none bg-gradient-to-br from-primary to-blue-700 p-5 text-white shadow-lg">
+        <Card className="rounded-lg border-none bg-blue-700 p-5 text-white shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/70">Modul aktif</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/70">Modul aktif</p>
               <h3 className="mt-2 text-xl font-headline font-bold">{activeComic.moduleName}</h3>
               <p className="mt-2 text-sm text-white/80">{activeComic.title}</p>
             </div>
-            <div className="rounded-2xl bg-white/15 p-3 backdrop-blur">
+            <div className="rounded-lg bg-white/15 p-3 backdrop-blur">
               <BookOpen className="h-6 w-6" />
             </div>
           </div>
 
-          <div className="mt-5 rounded-[1.5rem] bg-white/10 p-4 backdrop-blur">
+          <div className="mt-5 rounded-lg bg-white/10 p-4 backdrop-blur">
             <div className="flex items-center justify-between text-sm font-semibold">
               <span>Tahap saat ini</span>
               <span>{currentStage?.title}</span>
@@ -110,15 +110,15 @@ export default function MobileDashboard() {
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Link href={`/comics/${activeComicId}`} className="block">
-              <Button className="h-12 w-full rounded-2xl bg-white font-semibold text-primary hover:bg-white/90">
+              <Button className="h-12 w-full rounded-lg bg-white font-semibold text-primary hover:bg-white/90">
                 <BookOpen className="mr-2 h-4 w-4" />
-                Continue Learning
+                Mulai Petualangan
               </Button>
             </Link>
             <Link href={`/comics/${activeComicId}?restart=1`} className="block">
-              <Button variant="outline" className="h-12 w-full rounded-2xl border-white/50 bg-transparent font-semibold text-white hover:bg-white/10">
+              <Button variant="outline" className="h-12 w-full rounded-lg border-white/50 bg-transparent font-semibold text-white hover:bg-white/10">
                 <RotateCcw className="mr-2 h-4 w-4" />
-                Restart Learning
+                Ulangi Alur
               </Button>
             </Link>
           </div>
@@ -126,15 +126,15 @@ export default function MobileDashboard() {
       </section>
 
       <section className="mt-5 grid grid-cols-2 gap-3">
-        <Card className="rounded-[1.5rem] border-none bg-white p-4 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">XP</p>
+        <Card className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Poin</p>
           <div className="mt-2 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-amber-500" />
             <span className="text-xl font-bold text-slate-900">{profile?.poin || 0}</span>
           </div>
         </Card>
-        <Card className="rounded-[1.5rem] border-none bg-white p-4 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Badges</p>
+        <Card className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Badge</p>
           <div className="mt-2 flex items-center gap-2">
             <Award className="h-5 w-5 text-emerald-500" />
             <span className="text-xl font-bold text-slate-900">{profile?.badges?.length || 0}</span>
@@ -150,11 +150,11 @@ export default function MobileDashboard() {
         <div className="space-y-3">
           {recentHistory.length > 0 ? (
             recentHistory.map((entry) => (
-              <Card key={`${entry.comicId}-${entry.updatedAt}`} className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-sm">
+              <Card key={`${entry.comicId}-${entry.updatedAt}`} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{entry.title}</p>
-                    <p className="mt-1 text-xs text-slate-500">{entry.completedStages.length}/{CINARAI_STAGES.length} tahap selesai • {entry.xp} XP</p>
+                    <p className="mt-1 text-xs text-slate-500">{entry.completedStages.length}/{CINARAI_STAGES.length} tahap selesai - {entry.xp} XP</p>
                   </div>
                   <div className="flex items-center gap-1 text-xs font-semibold text-slate-400">
                     <Clock3 className="h-4 w-4" />
@@ -164,7 +164,7 @@ export default function MobileDashboard() {
               </Card>
             ))
           ) : (
-            <Card className="rounded-[1.25rem] border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+            <Card className="rounded-lg border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
               Belum ada riwayat belajar. Mulai dari Cover untuk memulai perjalanan CINARAI.
             </Card>
           )}
