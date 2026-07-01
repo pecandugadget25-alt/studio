@@ -204,8 +204,8 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f7f2e9]">
-      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
+    <div className="flex min-h-screen min-w-0 flex-col bg-[#f7f2e9]">
+      <div className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900">{comicTitle}</p>
           <p className="text-xs text-slate-500">Page {pageNumber} / {totalPages}</p>
@@ -215,9 +215,9 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         </Button>
       </div>
 
-      <div ref={containerRef} className="flex-1 bg-[#f7f2e9] px-2 py-2 sm:px-3 sm:py-3">
+      <div ref={containerRef} className="min-w-0 flex-1 bg-[#f7f2e9] px-2 py-2 sm:px-3 sm:py-3">
         <div className="relative flex h-full min-h-[calc(100vh-170px)] items-center justify-center rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-inner">
-          <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[1.25rem] bg-[#f3eee8] p-2">
+          <div className="flex h-full w-full min-w-0 items-center justify-center overflow-hidden rounded-[1.25rem] bg-[#f3eee8] p-2">
             <canvas ref={canvasRef} className="mx-auto block max-h-full max-w-full" />
           </div>
 

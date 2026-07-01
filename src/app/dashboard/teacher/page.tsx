@@ -17,7 +17,8 @@ import {
   Loader2,
   CheckCircle2,
   Clock,
-  BookOpen
+  BookOpen,
+  Menu
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -25,6 +26,7 @@ import { useUser, useFirebase, useCollection } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer } from "recharts";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export default function TeacherDashboard() {
   const router = useRouter();
@@ -95,53 +97,74 @@ export default function TeacherDashboard() {
     },
   } satisfies ChartConfig;
 
+  const sidebarContent = (
+    <>
+      <nav className="flex-1 p-4 space-y-2">
+        <Button variant="secondary" className="w-full justify-start gap-2 bg-primary/10 text-primary hover:bg-primary/20">
+          <Users className="h-4 w-4" /> Daftar Siswa
+        </Button>
+        <Button variant="ghost" className="w-full justify-start gap-2">
+          <BarChart3 className="h-4 w-4" /> Analisis Belajar
+        </Button>
+        <Button variant="ghost" className="w-full justify-start gap-2">
+          <BookOpen className="h-4 w-4" /> Monitor Komik
+        </Button>
+      </nav>
+      <div className="p-4 border-t space-y-2">
+        <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground">
+          <Settings className="h-4 w-4" /> Pengaturan
+        </Button>
+        <Button variant="ghost" onClick={handleLogout} className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10">
+          <LogOut className="h-4 w-4" /> Keluar
+        </Button>
+      </div>
+    </>
+  );
+
   if (authLoading || studentsLoading || !profile) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="flex min-h-screen w-full min-w-0 bg-slate-50">
       {/* Sidebar Guru */}
-      <aside className="w-64 border-r bg-white hidden lg:flex flex-col sticky top-0 h-screen">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-white lg:flex">
         <div className="p-6 h-16 border-b flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-white text-xs font-bold">EA</div>
           <span className="font-headline font-bold text-primary">Panel GURU</span>
         </div>
-        <nav className="flex-1 p-4 space-y-2">
-          <Button variant="secondary" className="w-full justify-start gap-2 bg-primary/10 text-primary hover:bg-primary/20">
-            <Users className="h-4 w-4" /> Daftar Siswa
-          </Button>
-          <Button variant="ghost" className="w-full justify-start gap-2">
-            <BarChart3 className="h-4 w-4" /> Analisis Belajar
-          </Button>
-          <Button variant="ghost" className="w-full justify-start gap-2">
-            <BookOpen className="h-4 w-4" /> Monitor Komik
-          </Button>
-        </nav>
-        <div className="p-4 border-t space-y-2">
-          <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground">
-            <Settings className="h-4 w-4" /> Pengaturan
-          </Button>
-          <Button variant="ghost" onClick={handleLogout} className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10">
-            <LogOut className="h-4 w-4" /> Keluar
-          </Button>
-        </div>
+        {sidebarContent}
       </aside>
 
       {/* Content Area */}
-      <main className="flex-1 flex flex-col h-screen overflow-auto">
-        <header className="h-16 border-b bg-white px-8 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-          <h1 className="font-headline font-bold text-lg">Ringkasan Aktivitas Siswa Realtime</h1>
+      <main className="flex h-screen min-w-0 flex-1 flex-col overflow-auto">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b bg-white px-4 shadow-sm sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="shrink-0 lg:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="flex w-[min(18rem,85vw)] flex-col p-0">
+                <SheetHeader className="border-b p-6 text-left">
+                  <SheetTitle className="font-headline text-primary">Panel GURU</SheetTitle>
+                </SheetHeader>
+                {sidebarContent}
+              </SheetContent>
+            </Sheet>
+            <h1 className="truncate font-headline font-bold text-base sm:text-lg">Ringkasan Aktivitas Siswa Realtime</h1>
+          </div>
           <div className="flex items-center gap-4">
-            <Badge variant="outline" className="font-bold border-primary text-primary">Guru: {profile.nama}</Badge>
+            <Badge variant="outline" className="max-w-[44vw] truncate border-primary font-bold text-primary sm:max-w-none">Guru: {profile.nama}</Badge>
           </div>
         </header>
 
-        <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
+        <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6 lg:space-y-8 lg:p-8">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -209,35 +232,37 @@ export default function TeacherDashboard() {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50/50">
-                      <TableHead className="font-bold">Siswa</TableHead>
-                      <TableHead className="font-bold text-center">Level</TableHead>
-                      <TableHead className="font-bold text-right">XP</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {students?.map((student, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
-                              {student.nama.charAt(0)}
-                            </div>
-                            <span className="truncate max-w-[120px]">{student.nama}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="secondary" className="font-bold">Lv {student.level || 1}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-mono font-bold text-primary">
-                          {student.poin || 0}
-                        </TableCell>
+                <div className="w-full overflow-x-auto">
+                  <Table className="min-w-[360px]">
+                    <TableHeader>
+                      <TableRow className="bg-slate-50/50">
+                        <TableHead className="font-bold">Siswa</TableHead>
+                        <TableHead className="font-bold text-center">Level</TableHead>
+                        <TableHead className="font-bold text-right">XP</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {students?.map((student, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-medium">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="w-8 h-8 shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
+                                {student.nama.charAt(0)}
+                              </div>
+                              <span className="max-w-[180px] truncate">{student.nama}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="secondary" className="font-bold">Lv {student.level || 1}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-mono font-bold text-primary">
+                            {student.poin || 0}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </div>

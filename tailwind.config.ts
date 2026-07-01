@@ -65,11 +65,38 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        cinarai: {
+          DEFAULT: 'hsl(var(--cinarai-primary))',
+          foreground: 'hsl(var(--cinarai-primary-foreground))',
+        },
+        qr: {
+          DEFAULT: 'hsl(var(--qr-secondary))',
+          foreground: 'hsl(var(--qr-secondary-foreground))',
+        },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        '2xl': 'var(--radius)',
+        lg: 'calc(var(--radius) - 2px)',
+        md: 'calc(var(--radius) - 4px)',
+        sm: 'calc(var(--radius) - 6px)',
+      },
+      boxShadow: {
+        sm: '0 1px 2px rgba(15, 23, 42, 0.08)',
+        md: '0 4px 12px rgba(15, 23, 42, 0.10)',
+      },
+      fontSize: {
+        heading: ['2rem', { lineHeight: '1.1', fontWeight: '700' }],
+        subheading: ['1.25rem', { lineHeight: '1.3', fontWeight: '700' }],
+        body: ['1rem', { lineHeight: '1.75' }],
+        caption: ['0.75rem', { lineHeight: '1.5' }],
+      },
+      spacing: {
+        1: '0.5rem',
+        2: '1rem',
+        3: '1.5rem',
+        4: '2rem',
+        5: '2.5rem',
+        6: '3rem',
       },
       keyframes: {
         'accordion-down': {

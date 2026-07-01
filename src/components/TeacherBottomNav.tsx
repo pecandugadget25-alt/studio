@@ -21,7 +21,7 @@ export function TeacherBottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white border-t android-shadow flex items-center justify-around px-1 max-w-[500px] mx-auto pb-2">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex h-20 items-center justify-around border-t bg-white px-1 pb-2 android-shadow md:hidden">
       {navItems.map((item) => {
         const isActive = pathname === item.href || (item.href !== '/teacher' && pathname.startsWith(item.href));
         const Icon = item.icon;

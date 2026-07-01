@@ -150,9 +150,9 @@ export default function TeacherMobileDashboard() {
   }
 
   return (
-    <div className="pt-20 pb-32 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto no-scrollbar">
+    <div className="mx-auto min-h-screen w-full max-w-screen-xl space-y-6 bg-slate-50/50 px-4 pb-32 pt-20 sm:px-6 lg:px-8">
       {/* Header Panel */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 max-w-[500px] mx-auto">
+      <div className="sticky top-16 z-40 -mx-4 flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-sm">EA</div>
           <h1 className="font-headline font-bold text-lg text-primary tracking-tight">DASHBOARD</h1>
@@ -206,7 +206,7 @@ export default function TeacherMobileDashboard() {
       </section>
 
       {/* SECTION: RINGKASAN KELAS */}
-      <section className="grid grid-cols-2 gap-4">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="rounded-3xl border-none p-4 bg-white shadow-sm space-y-3">
           <div className="p-2 bg-blue-50 w-fit rounded-2xl text-primary">
             <Users className="h-5 w-5" />

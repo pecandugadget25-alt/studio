@@ -51,7 +51,7 @@ export default function ChallengesPage() {
   }
 
   return (
-    <div className="pt-20 pb-32 px-4 space-y-6 max-w-[500px] mx-auto min-h-screen bg-slate-50/50 overflow-y-auto">
+    <div className="mx-auto min-h-screen w-full max-w-screen-xl space-y-6 bg-slate-50/50 px-4 pb-32 pt-20 sm:px-6 lg:px-8">
       <div className="px-1">
         <h2 className="text-2xl font-headline font-bold text-slate-900">Tantangan Harian</h2>
         <p className="text-sm text-muted-foreground font-medium">Selesaikan untuk klaim XP tambahan!</p>

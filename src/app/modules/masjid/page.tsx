@@ -44,18 +44,20 @@ export default function MasjidModulePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF7F5]">
-      <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-30">
+    <div className="min-h-screen bg-[#FAF7F5] pt-16">
+      <header className="sticky top-16 z-30 border-b bg-white">
+        <div className="mx-auto flex h-16 w-full max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/dashboard/student">
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Kembali
           </Button>
         </Link>
         <Badge variant="outline" className="border-primary text-primary">Religi x Matematika</Badge>
+        </div>
       </header>
 
-      <main className="container mx-auto px-6 py-12">
-        <div className="max-w-4xl mx-auto space-y-12">
+      <main className="mx-auto w-full max-w-screen-xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div className="mx-auto max-w-4xl space-y-12">
           {/* Hero Section */}
           <section className="relative h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white">
             <Image 
@@ -81,7 +83,7 @@ export default function MasjidModulePage() {
               </div>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid gap-4 lg:grid-cols-3">
               {topics.map((topic) => (
                 <Link key={topic.id} href={`/modules/masjid/${topic.id}`}>
                   <Card className="group hover:shadow-lg transition-all cursor-pointer border-none shadow-sm">

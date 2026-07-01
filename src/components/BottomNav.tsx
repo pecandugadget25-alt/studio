@@ -24,7 +24,7 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 h-24 bg-white/90 border-t bottom-nav-blur android-shadow flex items-center justify-around px-2 max-w-[500px] mx-auto pb-4">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex h-24 items-center justify-around border-t bg-white/90 px-2 pb-4 android-shadow bottom-nav-blur md:hidden">
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
         const Icon = item.icon;

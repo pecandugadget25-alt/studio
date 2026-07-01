@@ -60,7 +60,7 @@ export default function ProfilePage() {
   const isTeacherOrAdmin = profile.peran === 'guru' || profile.peran === 'admin' || profile.peran === 'peneliti';
 
   return (
-    <div className="pt-20 pb-32 px-4 space-y-6 max-w-[500px] mx-auto min-h-screen bg-slate-50/50">
+    <div className="mx-auto min-h-screen w-full max-w-screen-xl space-y-6 bg-slate-50/50 px-4 pb-32 pt-20 sm:px-6 lg:px-8">
       {/* Profile Header */}
       <div className="flex flex-col items-center space-y-3 py-4">
         <div className="relative">

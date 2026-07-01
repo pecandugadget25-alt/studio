@@ -164,8 +164,8 @@ export default function TeacherReportsPage() {
   }
 
   return (
-    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto no-scrollbar">
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 max-w-[500px] mx-auto">
+    <div className="mx-auto min-h-screen w-full max-w-screen-xl space-y-6 bg-slate-50/50 px-4 pb-28 pt-20 sm:px-6 lg:px-8">
+      <div className="sticky top-16 z-40 -mx-4 flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-3">
           <Link href="/teacher">
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -234,7 +234,7 @@ export default function TeacherReportsPage() {
           <LayoutGrid className="h-4 w-4 text-primary" /> Ringkasan Aktivitas
         </h3>
         <Card className="rounded-[2.5rem] border-none bg-slate-900 text-white p-6 shadow-lg overflow-hidden relative">
-          <div className="grid grid-cols-2 gap-8 relative z-10">
+          <div className="relative z-10 grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8">
             <div className="space-y-1">
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total XP</p>
               <h4 className="text-3xl font-bold text-white">{stats?.totalXP.toLocaleString()}</h4>
@@ -284,7 +284,7 @@ export default function TeacherReportsPage() {
         <h3 className="font-headline font-bold text-sm uppercase tracking-wider px-1 flex items-center gap-2 text-slate-900">
           <CircleDot className="h-4 w-4 text-primary" /> Kesiapan Siswa
         </h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
            {[
              { label: "Aktif", val: stats?.statusCounts.Aktif, color: "bg-emerald-50 text-emerald-600" },
              { label: "Orientasi", val: stats?.statusCounts.Orientasi, color: "bg-blue-50 text-blue-600" },

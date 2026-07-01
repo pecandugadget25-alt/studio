@@ -50,8 +50,8 @@ export default function TeacherStudentsPage() {
   }
 
   return (
-    <div className="pt-20 pb-28 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto">
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 max-w-[500px] mx-auto">
+    <div className="mx-auto min-h-screen w-full max-w-screen-xl space-y-6 bg-slate-50/50 px-4 pb-28 pt-20 sm:px-6 lg:px-8">
+      <div className="sticky top-16 z-40 -mx-4 flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-3">
           <Link href="/teacher">
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -84,7 +84,7 @@ export default function TeacherStudentsPage() {
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="grid gap-4 lg:grid-cols-2">
         {filteredStudents.length > 0 ? (
           filteredStudents.map((student) => (
             <Link key={student.uid} href={`/teacher/students/${student.uid}`}>

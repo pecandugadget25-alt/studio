@@ -126,7 +126,7 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
 
   if (!isValid) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 max-w-[500px] mx-auto">
+      <div className="mx-auto flex min-h-screen w-full max-w-screen-xl flex-col items-center justify-center bg-slate-50 p-4 sm:p-6 lg:px-8">
         <Card className="w-full border-none shadow-xl rounded-[2.5rem] p-8 text-center space-y-6">
           <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto text-red-500">
             <AlertCircle className="h-10 w-10" />
@@ -146,8 +146,8 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
   const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col max-w-[500px] mx-auto pb-32">
-      <header className="sticky top-0 z-50 h-16 flex items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md">
+    <div className="mx-auto flex min-h-screen w-full max-w-screen-xl flex-col bg-white pb-32">
+      <header className="sticky top-16 z-40 flex h-16 items-center justify-between border-b bg-white/80 px-4 backdrop-blur-md sm:px-6 lg:px-8">
         <Link href="/modules">
           <Button variant="ghost" size="icon" className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
@@ -157,7 +157,7 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
         <div className="w-10" />
       </header>
 
-      <main className="flex-1 space-y-6 p-6 animate-in fade-in duration-700">
+      <main className="flex-1 space-y-6 px-4 py-6 animate-in fade-in duration-700 sm:px-6 lg:px-8">
         <div className="space-y-2">
           <h2 className="text-2xl font-headline font-bold text-slate-900 leading-tight">
             {videoData.title}

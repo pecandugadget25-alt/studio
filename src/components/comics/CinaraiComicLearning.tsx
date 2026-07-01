@@ -535,8 +535,8 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
 
   return (
     <div className="min-h-screen bg-slate-100 pb-0">
-      <header className="fixed left-0 right-0 top-0 z-50 h-16 border-b bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex h-full max-w-[920px] items-center justify-between px-4 sm:px-6">
+      <header className="fixed left-0 right-0 top-16 z-40 h-16 border-b bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex h-full w-full max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/comics">
             <Button variant="ghost" size="icon" className="rounded-lg">
               <ArrowLeft className="h-5 w-5" />
@@ -559,10 +559,11 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
         </div>
       </header>
 
-      <main className={cn('mx-auto flex max-w-[920px] flex-col pt-16', isReadingStage ? 'min-h-screen px-0 pb-0' : 'gap-5 px-4 pb-8')}>
+      <main className={cn('mx-auto flex w-full max-w-screen-xl flex-col pt-32', isReadingStage ? 'min-h-screen px-0 pb-0' : 'gap-5 px-4 pb-8 sm:px-6 lg:px-8')}>
         {!isReadingStage ? (
-          <>
-            <div className="relative mt-4 overflow-hidden rounded-lg border border-slate-200 bg-slate-900 shadow-sm">
+        <div className="grid gap-6 lg:grid-cols-[1.55fr_0.95fr]">
+          <div className="space-y-6">
+            <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-slate-900 shadow-sm">
               <Image src={comic.image} alt={comic.title} width={1000} height={640} className="h-60 w-full object-cover sm:h-72" priority />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
@@ -573,8 +574,6 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/85">{comic.description}</p>
               </div>
             </div>
-
-            <CinaraiStageProgress completedStages={session.completedStages} currentStageId={currentStageId} />
 
             <Card className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
@@ -591,8 +590,27 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
                 <span>{currentStage?.subtitle}</span>
               </div>
             </Card>
-          </>
-        ) : null}
+          </div>
+
+          <aside className="space-y-6">
+            <CinaraiStageProgress completedStages={session.completedStages} currentStageId={currentStageId} />
+
+            <Card className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
+              <div className="flex items-center gap-2 font-semibold text-slate-900">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <span>Alur bertahap sesuai blueprint</span>
+              </div>
+              <p className="mt-2 leading-relaxed">
+                Kamu tidak bisa melewati tahapan. Setiap langkah akan dibuka setelah tahap sebelumnya selesai dan otomatis tersimpan di akunmu.
+              </p>
+              <div className="mt-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <span>Durasi belajar: {Math.floor(elapsedSeconds / 60)} menit {elapsedSeconds % 60} detik</span>
+              </div>
+            </Card>
+          </aside>
+        </div>
+      ) : null}
 
         {isReadingStage ? (
           <div className="px-3 pb-3 pt-2">

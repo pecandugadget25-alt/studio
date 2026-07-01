@@ -55,13 +55,13 @@ export default function ModulesPage() {
   }
 
   return (
-    <div className="pt-20 pb-32 px-4 space-y-6 overflow-y-auto min-h-screen">
+    <div className="mx-auto min-h-screen w-full max-w-screen-xl space-y-6 overflow-y-auto px-4 pb-32 pt-20 sm:px-6 lg:px-8">
       <div className="px-1">
         <h2 className="text-2xl font-headline font-bold">Modul Budaya</h2>
         <p className="text-xs text-muted-foreground">Pilih materi yang ingin kamu pelajari hari ini.</p>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {MODULES.map((mod) => {
           const isCompleted = profile?.completedModules?.includes(mod.id);
           return (

@@ -64,8 +64,8 @@ export default function ActivityLogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-32 overflow-y-auto max-w-[500px] mx-auto">
-      <header className="sticky top-0 z-50 h-16 bg-white border-b flex items-center justify-between px-6">
+    <div className="mx-auto min-h-screen w-full max-w-screen-xl bg-slate-50/50 pb-32">
+      <header className="sticky top-16 z-40 flex h-16 items-center justify-between border-b bg-white px-4 sm:px-6 lg:px-8">
         <Link href="/profile">
           <Button variant="ghost" size="icon" className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
@@ -78,7 +78,7 @@ export default function ActivityLogPage() {
         <div className="w-10" />
       </header>
 
-      <main className="p-6 space-y-6">
+      <main className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="space-y-1">
           <h2 className="text-2xl font-headline font-bold text-slate-900">Jejak Belajarmu 🐾</h2>
           <p className="text-sm text-muted-foreground font-medium">Lihat semua kegiatan dan XP yang kamu kumpulkan.</p>

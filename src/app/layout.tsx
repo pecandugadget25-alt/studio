@@ -3,7 +3,6 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseProvider } from "@/firebase/provider";
-import { BottomNav } from "@/components/BottomNav";
 import { AppBar } from "@/components/AppBar";
 import { DynamicNav } from "@/components/DynamicNav";
 
@@ -26,13 +25,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="font-body antialiased selection:bg-primary/20">
         <FirebaseProvider>
           <div className="app-container">
             <DynamicAppBar />
-            <main className="min-h-screen">
+            <main className="min-h-screen w-full min-w-0">
               {children}
             </main>
             <DynamicNav />

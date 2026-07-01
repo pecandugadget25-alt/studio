@@ -323,8 +323,8 @@ export default function UniversalScannerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-32 flex flex-col max-w-[500px] mx-auto overflow-y-auto transition-colors duration-500">
-      <header className="sticky top-0 z-50 h-16 bg-white border-b flex items-center justify-between px-6">
+    <div className="mx-auto flex min-h-screen w-full max-w-screen-xl flex-col bg-slate-50 pb-32 transition-colors duration-500">
+      <header className="sticky top-16 z-40 flex h-16 items-center justify-between border-b bg-white px-4 sm:px-6 lg:px-8">
         <Link href="/">
           <Button variant="ghost" size="icon" className="rounded-full">
             <X className="h-5 w-5" />
@@ -337,10 +337,10 @@ export default function UniversalScannerPage() {
         <div className="w-10" />
       </header>
 
-      <main className="flex-1 space-y-6">
+      <main className="min-w-0 flex-1 space-y-6">
         <div className={cn(
-          "relative bg-slate-900 overflow-hidden shadow-inner w-full transition-all duration-500 ease-in-out",
-          scanResult ? "h-[350px] bg-slate-100" : "aspect-square max-h-[50vh]"
+          "relative mx-auto w-full max-w-3xl overflow-hidden bg-slate-900 shadow-inner transition-all duration-500 ease-in-out lg:rounded-b-3xl",
+          scanResult ? "min-h-[350px] bg-slate-100" : "aspect-square max-h-[70vh]"
         )}>
           <div id="reader" className={cn("w-full h-full", scanResult ? "hidden" : "block")}></div>
           <div id="reader-hidden" className="hidden"></div>
@@ -414,7 +414,7 @@ export default function UniversalScannerPage() {
           )}
         </div>
 
-        <section className="px-6 grid grid-cols-2 gap-4">
+        <section className="grid grid-cols-2 gap-4 px-4 sm:px-6 lg:px-8">
           <Button 
             variant={isCameraActive ? 'default' : 'outline'}
             className={cn(
@@ -437,7 +437,7 @@ export default function UniversalScannerPage() {
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
         </section>
 
-        <section className="px-6 space-y-4 pb-12">
+        <section className="space-y-4 px-4 pb-12 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between px-1">
             <h3 className="font-headline font-bold text-sm text-slate-900 flex items-center gap-2">
               <History className="h-4 w-4 text-slate-400" /> Riwayat Baru

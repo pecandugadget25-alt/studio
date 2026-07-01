@@ -89,8 +89,9 @@ export default function ComicListPage() {
   const { profile } = useUser();
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-32 overflow-y-auto">
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 backdrop-blur-md border-b flex items-center justify-between px-6 max-w-[500px] mx-auto">
+    <div className="min-h-screen bg-slate-50 pb-32">
+      <header className="fixed left-0 right-0 top-16 z-40 border-b bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 w-full max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/">
           <Button variant="ghost" size="icon" className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
@@ -101,15 +102,16 @@ export default function ComicListPage() {
           Komik Digital
         </h1>
         <div className="w-10" />
+        </div>
       </header>
 
-      <main className="pt-20 px-6 space-y-6">
+      <main className="mx-auto w-full max-w-screen-xl space-y-6 px-4 pt-36 sm:px-6 lg:px-8">
         <div className="space-y-1">
           <h2 className="text-2xl font-headline font-bold text-slate-900">Literasi Nusantara 📚</h2>
           <p className="text-sm text-muted-foreground">Petualangan seru asah kemampuan numerasi.</p>
         </div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {COMICS.map((comic) => {
             const isRead = profile?.completedComics?.includes(comic.id);
             return (

@@ -117,8 +117,8 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="pt-20 pb-32 px-4 space-y-6 bg-slate-50/50 min-h-screen max-w-[500px] mx-auto overflow-y-auto no-scrollbar">
-      <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 h-16 bg-white border-b border-slate-100 max-w-[500px] mx-auto">
+    <div className="mx-auto min-h-screen w-full max-w-screen-xl space-y-6 bg-slate-50/50 px-4 pb-32 pt-20 sm:px-6 lg:px-8">
+      <div className="sticky top-16 z-40 -mx-4 flex h-16 items-center justify-between border-b border-slate-100 bg-white px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-3">
           <Link href="/teacher/students">
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -150,7 +150,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="bg-yellow-50/50 p-4 rounded-3xl border border-yellow-100/50 text-center space-y-1">
             <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-widest">Total XP</p>
             <div className="flex items-center justify-center gap-1.5">

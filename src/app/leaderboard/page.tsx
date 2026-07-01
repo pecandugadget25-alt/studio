@@ -43,8 +43,9 @@ export default function LeaderboardPage() {
   const topThree = displayData.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-[#FAF7F5] pb-32 overflow-y-auto">
-      <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm max-w-[500px] mx-auto">
+    <div className="min-h-screen bg-[#FAF7F5] pb-32">
+      <header className="sticky top-16 z-30 border-b bg-white shadow-sm">
+        <div className="mx-auto flex h-16 w-full max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/">
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" />
@@ -55,9 +56,10 @@ export default function LeaderboardPage() {
           Peringkat Nusantara
         </h1>
         <div className="w-10" />
+        </div>
       </header>
 
-      <main className="px-4 py-8 space-y-8 max-w-[500px] mx-auto">
+      <main className="mx-auto w-full max-w-screen-xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
