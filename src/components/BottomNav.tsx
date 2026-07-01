@@ -15,6 +15,9 @@ export function BottomNav() {
   
   if (isAuthPage || !profile) return null;
 
+  const isLearningMode = pathname.startsWith('/komik/') || pathname.startsWith('/comics/');
+  if (isLearningMode) return null;
+
   const navItems = [
     { label: "Home", icon: Home, href: "/", activePaths: ["/"] },
     // TODO: Point this to the dedicated learning route when the learning pages are integrated.

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { StageShell } from './StageShell';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Rocket } from 'lucide-react';
 
 interface ApplicationStageProps {
   onComplete: (payload?: Record<string, unknown>) => void;
@@ -24,7 +25,7 @@ export function ApplicationStage({ onComplete, onAiAssist }: ApplicationStagePro
   };
 
   return (
-    <StageShell title="Application" subtitle="Terapkan konsep bangun ruang pada bagian candi yang baru" badge="Tantangan" code="A" tone="bg-violet-600">
+    <StageShell title="Application" subtitle="Terapkan konsep bangun ruang pada bagian candi yang baru" badge="Tantangan" code="A" tone="bg-violet-600" icon={<Rocket className="h-5 w-5" />} accentClassName="from-violet-50 via-white to-slate-50" buttonClassName="bg-violet-600 hover:bg-violet-700" progressClassName="bg-violet-50/70">
       <div className="space-y-4">
         <div className="rounded-lg bg-violet-50 p-4 text-sm text-slate-600">
           <p className="font-semibold text-slate-800">Tantangan baru</p>
@@ -52,7 +53,7 @@ export function ApplicationStage({ onComplete, onAiAssist }: ApplicationStagePro
           {loading ? 'AI sedang membimbing...' : 'Dapatkan bimbingan AI'}
         </Button>
         {feedback ? <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{feedback}</div> : null}
-        <Button onClick={() => onComplete({ answer: response, score: response === 'limas' ? 100 : 70 })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700" disabled={!response}>
+        <Button onClick={() => onComplete({ answer: response, score: response === 'limas' ? 100 : 70 })} className="w-full rounded-lg bg-violet-600 py-6 text-base font-semibold hover:bg-violet-700" disabled={!response}>
           Lanjut refleksi
         </Button>
       </div>

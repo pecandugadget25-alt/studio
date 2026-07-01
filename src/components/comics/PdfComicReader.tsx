@@ -30,6 +30,9 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
   const [error, setError] = useState<string | null>(null);
   const [layoutVersion, setLayoutVersion] = useState(0);
   const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
+  const [pageTransition, setPageTransition] = useState<'idle' | 'next' | 'prev'>('idle');
+  const [showChrome, setShowChrome] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved'>('saved');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null);
@@ -204,9 +207,10 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
     };
   }, [pageNumber, totalPages, layoutVersion]);
 
-  const handlePageChange = (nextPage: number) => {
+  const handlePageChange = (nextPage: number, direction: 'next' | 'prev' = 'next') => {
     const boundedPage = Math.min(Math.max(1, nextPage), totalPages || 1);
     const reachedEnd = boundedPage >= totalPages;
+    setPageTransition(direction);
     setPageNumber(boundedPage);
     onPageChangeRef.current(boundedPage, totalPages || 1, reachedEnd);
   };
@@ -218,13 +222,13 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
 
   const goToPrevious = () => {
     if (pageNumber > 1) {
-      handlePageChange(pageNumber - 1);
+      handlePageChange(pageNumber - 1, 'prev');
     }
   };
 
   const goToNext = () => {
     if (pageNumber < totalPages) {
-      handlePageChange(pageNumber + 1);
+      handlePageChange(pageNumber + 1, 'next');
     }
   };
 
@@ -239,16 +243,53 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
     return () => window.clearTimeout(timeout);
   }, [onReadingComplete, pageNumber, totalPages]);
 
+  useEffect(() => {
+    if (isLoading) {
+      setShowChrome(true);
+      return;
+    }
+
+    setShowChrome(true);
+    const timer = window.setTimeout(() => setShowChrome(false), 2200);
+    return () => window.clearTimeout(timer);
+  }, [pageNumber, isLoading]);
+
+  useEffect(() => {
+    setSaveStatus('saving');
+    const timer = window.setTimeout(() => setSaveStatus('saved'), 400);
+    return () => window.clearTimeout(timer);
+  }, [pageNumber]);
+
+  const revealChrome = () => {
+    setShowChrome(true);
+  };
+
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[min(100%,1000px)] flex-col bg-[#f7f2e9]" style={{
-      ['--reader-header-height' as any]: 'clamp(56px,6.5vh,64px)',
-      ['--reader-footer-height' as any]: 'clamp(56px,6vh,64px)',
+    <div className="mx-auto flex min-h-screen w-full max-w-[min(100%,1000px)] flex-col bg-[radial-gradient(circle_at_top,_#fbf6ee_0%,_#f3eadc_100%)]" style={{
+      ['--reader-header-height' as any]: 'clamp(52px,6vh,60px)',
+      ['--reader-footer-height' as any]: 'clamp(58px,6.4vh,66px)',
       width: 'min(100%,1000px)',
       margin: '0 auto',
-      paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-      paddingRight: 'max(1rem, env(safe-area-inset-right))',
+      paddingLeft: 'max(0.5rem, env(safe-area-inset-left))',
+      paddingRight: 'max(0.5rem, env(safe-area-inset-right))',
     }}>
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur" style={{ minHeight: 'var(--reader-header-height)' }}>
+      <style jsx global>{`
+        @keyframes comicPageEnter {
+          0% {
+            opacity: 0;
+            transform: translate3d(0, 10px, 0) scale(0.985);
+          }
+          100% {
+            opacity: 1;
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+        }
+      `}</style>
+
+      <div
+        className={`flex items-center justify-between gap-3 border-b border-slate-200/70 bg-white/85 px-3 py-2 backdrop-blur transition-all duration-300 ${showChrome ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}
+        style={{ minHeight: 'var(--reader-header-height)' }}
+      >
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-semibold text-slate-900">{comicTitle}</p>
           <p className="text-xs text-slate-500">Halaman {pageNumber} / {totalPages}</p>
@@ -258,26 +299,45 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         </Button>
       </div>
 
-      <div className="flex-1 bg-[#f7f2e9] px-2 py-2 sm:px-3 sm:py-3">
-        <div className="relative flex h-full min-h-[70vh] w-full items-center justify-center overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
-          <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-auto bg-[#f4eee6] p-1 sm:p-2">
-            <div className="w-full max-w-full">
-              <canvas ref={canvasRef} className="mx-auto block h-auto w-full object-contain" />
+      <div className="flex-1 bg-transparent px-0 py-1 sm:px-1 sm:py-2">
+        <div
+          className="relative mx-auto flex h-full min-h-[72dvh] w-full max-w-[96%] items-center justify-center overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-[#f7efe3] shadow-[0_16px_45px_rgba(15,23,42,0.12)]"
+          onClick={revealChrome}
+          onPointerMove={revealChrome}
+          onTouchStart={revealChrome}
+        >
+          <div ref={containerRef} className="flex h-full w-full items-center justify-center overflow-auto bg-[radial-gradient(circle_at_top,_#fdf6e8_0%,_#efe1cc_100%)] p-1 sm:p-2">
+            <div key={`${pageNumber}-${layoutVersion}`} className="w-full max-w-full origin-center opacity-100 transition-all duration-300 ease-out" style={{ animation: 'comicPageEnter 280ms cubic-bezier(0.22, 1, 0.36, 1)' }}>
+              <div className="mx-auto max-w-[92%] rounded-[1.25rem] border border-slate-200/80 bg-white p-2 shadow-[0_16px_35px_rgba(15,23,42,0.12)] sm:p-3">
+                <canvas ref={canvasRef} className="mx-auto block h-auto w-full object-contain" />
+              </div>
             </div>
           </div>
 
-          <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-600 shadow-sm">
-            {pageNumber}/{totalPages}
+          <div className="pointer-events-none absolute left-1/2 top-3 flex -translate-x-1/2 items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm">
+            <span>{pageNumber}</span>
+            <span className="text-slate-300">/</span>
+            <span>{totalPages}</span>
           </div>
 
-          <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold text-primary shadow-sm">
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">
             {progressPercent}%
           </div>
 
+          <div className="pointer-events-none absolute bottom-3 right-3 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 shadow-sm">
+            {saveStatus === 'saving' ? 'Menyimpan…' : 'Tersimpan otomatis'}
+          </div>
+
           {isLoading ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/90 text-sm font-semibold text-slate-500 backdrop-blur-sm">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              Memuat halaman komik...
+            <div className="absolute inset-0 flex items-center justify-center bg-[rgba(255,252,246,0.9)] px-4 py-6 text-sm font-semibold text-slate-500 backdrop-blur-sm">
+              <div className="w-full max-w-[18rem] rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
+                <div className="mb-3 h-3 w-20 animate-pulse rounded-full bg-slate-200" />
+                <div className="mb-2 h-44 animate-pulse rounded-[1rem] bg-[linear-gradient(90deg,_#f3e7d4_0%,_#f7efe3_50%,_#f3e7d4_100%)]" />
+                <div className="flex gap-2">
+                  <div className="h-2.5 flex-1 animate-pulse rounded-full bg-slate-200" />
+                  <div className="h-2.5 w-12 animate-pulse rounded-full bg-slate-200" />
+                </div>
+              </div>
             </div>
           ) : null}
 
@@ -298,13 +358,13 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         </div>
       </div>
 
-      <div className="border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur" style={{ minHeight: 'var(--reader-footer-height)' }}>
+      <div className={`border-t border-slate-200/70 bg-white/85 px-2 py-2 backdrop-blur transition-all duration-300 ${showChrome ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}`} style={{ minHeight: 'var(--reader-footer-height)' }}>
         <div className="mx-auto flex items-center gap-2">
-          <Button variant="outline" className="flex-1 rounded-2xl border-slate-200 bg-white text-sm font-semibold text-slate-700" onClick={goToPrevious} disabled={pageNumber <= 1}>
+          <Button variant="outline" className="flex-1 rounded-2xl border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm" onClick={goToPrevious} disabled={pageNumber <= 1}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Sebelumnya
           </Button>
-          <Button className="flex-1 rounded-2xl bg-primary text-sm font-semibold text-white" onClick={goToNext} disabled={pageNumber >= totalPages}>
+          <Button className="flex-1 rounded-2xl bg-primary text-sm font-semibold text-white shadow-sm" onClick={goToNext} disabled={pageNumber >= totalPages}>
             Selanjutnya
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

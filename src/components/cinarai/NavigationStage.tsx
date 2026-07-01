@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { StageShell } from './StageShell';
-import { Bot, Info, Maximize, RotateCw, Send, ScanLine } from 'lucide-react';
+import { Bot, Compass, Info, Maximize, RotateCw, Send, ScanLine } from 'lucide-react';
 
 interface NavigationStageProps {
   onComplete: (payload?: Record<string, unknown>) => void;
@@ -25,7 +25,7 @@ export function NavigationStage({ onComplete, onAiAssist }: NavigationStageProps
   };
 
   return (
-    <StageShell title="Navigation" subtitle="Scan marker komik, jelajahi model 3D, lalu tanya AI" badge="AR + AI" code="N" tone="bg-green-600">
+    <StageShell title="Navigation" subtitle="Scan marker komik, jelajahi model 3D, lalu tanya AI" badge="AR + AI" code="N" tone="bg-cyan-600" icon={<Compass className="h-5 w-5" />} accentClassName="from-cyan-50 via-white to-slate-50" buttonClassName="bg-cyan-600 hover:bg-cyan-700" progressClassName="bg-cyan-50/70">
       <div className="space-y-4">
         <div className="grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-lg border border-green-100 bg-green-50 p-4">
@@ -69,7 +69,7 @@ export function NavigationStage({ onComplete, onAiAssist }: NavigationStageProps
           </div>
         </div>
         {aiResponse ? <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{aiResponse}</div> : null}
-        <Button onClick={() => onComplete({ detectedObject: detected, question })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700">
+        <Button onClick={() => onComplete({ detectedObject: detected, question })} className="w-full rounded-lg bg-cyan-600 py-6 text-base font-semibold hover:bg-cyan-700">
           Lanjut ke penalaran
         </Button>
       </div>

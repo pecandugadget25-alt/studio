@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StageShell } from './StageShell';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Calculator } from 'lucide-react';
 
 interface ResolutionStageProps {
   onComplete: (payload?: Record<string, unknown>) => void;
@@ -26,7 +26,7 @@ export function ResolutionStage({ onComplete, onAiAssist }: ResolutionStageProps
   };
 
   return (
-    <StageShell title="Resolution" subtitle="Selesaikan tantangan numerasi untuk menemukan jawaban terbaik" badge="Soal" code="R" tone="bg-red-500">
+    <StageShell title="Resolution" subtitle="Selesaikan tantangan numerasi untuk menemukan jawaban terbaik" badge="Soal" code="R" tone="bg-red-500" icon={<Calculator className="h-5 w-5" />} accentClassName="from-red-50 via-white to-slate-50" buttonClassName="bg-red-500 hover:bg-red-600" progressClassName="bg-red-50/70">
       <div className="space-y-4">
         <div className="rounded-lg bg-red-50 p-4 text-sm text-slate-600">
           <p className="font-semibold text-slate-800">Misi Kubus</p>
@@ -44,7 +44,7 @@ export function ResolutionStage({ onComplete, onAiAssist }: ResolutionStageProps
           {loading ? 'AI sedang menjelaskan...' : 'Lihat penjelasan AI'}
         </Button>
         {feedback ? <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{feedback}</div> : null}
-        <Button onClick={() => onComplete({ answer, score: isCorrect ? 100 : 60 })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700" disabled={!answer.trim()}>
+        <Button onClick={() => onComplete({ answer, score: isCorrect ? 100 : 60 })} className="w-full rounded-lg bg-red-500 py-6 text-base font-semibold hover:bg-red-600" disabled={!answer.trim()}>
           Lanjut ke aplikasi
         </Button>
       </div>

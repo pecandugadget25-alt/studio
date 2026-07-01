@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { StageShell } from './StageShell';
-import { BookOpen, ClipboardCheck, UserRound } from 'lucide-react';
+import { BookOpen, ClipboardCheck, Sparkles, UserRound } from 'lucide-react';
 
 interface CoverStageProps {
   onComplete: () => void;
@@ -13,7 +13,7 @@ interface CoverStageProps {
 
 export function CoverStage({ onComplete, coverImage, storyIntro, learningObjectives, characters }: CoverStageProps) {
   return (
-    <StageShell title="Cover Komik" subtitle="Mulai petualangan numerasi lewat komik AR etnomatematika Candi Jawi" badge="Mulai" code="1" tone="bg-slate-700">
+    <StageShell title="Cover Komik" subtitle="Mulai petualangan numerasi lewat komik AR etnomatematika Candi Jawi" badge="Mulai" code="1" tone="bg-slate-700" icon={<Sparkles className="h-5 w-5" />} accentClassName="from-slate-50 via-white to-slate-100" buttonClassName="bg-slate-700 hover:bg-slate-800" progressClassName="bg-slate-50">
       <div className="space-y-4">
         {coverImage ? (
           <div className="overflow-hidden rounded-lg border border-slate-200">
@@ -51,7 +51,7 @@ export function CoverStage({ onComplete, coverImage, storyIntro, learningObjecti
             <p className="mt-2">Disiapkan sebelum tahap Contextualization.</p>
           </div>
         </div>
-        <Button onClick={onComplete} className="w-full rounded-lg bg-blue-600 py-6 text-base font-semibold hover:bg-blue-700">
+        <Button onClick={onComplete} className="w-full rounded-lg bg-slate-700 py-6 text-base font-semibold hover:bg-slate-800">
           Mulai petualangan
         </Button>
       </div>

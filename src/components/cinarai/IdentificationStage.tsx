@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { StageShell } from './StageShell';
-import { Box, Cone, Pyramid, Shapes } from 'lucide-react';
+import { Binoculars, Box, Cone, Pyramid, Shapes } from 'lucide-react';
 
 interface IdentificationStageProps {
   onComplete: (payload?: Record<string, unknown>) => void;
@@ -45,7 +45,7 @@ export function IdentificationStage({ onComplete, onAiAssist }: IdentificationSt
   };
 
   return (
-    <StageShell title="Identification" subtitle="Identifikasi informasi penting dari gambar dan cerita Candi Jawi" badge="Quiz" code="I" tone="bg-teal-600">
+    <StageShell title="Identification" subtitle="Identifikasi informasi penting dari gambar dan cerita Candi Jawi" badge="Quiz" code="I" tone="bg-emerald-600" icon={<Binoculars className="h-5 w-5" />} accentClassName="from-emerald-50 via-white to-slate-50" buttonClassName="bg-emerald-600 hover:bg-emerald-700" progressClassName="bg-emerald-50/70">
       <div className="space-y-4">
         <div className="rounded-lg bg-teal-50 p-4 text-sm text-slate-600">
           <p className="font-semibold text-slate-800">Pertanyaan pengamatan</p>
@@ -75,7 +75,7 @@ export function IdentificationStage({ onComplete, onAiAssist }: IdentificationSt
           <p className="font-medium">{feedback}</p>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-teal-600">Skor sementara: {score}</p>
         </div>
-        <Button onClick={() => onComplete({ answer: selected, score })} className="w-full rounded-lg bg-teal-600 py-6 text-base font-semibold hover:bg-teal-700" disabled={selected.length === 0}>
+        <Button onClick={() => onComplete({ answer: selected, score })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700" disabled={selected.length === 0}>
           Lanjut ke tahap berikutnya
         </Button>
       </div>

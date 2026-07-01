@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { StageShell } from './StageShell';
-import { Volume2 } from 'lucide-react';
+import { Compass, Volume2 } from 'lucide-react';
 
 interface ContextualizationStageProps {
   onComplete: (payload?: Record<string, unknown>) => void;
@@ -40,7 +40,7 @@ export function ContextualizationStage({ onComplete, onAiAssist }: Contextualiza
   };
 
   return (
-    <StageShell title="Contextualization" subtitle="Baca komik Candi Jawi untuk mengaitkan matematika dengan dunia nyata" badge="Komik" code="C" tone="bg-blue-600">
+    <StageShell title="Contextualization" subtitle="Baca komik Candi Jawi untuk mengaitkan matematika dengan dunia nyata" badge="Komik" code="C" tone="bg-blue-600" icon={<Compass className="h-5 w-5" />} accentClassName="from-blue-50 via-white to-slate-50" buttonClassName="bg-blue-600 hover:bg-blue-700" progressClassName="bg-blue-50/70">
       <div className="space-y-4">
         <div className="rounded-lg bg-blue-50 p-4">
           <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.25em] text-blue-600">
@@ -69,7 +69,7 @@ export function ContextualizationStage({ onComplete, onAiAssist }: Contextualiza
           {loading ? 'AI sedang berpikir...' : 'Tanya AI tentang cerita'}
         </Button>
         {aiResponse ? <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{aiResponse}</div> : null}
-        <Button onClick={() => onComplete({ page: page + 1, comicCompleted: true })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700">
+        <Button onClick={() => onComplete({ page: page + 1, comicCompleted: true })} className="w-full rounded-lg bg-blue-600 py-6 text-base font-semibold hover:bg-blue-700">
           Selesai membaca dan lanjut
         </Button>
       </div>

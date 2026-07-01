@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { StageShell } from './StageShell';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Star } from 'lucide-react';
+import { Lightbulb, Star } from 'lucide-react';
 
 interface IntrospectionStageProps {
   onComplete: (payload?: Record<string, unknown>) => void;
@@ -33,7 +33,7 @@ export function IntrospectionStage({ onComplete, onAiAssist }: IntrospectionStag
   };
 
   return (
-    <StageShell title="Introspection" subtitle="Refleksikan pembelajaran dan nilai tingkat keyakinanmu" badge="Refleksi" code="I" tone="bg-sky-600">
+    <StageShell title="Introspection" subtitle="Refleksikan pembelajaran dan nilai tingkat keyakinanmu" badge="Refleksi" code="I" tone="bg-indigo-600" icon={<Lightbulb className="h-5 w-5" />} accentClassName="from-indigo-50 via-white to-slate-50" buttonClassName="bg-indigo-600 hover:bg-indigo-700" progressClassName="bg-indigo-50/70">
       <div className="space-y-4">
         <div className="rounded-lg bg-sky-50 p-4 text-sm text-slate-600">
           <label className="mb-2 block font-semibold text-slate-800">Tingkat kepercayaan diri</label>
@@ -62,7 +62,7 @@ export function IntrospectionStage({ onComplete, onAiAssist }: IntrospectionStag
           {loading ? 'AI sedang membuat rangkuman...' : 'Buat komentar AI'}
         </Button>
         {summary ? <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{summary}</div> : null}
-        <Button onClick={() => onComplete({ confidence, checklist, notes, summary })} className="w-full rounded-lg bg-emerald-600 py-6 text-base font-semibold hover:bg-emerald-700">
+        <Button onClick={() => onComplete({ confidence, checklist, notes, summary })} className="w-full rounded-lg bg-indigo-600 py-6 text-base font-semibold hover:bg-indigo-700">
           Lihat laporan akhir
         </Button>
       </div>
