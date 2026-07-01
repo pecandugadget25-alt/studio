@@ -28,6 +28,7 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
   const [pageNumber, setPageNumber] = useState<number>(Math.max(1, session.currentPage ?? 1));
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [layoutVersion, setLayoutVersion] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null);
@@ -43,6 +44,19 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
   }, [session.currentPage]);
 
   const totalPages = numPages ?? session.totalPages ?? 1;
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !containerRef.current) {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      setLayoutVersion((version) => version + 1);
+    });
+
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -135,8 +149,12 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         }
 
         const viewport = page.getViewport({ scale: 1 });
-        const maxWidth = Math.max(240, (containerRef.current?.clientWidth ?? 720) - 24);
-        const scale = Math.min(2.4, Math.max(0.85, maxWidth / viewport.width));
+        const availableWidth = containerRef.current?.clientWidth ?? window.innerWidth;
+        const availableHeight = containerRef.current?.clientHeight ?? window.innerHeight;
+        const maxWidth = Math.max(1, availableWidth);
+        const maxHeight = Math.max(1, availableHeight);
+        // compute scale so the entire page fits without cropping, using viewport units and clamped scales
+        const scale = Math.min(2.4, Math.max(0.25, Math.min(maxWidth / viewport.width, maxHeight / viewport.height)));
         const scaledViewport = page.getViewport({ scale });
         const context = canvas.getContext('2d');
 
@@ -147,8 +165,9 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         const outputScale = window.devicePixelRatio || 1;
         canvas.width = Math.floor(scaledViewport.width * outputScale);
         canvas.height = Math.floor(scaledViewport.height * outputScale);
-        canvas.style.width = `${scaledViewport.width}px`;
-        canvas.style.height = `${scaledViewport.height}px`;
+        // let CSS control the visual size: use responsive width and auto height so pages never crop
+        canvas.style.width = '100%';
+        canvas.style.height = 'auto';
 
         context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -182,7 +201,7 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
       renderTaskRef.current?.cancel();
       renderTaskRef.current = null;
     };
-  }, [pageNumber, totalPages]);
+  }, [pageNumber, totalPages, layoutVersion]);
 
   const handlePageChange = (nextPage: number) => {
     const boundedPage = Math.min(Math.max(1, nextPage), totalPages || 1);
@@ -204,21 +223,34 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-8rem)] min-w-0 flex-col bg-[#f7f2e9] pb-24">
-      <div className="mx-auto flex h-16 w-full max-w-[1000px] min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-3 backdrop-blur sm:px-4">
+    <div className="mx-auto flex w-full max-w-[min(100%,1000px)] min-w-0 flex-col bg-[#f7f2e9]" style={{
+      ['--reader-header-height' as any]: 'clamp(56px,6.5vh,64px)',
+      ['--reader-footer-height' as any]: 'clamp(48px,5.5vh,56px)',
+      ['--reader-gap' as any]: 'clamp(0.5rem,1.5dvw,1rem)',
+      width: 'min(100%,1000px)',
+      margin: '0 auto',
+      paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+      paddingRight: 'max(1rem, env(safe-area-inset-right))',
+    }}>
+      <div className="flex items-center justify-between gap-[clamp(0.5rem,2dvw,1rem)] border-b border-slate-200 bg-white/90 px-[var(--reader-gap)] backdrop-blur" style={{ height: 'var(--reader-header-height)' }}>
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-semibold text-slate-900">{comicTitle}</p>
           <p className="text-xs text-slate-500">Page {pageNumber} / {totalPages}</p>
         </div>
-        <Button variant="ghost" size="sm" className="h-9 rounded-full px-3 text-sm font-semibold text-slate-700" onClick={onExit}>
+        <Button variant="ghost" size="sm" className="rounded-full px-[clamp(0.75rem,2dvw,1rem)] text-sm font-semibold text-slate-700" onClick={onExit}>
           Exit
         </Button>
       </div>
 
-      <div ref={containerRef} className="mx-auto w-full max-w-[1000px] min-w-0 flex-1 bg-[#f7f2e9] px-3 py-3 sm:px-4 lg:px-0">
-        <div className="relative flex h-[60vh] items-center justify-center rounded-lg border border-slate-200 bg-white p-1 shadow-inner md:h-[70vh] lg:h-[75vh]">
-          <div className="flex h-full w-full min-w-0 items-center justify-center overflow-hidden rounded-md bg-[#f3eee8] p-1 sm:p-2">
-            <canvas ref={canvasRef} className="mx-auto block max-h-full max-w-full object-contain" />
+      <div className="flex-1 bg-[#f7f2e9] px-[var(--reader-gap)] py-[var(--reader-gap)]">
+        <div className="relative flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white p-[clamp(0.25rem,0.8dvw,0.5rem)] shadow-inner" style={{
+          minHeight: 'min(70vh, calc(100vh - var(--reader-header-height) - var(--reader-footer-height) - 6rem))',
+          alignItems: 'center',
+        }}>
+          <div ref={containerRef} className="flex h-full w-full min-w-0 items-center justify-center overflow-auto rounded-md bg-[#f3eee8] p-[clamp(0.25rem,0.8dvw,0.5rem)]">
+            <div className="w-full" style={{ maxWidth: '100%' }}>
+              <canvas ref={canvasRef} className="mx-auto block w-full h-auto object-contain" />
+            </div>
           </div>
 
           {isLoading ? (
@@ -236,13 +268,13 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur">
-        <div className="mx-auto grid w-full max-w-[1000px] grid-cols-2 gap-2 sm:gap-3">
-          <Button variant="outline" className="h-14 rounded-lg border-slate-200 bg-white text-sm font-semibold text-slate-700" onClick={goToPrevious} disabled={pageNumber <= 1}>
+      <div className="sticky bottom-0 z-40 border-t border-slate-200 bg-white/95 px-[var(--reader-gap)] py-[clamp(0.375rem,1dvh,0.75rem)] backdrop-blur" style={{ height: 'var(--reader-footer-height)' }}>
+        <div className="mx-auto grid w-full grid-cols-2 gap-[clamp(0.5rem,1.5dvw,0.75rem)]">
+          <Button variant="outline" className="rounded-lg border-slate-200 bg-white text-sm font-semibold text-slate-700" onClick={goToPrevious} disabled={pageNumber <= 1}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Previous
           </Button>
-          <Button className="h-14 rounded-lg bg-primary text-sm font-semibold text-white" onClick={goToNext} disabled={pageNumber >= totalPages}>
+          <Button className="rounded-lg bg-primary text-sm font-semibold text-white" onClick={goToNext} disabled={pageNumber >= totalPages}>
             Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

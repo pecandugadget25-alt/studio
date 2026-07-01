@@ -487,7 +487,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
 
   return (
     <div className="min-h-screen bg-slate-100 pb-0">
-      <header className="fixed left-0 right-0 top-16 z-40 h-16 border-b bg-white/95 backdrop-blur-md">
+      <header className="fixed left-0 right-0 z-40 border-b bg-white/95 backdrop-blur-md" style={{ top: 'clamp(48px,4.5vh,64px)', height: 'clamp(56px,6.5vh,64px)' }}>
         <div className="mx-auto flex h-full w-full max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/comics">
             <Button variant="ghost" size="icon" className="rounded-lg">
@@ -511,7 +511,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
         </div>
       </header>
 
-      <main className={cn('mx-auto flex w-full flex-col pt-32', isReadingStage ? 'min-h-screen max-w-[1000px] px-0 pb-0' : 'max-w-screen-xl gap-5 px-4 pb-8 sm:px-6 lg:px-8')}>
+      <main className={cn('mx-auto flex w-full flex-col', isReadingStage ? 'min-h-screen px-0 pb-0' : 'max-w-screen-xl gap-5 px-4 pb-8 sm:px-6 lg:px-8')} style={isReadingStage ? { maxWidth: 'min(100%,1000px)', margin: '0 auto', paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' } : undefined}>
         {!isReadingStage ? (
         <div className="grid gap-6 lg:grid-cols-[1.55fr_0.95fr]">
           <div className="space-y-6">
