@@ -33,15 +33,10 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
   const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null);
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
   const onPageChangeRef = useRef(onPageChange);
-  const pageNumberRef = useRef(pageNumber);
 
   useEffect(() => {
     onPageChangeRef.current = onPageChange;
   }, [onPageChange]);
-
-  useEffect(() => {
-    pageNumberRef.current = pageNumber;
-  }, [pageNumber]);
 
   useEffect(() => {
     setPageNumber(Math.max(1, session.currentPage ?? 1));
@@ -55,17 +50,18 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
     }
 
     let cancelled = false;
+    let loadingTask: ReturnType<typeof pdfjs.getDocument> | null = null;
 
     const loadPdf = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        if (pdfDocumentRef.current) {
-          pdfDocumentRef.current = null;
-        }
+        renderTaskRef.current?.cancel();
+        renderTaskRef.current = null;
+        pdfDocumentRef.current = null;
 
-        const loadingTask = pdfjs.getDocument({
+        loadingTask = pdfjs.getDocument({
           url: pdfUrl,
           useWorkerFetch: false,
         });
@@ -79,8 +75,12 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         const nextTotalPages = pdf.numPages || 1;
         setNumPages(nextTotalPages);
 
-        const boundedPage = Math.min(Math.max(1, pageNumberRef.current), nextTotalPages);
-        setPageNumber(boundedPage);
+        let boundedPage = 1;
+        setPageNumber((currentPage) => {
+          boundedPage = Math.min(Math.max(1, currentPage), nextTotalPages);
+          return boundedPage;
+        });
+
         onPageChangeRef.current(boundedPage, nextTotalPages, boundedPage >= nextTotalPages);
       } catch (err) {
         if (cancelled) {
@@ -97,11 +97,10 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
 
     return () => {
       cancelled = true;
+      loadingTask?.destroy?.();
       renderTaskRef.current?.cancel();
       renderTaskRef.current = null;
-      if (pdfDocumentRef.current) {
-        pdfDocumentRef.current = null;
-      }
+      pdfDocumentRef.current = null;
     };
   }, [pdfUrl]);
 
@@ -119,13 +118,19 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         return;
       }
 
-      const targetPage = Math.min(Math.max(1, pageNumberRef.current), totalPages || 1);
+      const targetPage = Math.min(Math.max(1, pageNumber), totalPages || 1);
       setIsLoading(true);
+
+      if (targetPage < 1 || targetPage > totalPages) {
+        throw new Error(`Halaman ${targetPage} di luar batas 1-${totalPages}.`);
+      }
 
       try {
         renderTaskRef.current?.cancel();
+        renderTaskRef.current = null;
+
         const page = await pdf.getPage(targetPage);
-        if (cancelled || targetPage !== pageNumberRef.current) {
+        if (cancelled) {
           return;
         }
 
@@ -146,7 +151,7 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
         canvas.style.height = `${scaledViewport.height}px`;
 
         context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
-        context.clearRect(0, 0, scaledViewport.width, scaledViewport.height);
+        context.clearRect(0, 0, canvas.width, canvas.height);
 
         const renderTask = page.render({
           canvas,
@@ -178,9 +183,6 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
       renderTaskRef.current = null;
     };
   }, [pageNumber, totalPages]);
-
-  const readingCompleted = Boolean(session.readingCompleted);
-  const isAtLastPage = totalPages > 0 && pageNumber >= totalPages;
 
   const handlePageChange = (nextPage: number) => {
     const boundedPage = Math.min(Math.max(1, nextPage), totalPages || 1);
