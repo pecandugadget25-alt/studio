@@ -204,45 +204,45 @@ export function PdfComicReader({ pdfUrl, comicTitle, session, onPageChange, onRe
   };
 
   return (
-    <div className="flex min-h-screen min-w-0 flex-col bg-[#f7f2e9]">
-      <div className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
-        <div className="min-w-0 flex-1">
+    <div className="flex min-h-[calc(100vh-8rem)] min-w-0 flex-col bg-[#f7f2e9] pb-24">
+      <div className="mx-auto flex h-16 w-full max-w-[1000px] min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-3 backdrop-blur sm:px-4">
+        <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-semibold text-slate-900">{comicTitle}</p>
           <p className="text-xs text-slate-500">Page {pageNumber} / {totalPages}</p>
         </div>
-        <Button variant="ghost" size="sm" className="rounded-full px-3 text-sm font-semibold text-slate-700" onClick={onExit}>
+        <Button variant="ghost" size="sm" className="h-9 rounded-full px-3 text-sm font-semibold text-slate-700" onClick={onExit}>
           Exit
         </Button>
       </div>
 
-      <div ref={containerRef} className="min-w-0 flex-1 bg-[#f7f2e9] px-2 py-2 sm:px-3 sm:py-3">
-        <div className="relative flex h-full min-h-[calc(100vh-170px)] items-center justify-center rounded-[1.5rem] border border-slate-200 bg-white p-2 shadow-inner">
-          <div className="flex h-full w-full min-w-0 items-center justify-center overflow-hidden rounded-[1.25rem] bg-[#f3eee8] p-2">
-            <canvas ref={canvasRef} className="mx-auto block max-h-full max-w-full" />
+      <div ref={containerRef} className="mx-auto w-full max-w-[1000px] min-w-0 flex-1 bg-[#f7f2e9] px-3 py-3 sm:px-4 lg:px-0">
+        <div className="relative flex h-[60vh] items-center justify-center rounded-lg border border-slate-200 bg-white p-1 shadow-inner md:h-[70vh] lg:h-[75vh]">
+          <div className="flex h-full w-full min-w-0 items-center justify-center overflow-hidden rounded-md bg-[#f3eee8] p-1 sm:p-2">
+            <canvas ref={canvasRef} className="mx-auto block max-h-full max-w-full object-contain" />
           </div>
 
           {isLoading ? (
-            <div className="absolute inset-2 flex flex-col items-center justify-center gap-3 rounded-[1.25rem] bg-white/90 text-sm font-semibold text-slate-500 backdrop-blur-sm">
+            <div className="absolute inset-1 flex flex-col items-center justify-center gap-3 rounded-md bg-white/90 text-sm font-semibold text-slate-500 backdrop-blur-sm">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
               Memuat halaman komik...
             </div>
           ) : null}
 
           {!isLoading && error ? (
-            <div className="absolute inset-2 flex items-center justify-center rounded-[1.25rem] bg-white/95 px-4 text-center text-sm text-red-500">
+            <div className="absolute inset-1 flex items-center justify-center rounded-md bg-white/95 px-4 text-center text-sm text-red-500">
               {error}
             </div>
           ) : null}
         </div>
       </div>
 
-      <div className="sticky bottom-0 z-20 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur">
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" className="h-12 rounded-[1.25rem] border-slate-200 bg-white text-sm font-semibold text-slate-700" onClick={goToPrevious} disabled={pageNumber <= 1}>
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur">
+        <div className="mx-auto grid w-full max-w-[1000px] grid-cols-2 gap-2 sm:gap-3">
+          <Button variant="outline" className="h-14 rounded-lg border-slate-200 bg-white text-sm font-semibold text-slate-700" onClick={goToPrevious} disabled={pageNumber <= 1}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Previous
           </Button>
-          <Button className="h-12 rounded-[1.25rem] bg-primary text-sm font-semibold text-white" onClick={goToNext} disabled={pageNumber >= totalPages}>
+          <Button className="h-14 rounded-lg bg-primary text-sm font-semibold text-white" onClick={goToNext} disabled={pageNumber >= totalPages}>
             Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

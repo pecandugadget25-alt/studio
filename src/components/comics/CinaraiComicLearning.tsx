@@ -511,7 +511,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
         </div>
       </header>
 
-      <main className={cn('mx-auto flex w-full max-w-screen-xl flex-col pt-32', isReadingStage ? 'min-h-screen px-0 pb-0' : 'gap-5 px-4 pb-8 sm:px-6 lg:px-8')}>
+      <main className={cn('mx-auto flex w-full flex-col pt-32', isReadingStage ? 'min-h-screen max-w-[1000px] px-0 pb-0' : 'max-w-screen-xl gap-5 px-4 pb-8 sm:px-6 lg:px-8')}>
         {!isReadingStage ? (
         <div className="grid gap-6 lg:grid-cols-[1.55fr_0.95fr]">
           <div className="space-y-6">
@@ -565,13 +565,9 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
       ) : null}
 
         {isReadingStage ? (
-          <div className="px-3 pb-3 pt-2">
-            <Button variant="ghost" className="w-full justify-between rounded-lg border border-slate-200 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm" onClick={() => setIsProgressOpen((value) => !value)}>
-              <span>Learning Progress</span>
-              {isProgressOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
+          <div className="px-3 pb-2 sm:px-4 lg:px-0">
             {isProgressOpen ? (
-              <div className="mt-2 space-y-3 rounded-lg border border-slate-200 bg-white/95 p-3 shadow-sm">
+              <div className="space-y-3 rounded-lg border border-slate-200 bg-white/95 p-3 shadow-sm">
                 <CinaraiStageProgress completedStages={session.completedStages} currentStageId={currentStageId} compact />
                 <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
                   <div>
