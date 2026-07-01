@@ -19,11 +19,10 @@ export function AppBar() {
   // Hanya tampilkan XP jika peran adalah 'siswa'
   const isStudent = profile.peran === 'siswa';
   const desktopNavItems = isStudent
-    ? [
+      ? [
         { label: "Beranda", icon: Home, href: "/" },
-        { label: "Modul", icon: BookOpen, href: "/modules" },
-        { label: "Scan QR", icon: QrCode, href: "/scan" },
         { label: "Komik", icon: BookOpen, href: "/komik" },
+        { label: "Scan QR", icon: QrCode, href: "/scan" },
         { label: "Peringkat", icon: Trophy, href: "/leaderboard" },
       ]
     : [

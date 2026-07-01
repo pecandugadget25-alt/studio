@@ -12,8 +12,8 @@ const StudentDataSchema = z.object({
   level: z.number(),
   poin: z.number(),
   badgeCount: z.number(),
-  completedModules: z.array(z.string()),
-  unfinishedModules: z.array(z.string()),
+  completedMaterials: z.array(z.string()),
+  unfinishedMaterials: z.array(z.string()),
 });
 
 const AnalysisOutputSchema = z.object({
@@ -52,23 +52,24 @@ LOGIKA STATUS:
 - XP 51-150: "AKTIF"
 - XP > 150: "UNGGUL"
 
-LOGIKA AREA LATIH (KONVERSI):
-Ubah nama modul menjadi area kompetensi berikut (Maksimal 2):
-- "Batik Nusantara" -> "Numerasi pada pola dan motif budaya"
-- "Candi Nusantara" -> "Numerasi pada bentuk dan struktur bangunan"
-- "Masjid Al Akbar" -> "Numerasi pada arsitektur dan pengukuran"
-- "Permainan Tradisional" -> "Strategi berpikir dan pola matematika"
+LOGIKA AREA LATIH:
+Ubah nama materi menjadi area kompetensi berikut (Maksimal 2):
+- "Bangun Ruang Candi Jawi" -> "Numerasi pada bentuk bangun ruang candi"
+- "Candi Penataran" -> "Numerasi pada struktur bangunan bersejarah"
+- "Gajah Mungkur" -> "Numerasi pada pengamatan bentuk ruang"
+- "Jembatan Merah" -> "Numerasi pada bentuk dan konstruksi"
+- "Keraton Sumenep" -> "Numerasi pada pola arsitektur budaya"
 
 LOGIKA RINGKASAN:
 - XP = 0: "Siswa masih berada pada tahap orientasi awal platform ETHNO-ARITH. Aktivitas belum mencukupi untuk pemetaan mendalam."
-- Modul 1-2 selesai: "Siswa menunjukkan keterlibatan awal dalam pembelajaran berbasis budaya dan mulai membangun pemahaman materi."
-- Modul 3+ selesai: "Siswa menunjukkan konsistensi belajar yang baik dan telah menguasai sebagian besar materi budaya."`,
+- Materi 1-2 selesai: "Siswa menunjukkan keterlibatan awal dalam pembelajaran berbasis budaya dan mulai membangun pemahaman materi."
+- Materi 3+ selesai: "Siswa menunjukkan konsistensi belajar yang baik dan telah menguasai sebagian besar materi budaya."`,
   prompt: `Analisis siswa berikut:
 Nama: {{{nama}}}
 XP: {{{poin}}}
 Badge: {{{badgeCount}}}
-Modul Selesai: {{#each completedModules}}{{{this}}}, {{/each}}
-Modul Belum: {{#each unfinishedModules}}{{{this}}}, {{/each}}
+Materi Selesai: {{#each completedMaterials}}{{{this}}}, {{/each}}
+Materi Belum: {{#each unfinishedMaterials}}{{{this}}}, {{/each}}
 
 Hasilkan laporan dalam format JSON sesuai skema yang ditentukan.`
 });
@@ -97,10 +98,10 @@ const studentIndividualAnalysisFlow = ai.defineFlow(
         status,
         ringkasan: input.poin === 0 ? "Siswa masih berada pada tahap orientasi awal." : "Siswa sedang dalam proses membangun pemahaman numerasi budaya.",
         kelebihan: ["Memiliki kesiapan mengikuti pembelajaran"],
-        areaLatih: ["Eksplorasi modul numerasi dasar"],
+        areaLatih: ["Eksplorasi materi numerasi dasar"],
         saranGuru: "Dampingi siswa dalam eksplorasi awal fitur aplikasi.",
         tipsSiswa: "Ayo mulai petualanganmu dengan menyelesaikan satu aktivitas hari ini!",
-        prediksi: "Siswa akan berkembang seiring peningkatan interaksi dengan modul."
+        prediksi: "Siswa akan berkembang seiring peningkatan interaksi dengan materi."
       };
     }
   }

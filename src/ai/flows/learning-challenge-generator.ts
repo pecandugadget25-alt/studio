@@ -9,7 +9,7 @@ import {z} from 'genkit';
 const LearningChallengeInputSchema = z.object({
   xp: z.number().describe('Total XP siswa saat ini.'),
   level: z.number().describe('Level siswa saat ini.'),
-  completedModules: z.array(z.string()).describe('Daftar ID modul yang sudah diselesaikan.'),
+  completedMaterials: z.array(z.string()).describe('Daftar ID materi yang sudah diselesaikan.'),
   quizScore: z.number().optional().describe('Rata-rata atau skor kuis terakhir.'),
 });
 export type LearningChallengeInput = z.infer<typeof LearningChallengeInputSchema>;
@@ -43,7 +43,7 @@ ATURAN TANTANGAN:
 - Bahasa Indonesia yang ceria dan sangat mudah dipahami anak SD.
 - Tantangan harus konkret dan berbasis budaya Indonesia.
 - Reward XP: 10 - 50 XP.`,
-  prompt: `Buat 1 tantangan spesial untuk siswa Level {{{level}}} dengan XP {{{xp}}}. Modul selesai: {{#each completedModules}}{{{this}}}, {{/each}}.`
+  prompt: `Buat 1 tantangan spesial untuk siswa Level {{{level}}} dengan XP {{{xp}}}. Materi selesai: {{#each completedMaterials}}{{{this}}}, {{/each}}.`
 });
 
 const learningChallengeFlow = ai.defineFlow(

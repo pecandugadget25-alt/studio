@@ -37,7 +37,7 @@ export default function ARScanPage() {
             </div>
             <h2 className="text-white text-2xl font-headline font-bold">Mulai Visualisasi AR</h2>
             <p className="text-white/60 text-sm leading-relaxed">
-              Arahkan kamera ke modul pembelajaran atau marker khusus untuk melihat visualisasi 3D bangun ruang dan pola batik.
+              Arahkan kamera ke materi pembelajaran atau marker khusus untuk melihat visualisasi 3D bangun ruang dan pola batik.
             </p>
             <Button size="lg" className="w-full h-14 text-lg font-bold bg-primary" onClick={() => setIsActive(true)}>
               Aktifkan Kamera

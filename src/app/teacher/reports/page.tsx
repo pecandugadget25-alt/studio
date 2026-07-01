@@ -18,10 +18,6 @@ import {
   TrendingUp,
   FileText,
   LayoutGrid,
-  MapPin,
-  Castle,
-  Landmark,
-  Dices,
   CircleDot
 } from "lucide-react";
 import Link from "next/link";
@@ -34,6 +30,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { cn } from "@/lib/utils";
+import { COMIC_LIBRARY } from "@/lib/comic-library";
 
 export const dynamic = "force-dynamic";
 
@@ -71,12 +68,13 @@ export default function TeacherReportsPage() {
     const totalBadges = students.reduce((acc, s) => acc + (s.badges?.length || 0), 0);
     const activeSiswa = students.filter(s => (s.poin || 0) > 0).length;
     
-    const moduleStats = [
-      { id: 'batik', name: 'Batik Nusantara', count: students.filter(s => s.completedModules?.includes('batik')).length, color: 'bg-orange-500', icon: MapPin },
-      { id: 'candi', name: 'Candi Nusantara', count: students.filter(s => s.completedModules?.includes('candi')).length, color: 'bg-primary', icon: Castle },
-      { id: 'masjid', name: 'Masjid Al Akbar', count: students.filter(s => s.completedModules?.includes('masjid')).length, color: 'bg-emerald-500', icon: Landmark },
-      { id: 'games', name: 'Permainan Tradisional', count: students.filter(s => s.completedModules?.includes('games')).length, color: 'bg-red-500', icon: Dices },
-    ].sort((a, b) => b.count - a.count);
+    const materialStats = COMIC_LIBRARY.map((comic, index) => ({
+      id: comic.id,
+      name: comic.title,
+      count: students.filter((s) => s.completedComics?.includes(comic.id)).length,
+      color: ['bg-primary', 'bg-emerald-500', 'bg-amber-500', 'bg-red-500', 'bg-sky-500'][index] ?? 'bg-primary',
+      icon: BookOpen,
+    })).sort((a, b) => b.count - a.count);
 
     // Status Kelas
     const statusCounts = {
@@ -85,7 +83,7 @@ export default function TeacherReportsPage() {
       Perhatian: students.filter(s => (s.poin || 0) === 0).length
     };
 
-    return { total, totalXP, avgXP, totalBadges, activeSiswa, moduleStats, statusCounts };
+    return { total, totalXP, avgXP, totalBadges, activeSiswa, materialStats, statusCounts };
   }, [students]);
 
   useEffect(() => {
@@ -101,7 +99,7 @@ export default function TeacherReportsPage() {
         }
 
         const modMap: Record<string, number> = {};
-        stats.moduleStats.forEach((m) => {
+        stats.materialStats.forEach((m) => {
           modMap[m.name] = m.count;
         });
 
@@ -111,7 +109,7 @@ export default function TeacherReportsPage() {
           totalXP: stats.totalXP,
           totalBadges: stats.totalBadges,
           averageXP: stats.avgXP,
-          moduleStats: modMap,
+          materialStats: modMap,
           unfinishedCount: stats.statusCounts.Perhatian
         });
         setAiInsight(result);
@@ -134,7 +132,7 @@ export default function TeacherReportsPage() {
       "Level": s.level || 1,
       "XP": s.poin || 0,
       "Lencana": s.badges?.length || 0,
-      "Modul Selesai": s.completedModules?.join(", ") || "-"
+      "Materi Selesai": s.completedComics?.join(", ") || "-"
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -148,8 +146,8 @@ export default function TeacherReportsPage() {
     setIsExportingPdf(true);
     const doc = new jsPDF();
     autoTable(doc, {
-      head: [["Nama", "Level", "XP", "Lencana", "Modul Selesai"]],
-      body: students.map((s) => [s.nama, s.level || 1, s.poin || 0, s.badges?.length || 0, s.completedModules?.join(", ") || "-"]),
+      head: [["Nama", "Level", "XP", "Lencana", "Materi Selesai"]],
+      body: students.map((s) => [s.nama, s.level || 1, s.poin || 0, s.badges?.length || 0, s.completedComics?.join(", ") || "-"]),
     });
     doc.save("Laporan_ETHNO_ARITH.pdf");
     setIsExportingPdf(false);
@@ -256,13 +254,13 @@ export default function TeacherReportsPage() {
         </Card>
       </section>
 
-      {/* MODUL TERPOPULER */}
+      {/* Materi terpopuler */}
       <section className="space-y-4">
         <h3 className="font-headline font-bold text-sm uppercase tracking-wider px-1 flex items-center gap-2 text-slate-900">
-          <TrendingUp className="h-4 w-4 text-primary" /> Performa Modul
+          <TrendingUp className="h-4 w-4 text-primary" /> Performa Materi
         </h3>
         <Card className="rounded-[2rem] border-none p-6 bg-white shadow-sm space-y-6">
-          {stats?.moduleStats.map((mod) => (
+          {stats?.materialStats.map((mod) => (
             <div key={mod.id} className="space-y-3">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">

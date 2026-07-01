@@ -30,6 +30,7 @@ import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { analyzeClassPerformance, type ClassAnalysisOutput } from "@/ai/flows/class-performance-analysis";
 import { cn } from "@/lib/utils";
+import { COMIC_LIBRARY } from "@/lib/comic-library";
 
 export const dynamic = "force-dynamic";
 
@@ -87,14 +88,14 @@ export default function TeacherMobileDashboard() {
       .sort((a, b) => (b.poin || 0) - (a.poin || 0))
       .slice(0, 5);
 
-    const moduleStats = {
-      'Batik Nusantara': students.filter(s => s.completedModules?.includes('batik')).length,
-      'Candi Nusantara': students.filter(s => s.completedModules?.includes('candi')).length,
-      'Masjid Al Akbar': students.filter(s => s.completedModules?.includes('masjid')).length,
-      'Permainan Tradisional': students.filter(s => s.completedModules?.includes('games')).length,
-    };
+    const materialStats = Object.fromEntries(
+      COMIC_LIBRARY.map((comic) => [
+        comic.title,
+        students.filter((s) => s.completedComics?.includes(comic.id)).length,
+      ])
+    );
 
-    return { total, active, totalXP, totalBadges, avgXP, topStudents, moduleStats };
+    return { total, active, totalXP, totalBadges, avgXP, topStudents, materialStats };
   }, [students]);
 
   const safeStats = stats ?? {
@@ -104,12 +105,7 @@ export default function TeacherMobileDashboard() {
     totalBadges: 0,
     avgXP: 0,
     topStudents: [],
-    moduleStats: {
-      'Batik Nusantara': 0,
-      'Candi Nusantara': 0,
-      'Masjid Al Akbar': 0,
-      'Permainan Tradisional': 0,
-    },
+    materialStats: Object.fromEntries(COMIC_LIBRARY.map((comic) => [comic.title, 0])),
   };
 
   // Invoke AI Analysis
@@ -127,7 +123,7 @@ export default function TeacherMobileDashboard() {
           totalXP: safeStats.totalXP,
           totalBadges: safeStats.totalBadges,
           averageXP: safeStats.avgXP,
-          moduleStats: safeStats.moduleStats,
+          materialStats: safeStats.materialStats,
           unfinishedCount: safeStats.total - safeStats.active
         });
         setAiInsight(result);
@@ -139,7 +135,7 @@ export default function TeacherMobileDashboard() {
     }
 
     void getInsight();
-  }, [aiInsight, aiLoading, safeStats.active, safeStats.avgXP, safeStats.moduleStats, safeStats.total, safeStats.totalBadges, safeStats.totalXP, stats]);
+  }, [aiInsight, aiLoading, safeStats.active, safeStats.avgXP, safeStats.materialStats, safeStats.total, safeStats.totalBadges, safeStats.totalXP, stats]);
 
   if (authLoading || studentsLoading || !profile) {
     return (

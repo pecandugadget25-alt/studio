@@ -11,17 +11,17 @@ const PersonalizedLearningRecommendationInputSchema = z.object({
   recentQuizResults: z
     .array(
       z.object({
-        moduleName: z.string().describe('Nama modul kuis.'),
+        materialName: z.string().describe('Nama materi kuis.'),
         score: z.number().describe('Skor kuis (0-100).'),
         difficulty: z.enum(['mudah', 'sedang', 'sulit']).describe('Tingkat kesulitan kuis.'),
       })
     )
     .optional()
     .describe('Hasil kuis terbaru siswa.'),
-  completedModules: z.array(z.string()).optional().describe('Daftar modul yang sudah selesai.'),
+  completedMaterials: z.array(z.string()).optional().describe('Daftar materi yang sudah selesai.'),
   points: z.number().optional().describe('Total XP siswa.'),
   level: z.number().optional().describe('Level siswa.'),
-  availableModules: z.array(z.string()).describe('Daftar semua modul yang tersedia.'),
+  availableMaterials: z.array(z.string()).describe('Daftar semua materi yang tersedia.'),
   availableBadges: z.array(z.string()).describe('Daftar semua lencana yang tersedia.'),
 });
 export type PersonalizedLearningRecommendationInput = z.infer<typeof PersonalizedLearningRecommendationInputSchema>;
@@ -55,7 +55,7 @@ BATASAN MATERI:
 ATURAN FORMAT:
 - Berikan saran tantangan berikutnya dan 1 kalimat penyemangat.
 - Gunakan bahasa Indonesia yang ramah anak.`,
-  prompt: `Halo ETHNO-AI! Berikan saran belajar untuk {{{studentName}}} (Level {{{level}}}, XP {{{points}}}). Modul tersedia: {{#each availableModules}}{{{this}}}, {{/each}}. Berikan 1 tantangan berikutnya dan motivasi ceria dalam maksimal 2 kalimat.`
+  prompt: `Halo ETHNO-AI! Berikan saran belajar untuk {{{studentName}}} (Level {{{level}}}, XP {{{points}}}). Materi tersedia: {{#each availableMaterials}}{{{this}}}, {{/each}}. Berikan 1 tantangan berikutnya dan motivasi ceria dalam maksimal 2 kalimat.`
 });
 
 const personalizedLearningRecommendationFlow = ai.defineFlow(
@@ -72,7 +72,7 @@ const personalizedLearningRecommendationFlow = ai.defineFlow(
     } catch (error) {
       console.error('AI Flow Error:', error);
       return {
-        nextChallenge: "Ayo jelajahi Modul Batik Nusantara hari ini!",
+        nextChallenge: "Ayo jelajahi komik budaya hari ini!",
         motivationMessage: `Semangat terus belajarnya ya, ${input.studentName}, kamu pasti bisa!`
       };
     }

@@ -27,6 +27,7 @@ import { doc } from "firebase/firestore";
 import { analyzeStudentIndividually, type StudentAnalysisOutput } from "@/ai/flows/student-individual-analysis";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { COMIC_LIBRARY } from "@/lib/comic-library";
 
 const SHOW_AI_DEBUG = false; 
 
@@ -45,30 +46,23 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
 
   const { data: student, loading } = useDoc(studentRef);
 
-  const MODULE_LIST = [
-    { id: 'batik', name: 'Batik Nusantara' },
-    { id: 'candi', name: 'Candi Nusantara' },
-    { id: 'masjid', name: 'Masjid Al Akbar' },
-    { id: 'games', name: 'Permainan Tradisional' },
-  ];
-
   const aiContext = useMemo(() => {
     if (!student) return null;
-    const completed = MODULE_LIST
-      .filter(m => student.completedModules?.includes(m.id))
-      .map(m => m.name);
+    const completed = COMIC_LIBRARY
+      .filter((comic) => student.completedComics?.includes(comic.id))
+      .map((comic) => comic.title);
     
-    const unfinished = MODULE_LIST
-      .filter(m => !student.completedModules?.includes(m.id))
-      .map(m => m.name);
+    const unfinished = COMIC_LIBRARY
+      .filter((comic) => !student.completedComics?.includes(comic.id))
+      .map((comic) => comic.title);
 
     return {
       nama: student.nama || "Siswa",
       level: student.level || 1,
       poin: student.poin || 0,
       badgeCount: student.badges?.length || 0,
-      completedModules: completed,
-      unfinishedModules: unfinished,
+      completedMaterials: completed,
+      unfinishedMaterials: unfinished,
     };
   }, [student]);
 
@@ -187,7 +181,7 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
                 <BrainCircuit className="h-8 w-8 text-white" />
               </div>
               <h4 className="font-headline font-bold text-lg text-white">Analisis Pedagogik AI</h4>
-              <p className="text-[10px] text-white/80 px-6">Klik untuk melihat interpretasi cerdas berdasarkan progres modul siswa.</p>
+              <p className="text-[10px] text-white/80 px-6">Klik untuk melihat interpretasi cerdas berdasarkan progres materi siswa.</p>
               <Button className="w-full h-12 bg-white text-primary font-bold rounded-2xl shadow-xl hover:bg-slate-50 mt-4" onClick={handleGenerateAI}>
                 Hasilkan Laporan
               </Button>
@@ -271,12 +265,12 @@ export default function StudentDetailPage({ params }: { params: Promise<{ id: st
           <BookOpen className="h-4 w-4 text-primary" /> Progres Materi Nusantara
         </h3>
         <div className="space-y-3">
-          {MODULE_LIST.map((mod) => {
-            const isCompleted = student.completedModules?.includes(mod.id);
+          {COMIC_LIBRARY.map((comic) => {
+            const isCompleted = student.completedComics?.includes(comic.id);
             return (
-              <Card key={mod.id} className="rounded-2xl border-none p-4 bg-white shadow-sm">
+              <Card key={comic.id} className="rounded-2xl border-none p-4 bg-white shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-slate-700">{mod.name}</span>
+                  <span className="text-sm font-bold text-slate-700">{comic.title}</span>
                   {isCompleted ? (
                     <Badge className="bg-green-500 text-white text-[9px] uppercase font-bold px-2 py-0.5">Selesai</Badge>
                   ) : (

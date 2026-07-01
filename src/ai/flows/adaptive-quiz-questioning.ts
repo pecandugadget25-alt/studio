@@ -12,12 +12,12 @@ const AdaptiveQuizInputSchema = z.object({
     .min(0)
     .max(100)
     .describe('Skor terakhir siswa pada kuis sebelumnya (0-100).'),
-  moduleName: z
+  materialName: z
     .string()
-    .describe('Nama modul pembelajaran yang sedang diikuti siswa.'),
+    .describe('Nama materi pembelajaran yang sedang diikuti siswa.'),
   topic: z
     .string()
-    .describe('Topik spesifik dalam modul pembelajaran.'),
+    .describe('Topik spesifik dalam materi pembelajaran.'),
 });
 export type AdaptiveQuizInput = z.infer<typeof AdaptiveQuizInputSchema>;
 
@@ -49,7 +49,7 @@ Aturan Penentuan Kesulitan:
 - Skor < 60: Rekomendasikan 'Mudah'.
 - Skor 60 - 80: Rekomendasikan 'Sedang'.
 - Skor > 80: Rekomendasikan 'Sulit'.`,
-  prompt: `Siswa baru saja mendapatkan skor {{{lastScore}}} pada kuis {{{moduleName}}} topik {{{topic}}}. Berikan rekomendasi tingkat kesulitan berikutnya dalam format JSON.`,
+  prompt: `Siswa baru saja mendapatkan skor {{{lastScore}}} pada kuis {{{materialName}}} topik {{{topic}}}. Berikan rekomendasi tingkat kesulitan berikutnya dalam format JSON.`,
 });
 
 const adaptiveQuizQuestioningFlow = ai.defineFlow(

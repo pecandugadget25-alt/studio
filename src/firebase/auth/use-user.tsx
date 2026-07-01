@@ -13,7 +13,6 @@ export interface UserProfile {
   level: number;
   poin: number;
   scanCount?: number;
-  completedModules?: string[];
   completedComics?: string[];
   completedVideos?: string[];
   badges?: string[];

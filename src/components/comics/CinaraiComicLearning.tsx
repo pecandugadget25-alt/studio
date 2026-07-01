@@ -42,9 +42,8 @@ export const COMIC_DATA: Record<string, {
   title: string;
   description: string;
   comicFolder: string;
-  moduleLink: string;
   image: string;
-  moduleName: string;
+  materialName: string;
   color: string;
   learningObjectives: string[];
   characters: string[];
@@ -54,9 +53,8 @@ export const COMIC_DATA: Record<string, {
     title: 'Bangun Ruang Candi Jawi',
     description: 'Eksplorasi bangun ruang melalui aset komik Candi Jawi.',
     comicFolder: 'candi-jawi',
-    moduleLink: '/modules/candi',
     image: '/comics/candi-jawi/cover.webp',
-    moduleName: 'Candi Jawi',
+    materialName: 'Candi Jawi',
     color: 'bg-blue-600',
     learningObjectives: ['Mengidentifikasi bangun ruang pada arsitektur Candi Jawi', 'Menjelaskan alasan matematika dari bentuk candi', 'Menghitung volume kubus sederhana dari konteks candi'],
     characters: ['Aris', 'Naya', 'Bu Rani'],
@@ -66,9 +64,8 @@ export const COMIC_DATA: Record<string, {
     title: 'Bangun Ruang Candi Penataran',
     description: 'Eksplorasi bangun ruang melalui aset komik Candi Penataran.',
     comicFolder: 'candi-penataran',
-    moduleLink: '/modules/candi',
     image: '/comics/candi-penataran/cover.webp',
-    moduleName: 'Candi Penataran',
+    materialName: 'Candi Penataran',
     color: 'bg-primary',
     learningObjectives: ['Mengidentifikasi bangun ruang pada arsitektur Candi Penataran', 'Menghubungkan ukuran dengan pola susunan', 'Menjelaskan pemecahan masalah numerasi'],
     characters: ['Aris', 'Naya', 'Bu Rani'],
@@ -78,9 +75,8 @@ export const COMIC_DATA: Record<string, {
     title: 'Bangun Ruang Gajah Mungkur',
     description: 'Eksplorasi bangun ruang melalui aset komik Gajah Mungkur.',
     comicFolder: 'gajah-mungkur',
-    moduleLink: '/modules/candi',
     image: '/comics/gajah-mungkur/cover.webp',
-    moduleName: 'Gajah Mungkur',
+    materialName: 'Gajah Mungkur',
     color: 'bg-red-500',
     learningObjectives: ['Mengidentifikasi bangun ruang pada Gajah Mungkur', 'Membedakan bentuk dan ukuran', 'Menyusun alasan dari hasil pengamatan'],
     characters: ['Aris', 'Naya', 'Bu Rani'],
@@ -90,9 +86,8 @@ export const COMIC_DATA: Record<string, {
     title: 'Bangun Ruang Jembatan Merah',
     description: 'Eksplorasi bangun ruang melalui aset komik Jembatan Merah.',
     comicFolder: 'jembatan-merah',
-    moduleLink: '/modules/candi',
     image: '/comics/jembatan-merah/cover.webp',
-    moduleName: 'Jembatan Merah',
+    materialName: 'Jembatan Merah',
     color: 'bg-green-500',
     learningObjectives: ['Mengidentifikasi bangun ruang pada Jembatan Merah', 'Menghubungkan geometri dengan arsitektur', 'Membuat kesimpulan dari pengamatan'],
     characters: ['Aris', 'Naya', 'Bu Rani'],
@@ -102,9 +97,8 @@ export const COMIC_DATA: Record<string, {
     title: 'Bangun Ruang Keraton Sumenep',
     description: 'Eksplorasi bangun ruang melalui aset komik Keraton Sumenep.',
     comicFolder: 'keraton-sumenep',
-    moduleLink: '/modules/candi',
     image: '/comics/keraton-sumenep/cover.webp',
-    moduleName: 'Keraton Sumenep',
+    materialName: 'Keraton Sumenep',
     color: 'bg-green-500',
     learningObjectives: ['Mengidentifikasi bangun ruang pada Keraton Sumenep', 'Membandingkan pola yang berulang', 'Menghubungkan pengetahuan dengan pengalaman sehari-hari'],
     characters: ['Aris', 'Naya', 'Bu Rani'],
@@ -526,7 +520,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
                 <div className={cn('inline-flex rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-white', comic.color)}>
-                  {comic.moduleName}
+                  {comic.materialName}
                 </div>
                 <h2 className="mt-3 text-2xl font-headline font-bold">Critical Numeracy with AR & AI</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/85">{comic.description}</p>

@@ -12,7 +12,6 @@ import {
   BookOpen, 
   Trophy, 
   Camera, 
-  MapPin, 
   ArrowLeft, 
   Star,
   Clock,
@@ -50,7 +49,6 @@ export default function ActivityLogPage() {
       case 'comic': return { icon: BookOpen, color: "text-emerald-500", bg: "bg-emerald-50" };
       case 'quiz': return { icon: Trophy, color: "text-yellow-600", bg: "bg-yellow-50" };
       case 'ar': return { icon: Camera, color: "text-purple-500", bg: "bg-purple-50" };
-      case 'module': return { icon: MapPin, color: "text-primary", bg: "bg-blue-50" };
       default: return { icon: Star, color: "text-slate-500", bg: "bg-slate-50" };
     }
   };
@@ -91,9 +89,9 @@ export default function ActivityLogPage() {
             </div>
             <div className="space-y-1">
               <h3 className="font-bold text-slate-900">Belum ada aktivitas belajar</h3>
-              <p className="text-xs text-muted-foreground px-10">Mulai petualanganmu dengan memindai QR atau membaca modul!</p>
+              <p className="text-xs text-muted-foreground px-10">Mulai petualanganmu dengan memindai QR atau membaca komik!</p>
             </div>
-            <Link href="/modules">
+            <Link href="/komik">
                <Button className="rounded-2xl font-bold bg-primary px-8">Mulai Sekarang</Button>
             </Link>
           </div>

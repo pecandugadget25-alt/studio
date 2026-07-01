@@ -86,8 +86,8 @@ export default function MobileDashboard() {
 
           <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="rounded-3xl bg-blue-700 p-6 text-white shadow-lg">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/75">Modul aktif</p>
-              <h3 className="mt-4 text-2xl font-headline font-bold">{activeComic.moduleName}</h3>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/75">Materi aktif</p>
+              <h3 className="mt-4 text-2xl font-headline font-bold">{activeComic.materialName}</h3>
               <p className="mt-3 text-sm text-white/80 leading-relaxed">{activeComic.title}</p>
 
               <div className="mt-6 rounded-3xl bg-white/10 p-5 backdrop-blur">

@@ -148,7 +148,7 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-screen-xl flex-col bg-white pb-32">
       <header className="sticky top-16 z-40 flex h-16 items-center justify-between border-b bg-white/80 px-4 backdrop-blur-md sm:px-6 lg:px-8">
-        <Link href="/modules">
+        <Link href="/komik">
           <Button variant="ghost" size="icon" className="rounded-full">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -241,9 +241,9 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
                   </div>
                   <p className="text-xs font-bold text-green-700">Video telah diselesaikan. Materi ini sudah tercatat di progres belajarmu!</p>
                </div>
-               <Link href="/modules" className="block">
+               <Link href="/komik" className="block">
                   <Button variant="outline" className="w-full h-14 rounded-2xl font-bold border-2">
-                    ← Kembali ke Modul
+                    Kembali ke Komik
                   </Button>
                </Link>
             </div>

@@ -116,14 +116,6 @@ export default function UniversalScannerPage() {
       isUrl = false;
     }
 
-    if (text.startsWith('module:')) return {
-      type: 'INTERNAL',
-      title: 'Modul Nusantara',
-      url: `/modules/${text.replace('module:', '')}`,
-      xp: 10,
-      icon: BookOpen,
-      buttonText: 'Buka Modul'
-    };
     if (text.startsWith('comic:')) return {
       type: 'INTERNAL',
       title: 'Komik Digital',
@@ -151,10 +143,10 @@ export default function UniversalScannerPage() {
     if (text.startsWith('quiz:')) return {
       type: 'INTERNAL',
       title: 'Kuis Evaluasi',
-      url: `/modules/${text.replace('quiz:', '').split('/')[0]}/quiz`,
+      url: '/komik',
       xp: 20,
       icon: ClipboardList,
-      buttonText: 'Mulai Kuis'
+      buttonText: 'Buka Komik'
     };
 
     if (isUrl) {
@@ -169,7 +161,7 @@ export default function UniversalScannerPage() {
         return { type: 'FORMULIR', title: 'Tugas / Formulir', url, xp: 0, icon: FileText, buttonText: 'Isi Form' };
       }
       if (url.toLowerCase().endsWith('.pdf')) {
-        return { type: 'PDF', title: 'Modul Pembelajaran', url, xp: 0, icon: BookOpen, buttonText: 'Buka PDF' };
+        return { type: 'PDF', title: 'Materi Pembelajaran', url, xp: 0, icon: BookOpen, buttonText: 'Buka PDF' };
       }
       if (url.includes('docs.google.com')) {
         return { type: 'DOKUMEN', title: 'Dokumen Belajar', url, xp: 0, icon: FileText, buttonText: 'Buka Dokumen' };
@@ -398,7 +390,7 @@ export default function UniversalScannerPage() {
                 <Camera className="h-12 w-12 text-white/40" />
               </div>
               <p className="text-white/60 text-sm font-medium leading-relaxed px-10">
-                Arahkan kamera ke QR Code pada modul, buku, atau video pembelajaran.
+                Arahkan kamera ke QR Code pada komik, buku, atau video pembelajaran.
               </p>
               <Button size="lg" className="bg-accent hover:bg-accent/90 font-bold px-10 h-16 rounded-3xl shadow-xl transition-all active:scale-95" onClick={startCamera}>
                 Aktifkan Kamera

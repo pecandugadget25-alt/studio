@@ -11,7 +11,7 @@ import Link from "next/link";
 
 const DAILY_CHALLENGES = [
   { id: 1, title: "Baca 1 Komik Budaya", xp: "+5 XP", icon: Target, completed: false },
-  { id: 2, title: "Selesaikan 1 Kuis Modul", xp: "+20 XP", icon: Star, completed: false },
+  { id: 2, title: "Selesaikan 1 Kuis Materi", xp: "+20 XP", icon: Star, completed: false },
   { id: 3, title: "Gunakan AR Scanner", xp: "+10 XP", icon: Zap, completed: true },
 ];
 
@@ -28,7 +28,7 @@ export default function ChallengesPage() {
           const result = await generateLearningChallenge({
             xp: profile?.poin || 0,
             level: profile?.level || 1,
-            completedModules: profile?.completedModules || [],
+            completedMaterials: profile?.completedComics || [],
             quizScore: 85 // Mock or fetch from quiz_results
           });
           setAiChallenge(result);
@@ -80,7 +80,7 @@ export default function ChallengesPage() {
               <Trophy className="h-4 w-4 text-yellow-300" />
               <span className="text-sm font-bold">+{aiChallenge?.rewardXP || 0} XP</span>
             </div>
-            <Link href="/modules" className="flex-1 ml-4">
+            <Link href="/komik" className="flex-1 ml-4">
               <Button className="w-full bg-white text-accent hover:bg-slate-50 font-bold rounded-2xl h-12 shadow-lg transition-transform active:scale-95">
                 Mulai Misi
               </Button>

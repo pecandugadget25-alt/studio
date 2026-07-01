@@ -68,9 +68,8 @@ export default function TeacherDashboard() {
     
     const totalComicReads = students.reduce((acc, s) => acc + (s.completedComics?.length || 0), 0);
     
-    // Simulasi rate penyelesaian (total modul selesai / total modul tersedia)
-    const totalModulesDone = students.reduce((acc, s) => acc + (s.completedModules?.length || 0), 0);
-    const completionRate = total > 0 ? Math.round((totalModulesDone / (total * 4)) * 100) : 0;
+    const totalMaterialsDone = students.reduce((acc, s) => acc + (s.completedComics?.length || 0), 0);
+    const completionRate = total > 0 ? Math.round((totalMaterialsDone / (total * 5)) * 100) : 0;
 
     return { total, avgXP, completionRate, needyCount, comicReads: totalComicReads };
   }, [students]);
@@ -170,7 +169,7 @@ export default function TeacherDashboard() {
             {[
               { title: "Total Siswa", value: stats.total.toString(), sub: "Aktif di kelas", icon: Users },
               { title: "Total Baca Komik", value: stats.comicReads.toString(), sub: "Semua petualangan", icon: BookOpen },
-              { title: "Selesai Modul", value: `${stats.completionRate}%`, sub: "Progress total", icon: CheckCircle2 },
+              { title: "Selesai Materi", value: `${stats.completionRate}%`, sub: "Progress total", icon: CheckCircle2 },
               { title: "Perlu Bantuan", value: stats.needyCount.toString(), sub: "Poin < 50 XP", icon: AlertCircle, destructive: stats.needyCount > 0 },
             ].map((stat, i) => (
               <Card key={i} className="border-none shadow-sm overflow-hidden relative group">

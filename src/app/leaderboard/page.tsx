@@ -74,7 +74,7 @@ export default function LeaderboardPage() {
               <h3 className="font-bold text-slate-900">Belum ada data peringkat siswa</h3>
               <p className="text-xs text-slate-500 px-10 leading-relaxed">Jadilah yang pertama untuk meraih peringkat tertinggi dengan belajar dan mengerjakan kuis!</p>
             </div>
-            <Link href="/modules">
+            <Link href="/komik">
               <Button className="rounded-2xl font-bold bg-primary px-8 h-12 shadow-lg">Mulai Belajar</Button>
             </Link>
           </div>
