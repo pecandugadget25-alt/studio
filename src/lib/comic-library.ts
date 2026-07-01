@@ -19,7 +19,7 @@ export const COMIC_LIBRARY: ComicLibraryItem[] = [
   {
     id: 'komik-2',
     slug: 'candi-penataran',
-    title: 'Bangun Ruang Candi Penataran',
+    title: 'Candi Penataran',
     coverImage: '/comics/candi-penataran/cover.webp',
     pageCount: 32,
     imageHint: 'candi penataran',
@@ -27,7 +27,7 @@ export const COMIC_LIBRARY: ComicLibraryItem[] = [
   {
     id: 'komik-3',
     slug: 'gajah-mungkur',
-    title: 'Bangun Ruang Gajah Mungkur',
+    title: 'Gajah Mungkur',
     coverImage: '/comics/gajah-mungkur/cover.webp',
     pageCount: 28,
     imageHint: 'gajah mungkur',
@@ -35,7 +35,7 @@ export const COMIC_LIBRARY: ComicLibraryItem[] = [
   {
     id: 'komik-4',
     slug: 'jembatan-merah',
-    title: 'Bangun Ruang Jembatan Merah',
+    title: 'Jembatan Merah',
     coverImage: '/comics/jembatan-merah/cover.webp',
     pageCount: 26,
     imageHint: 'jembatan merah',
@@ -43,7 +43,7 @@ export const COMIC_LIBRARY: ComicLibraryItem[] = [
   {
     id: 'komik-5',
     slug: 'keraton-sumenep',
-    title: 'Bangun Ruang Keraton Sumenep',
+    title: 'Keraton Sumenep',
     coverImage: '/comics/keraton-sumenep/cover.webp',
     pageCount: 34,
     imageHint: 'keraton sumenep',
