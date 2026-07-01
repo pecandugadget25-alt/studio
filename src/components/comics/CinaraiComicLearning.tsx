@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, BookOpen, CheckCircle2, ChevronDown, ChevronUp, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, ChevronDown, ChevronUp, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -119,6 +119,18 @@ const createDefaultSession = (comicId: string): CinaraiSessionData => ({
   durationSeconds: 0,
   reflection: '',
 });
+
+const blueprintJourneySteps: Array<{ id: CinaraiStageId; label: string; description: string }> = [
+  { id: 'cover', label: 'Comic Cover', description: 'Mulai dari sampul komik yang memperkenalkan cerita.' },
+  { id: 'contextualization', label: 'Contextualization', description: 'Hubungkan cerita dengan konteks nyata yang dekat dengan siswa.' },
+  { id: 'identification', label: 'Identification', description: 'Temukan informasi dan bentuk penting dari materi.' },
+  { id: 'navigation', label: 'Navigation', description: 'Jelajah AR dan tanyakan AI saat butuh panduan.' },
+  { id: 'argumentation', label: 'Argumentation', description: 'Bangun alasan logis dari pengamatan yang sudah dikumpulkan.' },
+  { id: 'resolution', label: 'Resolution', description: 'Tentukan solusi numerasi terbaik dari permasalahan.' },
+  { id: 'application', label: 'Application', description: 'Terapkan pemahaman pada konteks baru yang berbeda.' },
+  { id: 'introspection', label: 'Introspection', description: 'Refleksi diri dan lihat apa yang sudah dipahami.' },
+  { id: 'report', label: 'Learning Result', description: 'Simpan hasil belajar dan siap lanjut ke komik berikutnya.' },
+];
 
 export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   const router = useRouter();
@@ -530,16 +542,52 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
             <Card className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Tahap saat ini</p>
-                  <p className="text-lg font-bold text-slate-900">{currentStage?.title}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">Perjalanan belajar</p>
+                  <p className="text-lg font-bold text-slate-900">Ikuti alur CINARAI dari sampul sampai hasil belajar</p>
                 </div>
                 <div className="rounded-md bg-blue-50 px-3 py-2 text-right text-xs font-semibold text-blue-700">
                   {session.completedStages.length}/{CINARAI_STAGES.length} selesai
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
-                <Sparkles className="h-4 w-4 text-blue-600" />
-                <span>{currentStage?.subtitle}</span>
+
+              <div className="mt-4 space-y-3">
+                {blueprintJourneySteps.map((step, index) => {
+                  const isCompleted = session.completedStages.includes(step.id);
+                  const isCurrent = step.id === currentStageId;
+                  const isUpcoming = !isCompleted && !isCurrent;
+
+                  return (
+                    <div key={step.id} className={cn(
+                      'flex items-start gap-3 rounded-lg border p-3',
+                      isCurrent ? 'border-blue-200 bg-blue-50' : isCompleted ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'
+                    )}>
+                      <div className={cn(
+                        'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white',
+                        isCompleted ? 'bg-emerald-600' : isCurrent ? 'bg-blue-600' : 'bg-slate-300'
+                      )}>
+                        {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className={cn('text-sm font-semibold', isCurrent ? 'text-blue-700' : isCompleted ? 'text-emerald-700' : 'text-slate-700')}>
+                            {step.label}
+                          </p>
+                          {isCurrent ? (
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600">
+                              Sekarang
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className={cn('mt-1 text-sm leading-relaxed', isUpcoming ? 'text-slate-500' : 'text-slate-600')}>
+                          {step.description}
+                        </p>
+                      </div>
+                      {index < blueprintJourneySteps.length - 1 ? (
+                        <ArrowRight className={cn('mt-1 h-4 w-4 shrink-0', isCompleted ? 'text-emerald-500' : 'text-slate-300')} />
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             </Card>
           </div>
@@ -549,11 +597,11 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
 
             <Card className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
               <div className="flex items-center gap-2 font-semibold text-slate-900">
-                <BookOpen className="h-4 w-4 text-primary" />
-                <span>Alur bertahap sesuai blueprint</span>
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span>Perjalanan yang terarah</span>
               </div>
               <p className="mt-2 leading-relaxed">
-                Kamu tidak bisa melewati tahapan. Setiap langkah akan dibuka setelah tahap sebelumnya selesai dan otomatis tersimpan di akunmu.
+                Siswa mengikuti satu perjalanan belajar yang utuh: dari sampul komik, memahami konteks, menjelajah AR dan AI, sampai meninjau hasil belajar tanpa berpindah ke fitur lain.
               </p>
               <div className="mt-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -598,11 +646,11 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
         {!isReadingStage ? (
           <Card className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
             <div className="flex items-center gap-2 font-semibold text-slate-900">
-              <BookOpen className="h-4 w-4 text-primary" />
-              Alur bertahap sesuai blueprint
+              <Sparkles className="h-4 w-4 text-primary" />
+              Perjalanan yang terarah
             </div>
             <p className="mt-2 leading-relaxed">
-              Kamu tidak bisa melewati tahapan. Setiap langkah akan dibuka setelah tahap sebelumnya selesai dan otomatis tersimpan di akunmu.
+              Setiap tahap terhubung dengan tahap berikutnya sehingga pembelajaran terasa seperti satu perjalanan yang berkesinambungan, bukan sekadar daftar fitur.
             </p>
             <div className="mt-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
