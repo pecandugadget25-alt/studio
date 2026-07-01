@@ -38,12 +38,6 @@ interface CinaraiComicLearningProps {
   comicId: string;
 }
 
-const COMIC_ID_ALIASES: Record<string, string> = {
-  batik: 'komik-1',
-  candi: 'komik-2',
-  permainan: 'komik-3',
-};
-
 export const COMIC_DATA: Record<string, {
   title: string;
   description: string;
@@ -58,10 +52,10 @@ export const COMIC_DATA: Record<string, {
 }> = {
   'komik-1': {
     title: 'Bangun Ruang Candi Jawi',
-    description: 'Ikuti Aris, Naya, dan Bu Rani menemukan kubus, balok, prisma, dan limas pada arsitektur Candi Jawi.',
+    description: 'Eksplorasi bangun ruang melalui aset komik Candi Jawi.',
     comicFolder: 'candi-jawi',
     moduleLink: '/modules/candi',
-    image: 'https://picsum.photos/seed/candi-jawi-cinarai/800/600',
+    image: '/comics/candi-jawi/cover.webp',
     moduleName: 'Candi Jawi',
     color: 'bg-blue-600',
     learningObjectives: ['Mengidentifikasi bangun ruang pada arsitektur Candi Jawi', 'Menjelaskan alasan matematika dari bentuk candi', 'Menghitung volume kubus sederhana dari konteks candi'],
@@ -69,88 +63,52 @@ export const COMIC_DATA: Record<string, {
     storyIntro: 'Aris dan Naya berkunjung ke Candi Jawi. Bu Rani mengajak mereka melihat bahwa bagian candi dapat dipelajari melalui bangun ruang.',
   },
   'komik-2': {
-    title: 'Petualangan di Candi Megah',
-    description: 'Bantu Maya menghitung blok batu dan memahami bangun ruang di candi Borobudur.',
+    title: 'Bangun Ruang Candi Penataran',
+    description: 'Eksplorasi bangun ruang melalui aset komik Candi Penataran.',
     comicFolder: 'candi-penataran',
     moduleLink: '/modules/candi',
-    image: 'https://picsum.photos/seed/comic-candi/800/600',
-    moduleName: 'Candi Nusantara',
+    image: '/comics/candi-penataran/cover.webp',
+    moduleName: 'Candi Penataran',
     color: 'bg-primary',
-    learningObjectives: ['Mengenali bentuk bangun ruang pada candi', 'Menghubungkan ukuran dengan pola susunan', 'Menjelaskan pemecahan masalah numerasi'],
-    characters: ['Maya', 'Kakak', 'Arsitek'],
-    storyIntro: 'Maya melihat susunan batu candi yang membentuk pola berulang dan ingin memahaminya.',
+    learningObjectives: ['Mengidentifikasi bangun ruang pada arsitektur Candi Penataran', 'Menghubungkan ukuran dengan pola susunan', 'Menjelaskan pemecahan masalah numerasi'],
+    characters: ['Aris', 'Naya', 'Bu Rani'],
+    storyIntro: 'Aris dan Naya mengamati Candi Penataran untuk menemukan bentuk bangun ruang pada bagian bangunannya.',
   },
   'komik-3': {
-    title: 'Permainan Tradisional',
-    description: 'Eksplorasi strategi berhitung lewat permainan Congklak dan Engklek bersama teman-teman.',
+    title: 'Bangun Ruang Gajah Mungkur',
+    description: 'Eksplorasi bangun ruang melalui aset komik Gajah Mungkur.',
     comicFolder: 'gajah-mungkur',
-    moduleLink: '/modules/games',
-    image: 'https://picsum.photos/seed/comic-games/800/600',
-    moduleName: 'Permainan Nusantara',
+    moduleLink: '/modules/candi',
+    image: '/comics/gajah-mungkur/cover.webp',
+    moduleName: 'Gajah Mungkur',
     color: 'bg-red-500',
-    learningObjectives: ['Menghubungkan permainan dengan konsep bilangan', 'Mengidentifikasi pola strategi', 'Menerapkan hitungan pada situasi nyata'],
-    characters: ['Rina', 'Dedi', 'Lia'],
-    storyIntro: 'Rina dan teman-temannya menggunakan permainan tradisional untuk memahami pola dan strategi berhitung.',
+    learningObjectives: ['Mengidentifikasi bangun ruang pada Gajah Mungkur', 'Membedakan bentuk dan ukuran', 'Menyusun alasan dari hasil pengamatan'],
+    characters: ['Aris', 'Naya', 'Bu Rani'],
+    storyIntro: 'Aris dan Naya mengamati Gajah Mungkur dan mencatat bentuk-bentuk ruang yang muncul pada bangunannya.',
   },
   'komik-4': {
-    title: 'Candi Jawi',
-    description: 'Mengenal sejarah dan keunikan Candi Jawi sebagai peninggalan Kerajaan Singhasari.',
+    title: 'Bangun Ruang Jembatan Merah',
+    description: 'Eksplorasi bangun ruang melalui aset komik Jembatan Merah.',
     comicFolder: 'jembatan-merah',
     moduleLink: '/modules/candi',
-    image: 'https://picsum.photos/seed/comic-candi-jawi/800/600',
-    moduleName: 'Candi Nusantara',
+    image: '/comics/jembatan-merah/cover.webp',
+    moduleName: 'Jembatan Merah',
     color: 'bg-green-500',
-    learningObjectives: ['Mengenali bentuk pada bangunan sejarah', 'Menghubungkan geometri dengan arsitektur', 'Membuat kesimpulan dari pengamatan'],
-    characters: ['Naya', 'Kakek', 'Pengunjung'],
-    storyIntro: 'Naya mengamati ornamen candi dan melihat banyak bentuk matematika dalam susunannya.',
+    learningObjectives: ['Mengidentifikasi bangun ruang pada Jembatan Merah', 'Menghubungkan geometri dengan arsitektur', 'Membuat kesimpulan dari pengamatan'],
+    characters: ['Aris', 'Naya', 'Bu Rani'],
+    storyIntro: 'Aris dan Naya mengamati Jembatan Merah dan menemukan bentuk ruang dari susunan bangunannya.',
   },
   'komik-5': {
-    title: 'Candi Penataran',
-    description: 'Menjelajahi sejarah Candi Penataran sebagai kompleks candi terbesar di Jawa Timur.',
-    comicFolder: 'candi-jawi',
+    title: 'Bangun Ruang Keraton Sumenep',
+    description: 'Eksplorasi bangun ruang melalui aset komik Keraton Sumenep.',
+    comicFolder: 'keraton-sumenep',
     moduleLink: '/modules/candi',
-    image: 'https://picsum.photos/seed/comic-candi-penataran/800/600',
-    moduleName: 'Candi Nusantara',
+    image: '/comics/keraton-sumenep/cover.webp',
+    moduleName: 'Keraton Sumenep',
     color: 'bg-green-500',
-    learningObjectives: ['Mengidentifikasi pola pada struktur candi', 'Menghitung bagian berulang', 'Menjelaskan hubungan antara sejarah dan matematika'],
-    characters: ['Ayu', 'Bapak', 'Tim Museum'],
-    storyIntro: 'Ayu mempelajari susunan candi dan menemukan banyak pola yang bisa dihitung.',
-  },
-  'komik-6': {
-    title: 'Jembatan Merah',
-    description: 'Mempelajari sejarah Jembatan Merah Surabaya dan perannya dalam perjuangan kemerdekaan.',
-    comicFolder: 'candi-penataran',
-    moduleLink: '/modules/bangunan-bersejarah',
-    image: 'https://picsum.photos/seed/comic-jembatan-merah/800/600',
-    moduleName: 'Bangunan Bersejarah',
-    color: 'bg-blue-500',
-    learningObjectives: ['Mengamati pola geometri pada bangunan', 'Menghubungkan sejarah dengan perhitungan', 'Menerapkan numerasi pada konteks lokal'],
-    characters: ['Damar', 'Sari', 'Pak Bima'],
-    storyIntro: 'Damar melihat Jembatan Merah sebagai tempat penuh kisah dan bentuk-bentuk yang bisa dipelajari.',
-  },
-  'komik-7': {
-    title: 'Keraton Sumenep',
-    description: 'Mengenal Keraton Sumenep sebagai pusat pemerintahan dan budaya Madura.',
-    comicFolder: 'gajah-mungkur',
-    moduleLink: '/modules/bangunan-bersejarah',
-    image: 'https://picsum.photos/seed/comic-keraton-sumenep/800/600',
-    moduleName: 'Bangunan Bersejarah',
-    color: 'bg-blue-500',
-    learningObjectives: ['Mengenali elemen bentuk pada arsitektur', 'Membandingkan pola yang berulang', 'Menghubungkan pengetahuan dengan pengalaman sehari-hari'],
-    characters: ['Laras', 'Nenek', 'Guide'],
-    storyIntro: 'Laras mengunjungi keraton dan menemukan bahwa banyak pola memiliki susunan yang terukur.',
-  },
-  'komik-8': {
-    title: 'Rumah Gajah Mungkur',
-    description: 'Menelusuri sejarah Rumah Gajah Mungkur sebagai bangunan bersejarah di Gresik.',
-    comicFolder: 'jembatan-merah',
-    moduleLink: '/modules/bangunan-bersejarah',
-    image: 'https://picsum.photos/seed/comic-gajah-mungkur/800/600',
-    moduleName: 'Bangunan Bersejarah',
-    color: 'bg-blue-500',
-    learningObjectives: ['Membedakan bentuk dan ukuran', 'Menerapkan konsep matematis secara sederhana', 'Menyusun alasan dari hasil pengamatan'],
-    characters: ['Tomi', 'Ibu', 'Arif'],
-    storyIntro: 'Tomi mengamati rumah bersejarah dan melihat banyak bentuk yang bisa diidentifikasi dengan matematika.',
+    learningObjectives: ['Mengidentifikasi bangun ruang pada Keraton Sumenep', 'Membandingkan pola yang berulang', 'Menghubungkan pengetahuan dengan pengalaman sehari-hari'],
+    characters: ['Aris', 'Naya', 'Bu Rani'],
+    storyIntro: 'Aris dan Naya mengunjungi Keraton Sumenep dan mengaitkan bentuk bangunannya dengan konsep bangun ruang.',
   },
 };
 
@@ -175,7 +133,7 @@ export function CinaraiComicLearning({ comicId }: CinaraiComicLearningProps) {
   const { user, profile } = useUser();
   const db = useFirestore();
 
-  const normalizedComicId = COMIC_ID_ALIASES[comicId] ?? comicId;
+  const normalizedComicId = comicId;
   const comic = COMIC_DATA[normalizedComicId] || COMIC_DATA['komik-1'];
   const [session, setSession] = useState<CinaraiSessionData>(() => createDefaultSession(normalizedComicId));
   const [isSaving, setIsSaving] = useState(false);
